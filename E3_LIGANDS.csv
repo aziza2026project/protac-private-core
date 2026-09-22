@@ -1,0 +1,7 @@
+﻿E3_Ligand_ID,Name,SMILES,Plant_Of _Origin ,Molecular_Weight,LogP,TPSA,H_Bond_Donor,H_Bond_Acceptor,Rotatable_Bonds_Calc,Ring_Count,Heteroatom_Count,Status
+LG-0001,Nimbolide derivative,C1=C[C@@]3([C@H]2[C@](C1=O)([C@H]([C@]4([C@@H]([C@@H]2OC3=O)O[C@H]5C4=C([C@@H](C5)C6=C(OC=C6)C7=CC=C(C=C7)C(=O)O)C)C)CC(OC)=O)C)C,Azadirachta indica,586.637,5.1083,129.34,1,8,5,7,9,Valid
+LG-0002,4-Fluoro-thalidomide,C1(=O)NC(=O)C(N2C(=O)C3C=CC=C(F)C=3C2=O)CC1,Synthetic,276.223,0.2269,83.55,1,4,1,3,7,Valid
+LG-0004,Bromo-Lenalidomide,C1CC(=O)NC(=O)C1N2CC3=C(C2=O)C=CC=C3Br,Synthetic,323.146,1.2101,66.48,1,3,1,3,6,Valid
+LG-0005,pomalidomide,C12C(=O)N(C3C(=O)NC(=O)CC3)C(=O)C1=C(N)C=CC=2,Synthetic,273.248,-0.33,109.57,2,5,1,3,7,Valid
+LG-0006,VH-032,[N][C](C(=O)N1[C]([C][C]([C]1)[O])C(=O)[N][C]C2=[C][C]=C([C]=[C]2)C3=C(N=[C]S3)[C])C([C])([C])[C],Synthetic,400.334,0.07325,106.57,0,4,6,3,8,Valid
+LG-0007,5-fluorothalidomide,C1(F)C=C2C(=O)N(C3CCC(=O)NC3=O)C(=O)C2=CC=1,Synthetic,276.223,0.2269,83.55,1,4,1,3,7,Valid
