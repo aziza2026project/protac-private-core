@@ -4,7 +4,7 @@ def check_email_access():
     st.subheader("🔐 Access Control & Verification")
     st.markdown("Please enter your email address to access the prediction tools:")
     
-    whitelist = ["aziza.mnasri@example.com", "researcher@cnrsm.tn", "admin@protac.com"]
+    whitelist = ["azizamnasri10@gmail.com", "researcher@cnrsm.tn", "admin@protac.com"]
     blacklist = ["blocked_user@example.com", "spam@test.com"]
     
     user_email = st.text_input("📧 Email Address:", placeholder="example@domain.com", key="auth_email_input")
