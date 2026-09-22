@@ -1,0 +1,7 @@
+﻿Warhead_ID,Name,SMILES,Plant_Of _Origin ,Functional_Groups,Molecular_Weight,LogP,TPSA,H_Bond_Donor,H_Bond_Acceptor,Rotatable_Bonds_Calc,Ring_Count,Heteroatom_Count,Status
+WH-0001,JQ1,C(CC2C1=NN=C([N]1C4=C(C(=N2)C3=CC=C(C=C3)Cl)C(=C(S4)C)C)C)(=O)OC(C)(C)C,Synthetic,,456.999,5.53136,69.37,0,6,3,4,8,Valid
+WH-0002,Matrine derivative,C1C(OCC#C)=CC=C(CC(NC(CNC2CC(=O)N3CC4CCCN5C4C(C3C2)CCC5)=O)C(=O)OC)C=1,Sophora flavescens,,536.673,1.3523,100.21,2,7,9,5,9,Valid
+WH-0004,3-fluoro-10-hydroxy-N-methyl-evodiamine,C1=CC2N(C)C3C4NC5C=CC(O)=CC=5C=4CCN3C(=O)C=2C=C1F,,,337.354,3.1595,59.57,2,3,0,5,6,Valid
+WH-0005,Hederagenin,C1C[C@]2([C@H]([C@@](C1O)(CO)C)CC[C@@]3(C2CC=C4[C@]3(CC[C@@]5([C@H]4CC(CC5)(C)C)C(=O)O)C)C)C,,,472.71,6.206,77.76,3,3,2,5,4,Valid
+WH-0007,Wogonin,C1(O)C=C(OCC2C=CC=CC=2)C(O)=C2OC(C3C=CC=CC=3)=CC(=O)C=12,Scutellaria baicalensis,,360.365,4.4502,79.9,2,5,4,4,5,Valid
+WH-0008,Dasatinib,N1CCN(C2N=C(C)N=C(NC3=NC=C(C(NC4C(C)=CC=CC=4Cl)=O)S3)C=2)CC1,Synthetic,,443.964,3.60884,95.07,3,8,5,4,10,Valid
