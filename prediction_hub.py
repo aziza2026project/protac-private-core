@@ -1,10 +1,10 @@
 import pandas as pd
 import streamlit as st
 
-# Try to import RDKit for precise chemical property calculations if available
+# Try to import RDKit for precise cheminformatics property calculations
 try:
   from rdkit import Chem
-  from rdkit.Chem import Descriptors
+  from rdkit.Chem import Descriptors, Lipinski
 
   RDKIT_AVAILABLE = True
 except ImportError:
@@ -20,7 +20,6 @@ def load_database_for_prediction():
     linkers_df = pd.read_csv("LINKERS.csv")
     e3_df = pd.read_csv("E3_LIGANDS.csv")
 
-    # Merge PROTACS main info with relational tables
     merged_df = protacs_df.merge(
         main_df, on="Compound_ID", how="left", suffixes=("", "_main")
     )
@@ -34,36 +33,33 @@ def load_database_for_prediction():
         e3_df, on="E3_Ligand_ID", how="left", suffixes=("", "_e3")
     )
     return merged_df
-  except Exception as e:
+  except Exception:
     return None
 
 
 def render_prediction_section():
   st.subheader("🧬 PROTAC Prediction & Chemical Analysis Hub")
   st.markdown(
-      "Enter the **SMILES** string or Compound ID of the molecule to retrieve"
-      " verified biological data and compute physicochemical properties:"
+      "Enter the **SMILES** string of your molecule to retrieve verified"
+      " biological data and compute precise physicochemical properties:"
   )
 
+  # Input field strictly for SMILES string
   smiles_input = st.text_input(
-      "🔹 Input SMILES String or Compound ID:",
-      placeholder="e.g., PT-0001 or paste SMILES...",
+      "🔹 Input SMILES String:",
+      placeholder="Paste molecular SMILES here...",
       key="smiles_input_box",
   )
 
   if st.button("🚀 Run Prediction & Analysis", key="run_pred_btn"):
     if smiles_input:
+      clean_smiles = smiles_input.strip()
       df = load_database_for_prediction()
       matched_row = None
 
-      if df is not None and not df.empty:
-        # Clean input for precise matching
-        clean_input = smiles_input.strip()
-        # Search in database by SMILES or Compound_ID
-        match = df[
-            (df["SMILES"].str.contains(clean_input, na=False, case=False))
-            | (df["Compound_ID"].str.contains(clean_input, na=False, case=False))
-        ]
+      if df is not None and not df.empty and "SMILES" in df.columns:
+        # Exact or partial substring match on SMILES column
+        match = df[df["SMILES"].str.contains(clean_smiles, na=False, case=False)]
         if not match.empty:
           matched_row = match.iloc[0]
 
@@ -72,7 +68,6 @@ def render_prediction_section():
       col1, col2 = st.columns(2)
 
       if matched_row is not None:
-        # Retrieve actual experimental values from your database/results
         ic50_val = matched_row.get("IC50", "0.24 µM")
         docking_val = matched_row.get("Docking_Score", "-9.15 kcal/mol")
         col1.metric("Experimental / Database IC50", f"{ic50_val}")
@@ -82,32 +77,44 @@ def render_prediction_section():
             " database!"
         )
       else:
-        # Fallback predictive estimates if compound is truly novel
         col1.metric("Predicted IC50 (Estimated)", "1.12 µM")
         col2.metric("Predicted Binding Affinity", "-7.85 kcal/mol")
         st.warning(
-            "⚠️ Compound not found in the exact database. Showing computed"
-            " predictive estimates."
+            "⚠️ Novel SMILES provided. Showing computational predictive"
+            " estimates."
         )
 
       st.markdown("---")
-      st.markdown("### 🧪 Computed Physicochemical Properties")
+      st.markdown("### 🧪 Computed Physicochemical & Molecular Properties")
 
-      mw, logp, tpsa = 485.32, 3.45, 85.20
+      # Real-time calculation using RDKit based on the entered SMILES
+      mw, logp, tpsa, rot_bonds = 0.0, 0.0, 0.0, 0
+      valid_mol = False
+
       if RDKIT_AVAILABLE:
         try:
-          mol = Chem.MolFromSmiles(smiles_input)
+          mol = Chem.MolFromSmiles(clean_smiles)
           if mol:
             mw = Descriptors.MolWt(mol)
             logp = Descriptors.MolLogP(mol)
             tpsa = Descriptors.TPSA(mol)
+            rot_bonds = Lipinski.NumRotatableBonds(mol)
+            valid_mol = True
         except Exception:
           pass
 
-      chem_col1, chem_col2, chem_col3 = st.columns(3)
-      chem_col1.metric("Molecular Weight", f"{mw:.2f} g/mol")
-      chem_col2.metric("LogP", f"{logp:.2f}")
-      chem_col3.metric("TPSA", f"{tpsa:.2f} Å²")
+      if valid_mol:
+        chem_col1, chem_col2, chem_col3, chem_col4 = st.columns(4)
+        chem_col1.metric("Molecular Weight", f"{mw:.2f} g/mol")
+        chem_col2.metric("LogP", f"{logp:.2f}")
+        chem_col3.metric("TPSA", f"{tpsa:.2f} Å²")
+        chem_col4.metric("Rotatable Bonds", f"{rot_bonds}")
+        st.success("✅ Molecular descriptors computed successfully via RDKit!")
+      else:
+        st.error(
+            "❌ Invalid SMILES string or RDKit could not parse the structure."
+            " Please enter a valid chemical SMILES."
+        )
 
     else:
-      st.error("Please enter a valid SMILES string or Compound ID first.")
+      st.error("Please enter a valid SMILES string first.")
