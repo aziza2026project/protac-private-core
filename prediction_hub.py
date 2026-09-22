@@ -14,12 +14,17 @@ except ImportError:
 @st.cache_data
 def load_database_for_prediction():
   try:
+    protacs_df = pd.read_csv("PROTACS.csv")
     main_df = pd.read_csv("database.csv")
     warheads_df = pd.read_csv("WARHEADS.csv")
     linkers_df = pd.read_csv("LINKERS.csv")
     e3_df = pd.read_csv("E3_LIGANDS.csv")
 
-    merged_df = main_df.merge(
+    # Merge PROTACS main info with relational tables
+    merged_df = protacs_df.merge(
+        main_df, on="Compound_ID", how="left", suffixes=("", "_main")
+    )
+    merged_df = merged_df.merge(
         warheads_df, on="Warhead_ID", how="left", suffixes=("", "_warhead")
     )
     merged_df = merged_df.merge(
@@ -29,7 +34,7 @@ def load_database_for_prediction():
         e3_df, on="E3_Ligand_ID", how="left", suffixes=("", "_e3")
     )
     return merged_df
-  except Exception:
+  except Exception as e:
     return None
 
 
@@ -52,10 +57,12 @@ def render_prediction_section():
       matched_row = None
 
       if df is not None and not df.empty:
+        # Clean input for precise matching
+        clean_input = smiles_input.strip()
         # Search in database by SMILES or Compound_ID
         match = df[
-            (df["SMILES"].str.contains(smiles_input, na=False, case=False))
-            | (df["Compound_ID"].str.contains(smiles_input, na=False, case=False))
+            (df["SMILES"].str.contains(clean_input, na=False, case=False))
+            | (df["Compound_ID"].str.contains(clean_input, na=False, case=False))
         ]
         if not match.empty:
           matched_row = match.iloc[0]
@@ -65,7 +72,7 @@ def render_prediction_section():
       col1, col2 = st.columns(2)
 
       if matched_row is not None:
-        # If compound exists in the research database, display actual saved values
+        # Retrieve actual experimental values from your database/results
         ic50_val = matched_row.get("IC50", "0.24 µM")
         docking_val = matched_row.get("Docking_Score", "-9.15 kcal/mol")
         col1.metric("Experimental / Database IC50", f"{ic50_val}")
@@ -75,7 +82,7 @@ def render_prediction_section():
             " database!"
         )
       else:
-        # If not found, compute sensible and realistic predictive estimates
+        # Fallback predictive estimates if compound is truly novel
         col1.metric("Predicted IC50 (Estimated)", "1.12 µM")
         col2.metric("Predicted Binding Affinity", "-7.85 kcal/mol")
         st.warning(
@@ -86,7 +93,6 @@ def render_prediction_section():
       st.markdown("---")
       st.markdown("### 🧪 Computed Physicochemical Properties")
 
-      # Calculate properties via RDKit if valid SMILES is provided, otherwise use fallback values
       mw, logp, tpsa = 485.32, 3.45, 85.20
       if RDKIT_AVAILABLE:
         try:
