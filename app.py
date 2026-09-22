@@ -20,8 +20,8 @@ app_mode = st.sidebar.selectbox(
 )
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("**Developer:** Aziza Mnasri")
-st.sidebar.markdown("**Institution:** CNRSM, Tunisia")
+st.sidebar.markdown("**Developer:** Aziza Mnasri(PhD)")
+st.sidebar.markdown("**Profile:** Independent Researcher (Organic Chemistry & Computational Drug Discovery)")
 
 if app_mode == "Prediction Tool":
     is_allowed = check_email_access()
