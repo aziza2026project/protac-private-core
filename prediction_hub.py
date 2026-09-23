@@ -67,14 +67,6 @@ def render_prediction_section():
         with col_file2:
             ligand_file = st.file_uploader("📁 Upload Ligand File (.pdbqt)", type=["pdbqt"], key="up_ligand_pdbqt")
 
-        st.markdown("---")
-        st.markdown("#### ⚙️ Output & Notification Settings")
-        col_out1, col_out2 = st.columns(2)
-        with col_out1:
-            output_filename = st.text_input("💾 Output Result File Name:", value="docking_output_result.pdbqt", key="docking_out_filename")
-        with col_out2:
-            user_email_docking = st.text_input("📧 Notification Email (to receive results):", placeholder="your_email@domain.com", key="docking_email_input")
-
         st.markdown("#### 📦 Grid Box Parameters (Binding Pocket)")
         col_c1, col_c2, col_c3 = st.columns(3)
         center_x = col_c1.number_input("Center X (Å)", value=10.50, format="%.2f", key="box_cx")
@@ -87,6 +79,15 @@ def render_prediction_section():
         size_z = col_s3.number_input("Size Z (Å)", value=20.0, format="%.1f", key="box_sz")
         exhaustiveness = col_ex.number_input("Exhaustiveness", value=8, min_value=1, max_value=64, key="box_ex")
 
+        st.markdown("---")
+        st.markdown("#### ⚙️ Output & Notification Settings")
+        col_out1, col_out2 = st.columns(2)
+        with col_out1:
+            output_filename = st.text_input("💾 Output Result File Name:", value="docking_output_result.pdbqt", key="docking_out_filename")
+        with col_out2:
+            user_email_docking = st.text_input("📧 Notification Email (to receive results):", placeholder="your_email@domain.com", key="docking_email_input")
+
+        st.markdown("---")
         if st.button("🚀 Run Molecular Docking Simulation", key="run_docking_btn"):
             if protein_file is not None and ligand_file is not None:
                 st.success(f"✅ Receptor `{protein_file.name}` and Ligand `{ligand_file.name}` loaded successfully.")
@@ -102,11 +103,11 @@ def render_prediction_section():
                 st.error("Please upload both Target Protein (.pdbqt) and Ligand File (.pdbqt) first.")
 
     # =========================================================================
-    # TAB 2: BIOLOGICAL & CHEMICAL ANALYSIS (RDKit Direct Calculation)
+    # TAB 2: BIOLOGICAL & CHEMICAL ANALYSIS (CSV Database Matching + Exact RDKit)
     # =========================================================================
     with tab_analysis:
         st.markdown("### 🧪 Comprehensive Physicochemical, ADME & Biological Hub")
-        st.markdown("Enter any molecule **SMILES** string. The system will compute exact properties directly using RDKit algorithms for any custom input.")
+        st.markdown("Enter a molecule **SMILES** string. The system will search your project CSV databases first for exact experimental matches; otherwise, it computes exact physicochemical properties natively using RDKit.")
 
         analysis_smiles = st.text_input(
             "🔹 Input Ligand SMILES String:",
@@ -138,12 +139,19 @@ def render_prediction_section():
                 df = load_database_for_prediction()
                 matched_row = None
 
-                # حساب الخصائص الفورية عبر RDKit لأي SMILES مدخل
-                mw, logp, tpsa, rot_bonds, h_acc, h_don = 450.0, 3.2, 95.0, 6, 5, 2
-                molar_refractivity, fractional_csp3, heavy_atoms, aromatic_rings = 120.0, 0.45, 30, 4
-                valence_electrons, ring_count = 140, 4
-                success_rdkit = False
+                # البحث الدقيق في قواعد البيانات المدمجة عبر عمود SMILES
+                if df is not None and not df.empty:
+                    for col in df.columns:
+                        if "smiles" in col.lower():
+                            for _, row in df.iterrows():
+                                db_val = str(row[col]).strip()
+                                if db_val.lower() == clean_smiles.lower():
+                                    matched_row = row
+                                    break
+                            if matched_row is not None:
+                                break
 
+                # حساب الخصائص بدقة تامة عبر RDKit إذا كانت المكتبة متوفرة
                 if RDKIT_AVAILABLE:
                     try:
                         mol_calc = Chem.MolFromSmiles(clean_smiles, sanitize=True)
@@ -163,19 +171,12 @@ def render_prediction_section():
                             valence_electrons = Descriptors.NumValenceElectrons(mol_calc)
                             ring_count = Lipinski.RingCount(mol_calc)
                             success_rdkit = True
+                        else:
+                            success_rdkit = False
                     except Exception:
-                        pass
-
-                # مطابقة اختيارية مع قواعد البيانات إن وجد المركب فيها
-                if df is not None and not df.empty:
-                    for col in df.columns:
-                        if "smiles" in col.lower():
-                            for _, row in df.iterrows():
-                                if str(row[col]).strip().lower() == clean_smiles.lower():
-                                    matched_row = row
-                                    break
-                            if matched_row is not None:
-                                break
+                        success_rdkit = False
+                else:
+                    success_rdkit = False
 
                 st.markdown("---")
 
@@ -186,24 +187,24 @@ def render_prediction_section():
                     st.markdown("### 📊 IC50 & Target Biological Activity Profile")
                     target_display = target_protein_input if target_protein_input else "General Target / Unspecified"
                     
-                    ic50_val = f"{max(0.05, round(0.1 + (mw * 0.0003) + (logp * 0.05), 3))} µM"
-                    source_engine = "RDKit QSAR Predictive Model"
+                    ic50_val = "N/A"
+                    source_engine = "Not Found in CSV Database"
                     
-                    if matched_row is not None:
+                    if matched_ros is not None if 'matched_ros' in locals() else matched_row is not None:
                         for col in matched_row.index:
-                            if "ic50" in col.lower() or "activity" in col.lower():
+                            if "ic50" in col.lower() or "activity" in col.lower() or "potency" in col.lower():
                                 val = matched_row[col]
                                 if not pd.isna(val):
                                     ic50_val = str(val)
-                                    source_engine = "Database Match (CSV)"
+                                    source_engine = "Exact Match from CSV Database"
                                     break
 
-                    st.info(f"🛡️ **Target:** `{target_display}` | **Calculation Engine:** `{source_engine}`")
+                    st.info(f"🛡️ **Target:** `{target_display}` | **Source:** `{source_engine}`")
 
                     activity_data = [
                         {"Parameter": "Target Protein / Biological System", "Value": target_display, "Source / Engine": "User Specification", "Category": "Biological Target"},
-                        {"Parameter": "Predicted / Experimental IC50", "Value": ic50_val, "Source / Engine": source_engine, "Category": "Potency"},
-                        {"Parameter": "Binding Confidence Score", "Value": "95.8%", "Source / Engine": "Machine Learning Validation", "Category": "Validation"}
+                        {"Parameter": "Experimental / Database IC50", "Value": ic50_val, "Source / Engine": source_engine, "Category": "Potency"},
+                        {"Parameter": "Database Verification", "Value": "Verified in CSV" if matched_row is not None else "Custom SMILES Entry", "Source / Engine": "Local Files", "Category": "Status"}
                     ]
 
                     act_df = pd.DataFrame(activity_data)
@@ -221,22 +222,23 @@ def render_prediction_section():
                 # MODULE 2: ADME PROPERTIES
                 # -------------------------------------------------------------
                 elif analysis_choice.startswith("2."):
-                    st.markdown("### 💊 ADME Properties & Pharmacokinetics (pkCSM & RDKit Engine)")
+                    st.markdown("### 💊 ADME Properties & Pharmacokinetics (pkCSM & RDKit)")
                     
-                    caco2 = round(1.15 - (mw * 0.0004) + (logp * 0.08), 2)
-                    sol = round(-2.8 - (logp * 0.35), 2)
-                    ppb = round(82.0 + min(15.0, logp * 3.5), 1)
-                    vdss = round(0.4 + (logp * 0.05), 2)
+                    if success_rdkit:
+                        caco2 = round(1.15 - (mw * 0.0004) + (logp * 0.08), 2)
+                        sol = round(-2.8 - (logp * 0.35), 2)
+                        ppb = round(82.0 + min(15.0, logp * 3.5), 1)
+                        vdss = round(0.4 + (logp * 0.05), 2)
+                    else:
+                        caco2, sol, ppb, vdss = 0.0, 0.0, 0.0, 0.0
 
                     adme_data = [
-                        {"Adme Property": "Caco-2 Permeability", "Value": f"{caco2}", "Unit": "log Papp (cm/s)", "Interpretation": "High absorption if > 0.90" if caco2 > 0.9 else "Moderate absorption", "Prediction Engine": "pkCSM / RDKit Model"},
-                        {"Adme Property": "Aqueous Solubility", "Value": f"{sol}", "Unit": "log mol/L", "Interpretation": "Soluble" if sol > -4.0 else "Moderately Soluble", "Prediction Engine": "ESOL Algorithm"},
-                        {"Adme Property": "Plasma Protein Binding (PPB)", "Value": f"{ppb}%", "Unit": "% Bound", "Interpretation": "High protein binding" if ppb > 90 else "Balanced free fraction", "Prediction Engine": "pkCSM Binding Model"},
-                        {"Adme Property": "Steady State Volume of Distribution", "Value": f"{vdss}", "Unit": "log L/kg", "Interpretation": "Tissue distribution index", "Prediction Engine": "pkCSM Distribution"},
-                        {"Adme Property": "Blood-Brain Barrier (BBB) Permeability", "Value": "Low (Non-Penetrant)" if logp < 4 else "Moderate", "Unit": "Qualitative", "Interpretation": "CNS exposure indicator", "Prediction Engine": "pkCSM CNS Model"},
-                        {"Adme Property": "CYP3A4 Substrate", "Value": "Yes" if mw > 500 else "No", "Unit": "Yes/No", "Interpretation": "Hepatic metabolic liability", "Prediction Engine": "pkCSM Metabolism"},
-                        {"Adme Property": "Total Renal Clearance", "Value": "6.4", "Unit": "mL/min/kg", "Interpretation": "Excretion rate indicator", "Prediction Engine": "pkCSM Excretion"},
-                        {"Adme Property": "AMES Toxicity", "Value": "Non-Toxic", "Unit": "Safety Flag", "Interpretation": "Mutagenicity screening", "Prediction Engine": "pkCSM Toxicity"},
+                        {"Adme Property": "Caco-2 Permeability", "Value": f"{caco2}" if success_rdkit else "N/A", "Unit": "log Papp (cm/s)", "Interpretation": "High absorption if > 0.90", "Prediction Engine": "RDKit / pkCSM"},
+                        {"Adme Property": "Aqueous Solubility", "Value": f"{sol}" if success_rdkit else "N/A", "Unit": "log mol/L", "Interpretation": "Soluble if > -4.0", "Prediction Engine": "ESOL Algorithm"},
+                        {"Adme Property": "Plasma Protein Binding (PPB)", "Value": f"{ppb}%" if success_rdkit else "N/A", "Unit": "% Bound", "Interpretation": "Protein binding index", "Prediction Engine": "pkCSM Model"},
+                        {"Adme Property": "Steady State Volume of Distribution", "Value": f"{vdss}" if success_rdkit else "N/A", "Unit": "log L/kg", "Interpretation": "Tissue distribution", "Prediction Engine": "pkCSM Model"},
+                        {"Adme Property": "Blood-Brain Barrier (BBB)", "Value": "Low" if success_rdkit and logp < 4 else "Moderate", "Unit": "Qualitative", "Interpretation": "CNS penetration", "Prediction Engine": "pkCSM Model"},
+                        {"Adme Property": "CYP3A4 Substrate", "Value": "Yes" if success_rdkit and mw > 500 else "No", "Unit": "Yes/No", "Interpretation": "Metabolic liability", "Prediction Engine": "pkCSM Model"},
                     ]
 
                     adme_df = pd.DataFrame(adme_data)
@@ -249,44 +251,42 @@ def render_prediction_section():
                         file_name="Complete_ADME_Report.csv",
                         mime="text/csv"
                     )
-                    st.success("✅ ADME pharmacokinetic profile successfully computed.")
+                    st.success("✅ ADME pharmacokinetic profile computed.")
 
                 # -------------------------------------------------------------
-                # MODULE 3: PHYSICOCHEMICAL PROPERTIES
+                # MODULE 3: PHYSICOCHEMICAL PROPERTIES (Exact RDKit)
                 # -------------------------------------------------------------
                 elif analysis_choice.startswith("3."):
                     st.markdown("### 🧪 Complete Physicochemical Properties (Exact RDKit Descriptors)")
                     
-                    phys_data = [
-                        {"Descriptor Name": "Molecular Weight (MW)", "Value": f"{mw:.2f}", "Unit": "g/mol", "Category": "Size", "Library / Engine": "RDKit"},
-                        {"Descriptor Name": "LogP", "Value": f"{logp:.2f}", "Unit": "dimensionless", "Category": "Lipophilicity", "Library / Engine": "RDKit Crippen"},
-                        {"Descriptor Name": "TPSA", "Value": f"{tpsa:.2f}", "Unit": "Å²", "Category": "Polarity", "Library / Engine": "RDKit MolSurf"},
-                        {"Descriptor Name": "Rotatable Bonds", "Value": f"{rot_bonds}", "Unit": "count", "Category": "Flexibility", "Library / Engine": "RDKit Lipinski"},
-                        {"Descriptor Name": "H-Acceptors", "Value": f"{h_acc}", "Unit": "count", "Category": "H-Bonding", "Library / Engine": "RDKit Lipinski"},
-                        {"Descriptor Name": "H-Donors", "Value": f"{h_don}", "Unit": "count", "Category": "H-Bonding", "Library / Engine": "RDKit Lipinski"},
-                        {"Descriptor Name": "Molar Refractivity", "Value": f"{molar_refractivity:.2f}", "Unit": "refractivity", "Category": "Refractivity", "Library / Engine": "RDKit Crippen"},
-                        {"Descriptor Name": "Fraction Csp3", "Value": f"{fractional_csp3:.2f}", "Unit": "ratio", "Category": "Saturation", "Library / Engine": "RDKit Lipinski"},
-                        {"Descriptor Name": "Heavy Atoms", "Value": f"{heavy_atoms}", "Unit": "count", "Category": "Composition", "Library / Engine": "RDKit Core"},
-                        {"Descriptor Name": "Aromatic Rings", "Value": f"{aromatic_rings}", "Unit": "count", "Category": "Topology", "Library / Engine": "RDKit Lipinski"},
-                        {"Descriptor Name": "Ring Count", "Value": f"{ring_count}", "Unit": "count", "Category": "Topology", "Library / Engine": "RDKit Lipinski"},
-                        {"Descriptor Name": "Valence Electrons", "Value": f"{valence_electrons}", "Unit": "count", "Category": "Electronic", "Library / Engine": "RDKit Descriptors"},
-                    ]
-
-                    phys_df = pd.DataFrame(phys_data)
-                    st.dataframe(phys_df, use_container_width=True)
-
-                    csv_phys = phys_df.to_csv(index=False).encode('utf-8')
-                    st.download_button(
-                        label="📥 Download Complete Physicochemical Report (CSV)",
-                        data=csv_phys,
-                        file_name="Physicochemical_Properties_RDKit.csv",
-                        mime="text/csv"
-                    )
-
                     if success_rdkit:
-                        st.success("✅ Descriptors calculated successfully and precisely via RDKit engine!")
+                        phys_data = [
+                            {"Descriptor Name": "Molecular Weight (MW)", "Value": f"{mw:.2f}", "Unit": "g/mol", "Category": "Size", "Library / Engine": "RDKit"},
+                            {"Descriptor Name": "LogP", "Value": f"{logp:.2f}", "Unit": "dimensionless", "Category": "Lipophilicity", "Library / Engine": "RDKit Crippen"},
+                            {"Descriptor Name": "TPSA", "Value": f"{tpsa:.2f}", "Unit": "Å²", "Category": "Polarity", "Library / Engine": "RDKit MolSurf"},
+                            {"Descriptor Name": "Rotatable Bonds", "Value": f"{rot_bonds}", "Unit": "count", "Category": "Flexibility", "Library / Engine": "RDKit Lipinski"},
+                            {"Descriptor Name": "H-Acceptors", "Value": f"{h_acc}", "Unit": "count", "Category": "H-Bonding", "Library / Engine": "RDKit Lipinski"},
+                            {"Descriptor Name": "H-Donors", "Value": f"{h_don}", "Unit": "count", "Category": "H-Bonding", "Library / Engine": "RDKit Lipinski"},
+                            {"Descriptor Name": "Molar Refractivity", "Value": f"{molar_refractivity:.2f}", "Unit": "refractivity", "Category": "Refractivity", "Library / Engine": "RDKit Crippen"},
+                            {"Descriptor Name": "Fraction Csp3", "Value": f"{fractional_csp3:.2f}", "Unit": "ratio", "Category": "Saturation", "Library / Engine": "RDKit Lipinski"},
+                            {"Descriptor Name": "Heavy Atoms", "Value": f"{heavy_atoms}", "Unit": "count", "Category": "Composition", "Library / Engine": "RDKit Core"},
+                            {"Descriptor Name": "Aromatic Rings", "Value": f"{aromatic_rings}", "Unit": "count", "Category": "Topology", "Library / Engine": "RDKit Lipinski"},
+                            {"Descriptor Name": "Ring Count", "Value": f"{ring_count}", "Unit": "count", "Category": "Topology", "Library / Engine": "RDKit Lipinski"},
+                            {"Descriptor Name": "Valence Electrons", "Value": f"{valence_electrons}", "Unit": "count", "Category": "Electronic", "Library / Engine": "RDKit Descriptors"},
+                        ]
+                        phys_df = pd.DataFrame(phys_data)
+                        st.dataframe(phys_df, use_container_width=True)
+
+                        csv_phys = phys_df.to_csv(index=False).encode('utf-8')
+                        st.download_button(
+                            label="📥 Download Complete Physicochemical Report (CSV)",
+                            data=csv_phys,
+                            file_name="Physicochemical_Properties_RDKit.csv",
+                            mime="text/csv"
+                        )
+                        st.success("✅ Exact descriptors calculated successfully via RDKit!")
                     else:
-                        st.warning("⚠️ Estimated parameters applied for complex structure.")
+                        st.error("❌ Invalid SMILES string or RDKit could not parse this molecule.")
             else:
                 st.error("Please enter a valid SMILES string first.")
 
@@ -369,8 +369,8 @@ def render_prediction_section():
                         else:
                             st.warning("Insufficient clean rows for reliable ML training (minimum 5 required).")
                 else:
-                    st.warning("⚠️ Could not load CSV databases. Please ensure they are in the app directory.")
+                    st.warning("Dataset does not contain enough numeric columns.")
             else:
-                st.warning("Dataset does not contain enough numeric columns.")
+                st.warning("⚠️ Could not load CSV databases. Please ensure they are in the app directory.")
         else:
-            st.error("⚠️ `scikit-learn` library is not installed in the environment. Please add `scikit-learn` to your `requirements.txt` file.")
+            st.error("⚠️ `scikit-learn` library is not installed in the environment.")
