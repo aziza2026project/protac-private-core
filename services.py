@@ -22,11 +22,18 @@ def load_persistent_requests():
 
 
 def save_persistent_requests(requests_list):
-  # تجهيز البيانات للحفظ (بدون كائنات الملفات المباشرة، سنحفظ مساراتها)
+  # تنظيف البيانات والتأكد من أنها قابلة للحفظ (JSON Serialiazable)
   data_to_save = []
   for req in requests_list:
     req_copy = req.copy()
-    # نحتفظ بمسارات الملفات بدلاً من كائن الـ uploaded_file
+    # التأكد من أن حقل الملفات يحتوي فقط على أسماء ومسارات وليست كائنات برمجية
+    clean_files = []
+    for f in req_copy.get("files", []):
+      if isinstance(f, dict):
+        clean_files.append(
+            {"name": f.get("name", "file"), "path": f.get("path", "")}
+        )
+    req_copy["files"] = clean_files
     data_to_save.append(req_copy)
 
   with open(DB_FILE, "w", encoding="utf-8") as f:
