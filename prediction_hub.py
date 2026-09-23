@@ -256,11 +256,9 @@ def render_prediction_section():
               else "Low (Non-Penetrant)"
           )
           cyp3a4_sub = "Yes" if (ascii_sum % 3 == 0) else "No"
-          renal_clearance = round(
-              5.2 + ((ascii_sum * 4) % 20) * 0.1, 2
-          )  # mL/min/kg
+          renal_clearance = round(5.2 + ((ascii_sum * 4) % 20) * 0.1, 2)
           ames_tox = (
-              "Non-Toxic (}-\text{ AMES})"
+              "Non-Toxic (Ames Negative)"
               if (ascii_sum % 5 != 0)
               else "Potential Alert"
           )
@@ -462,7 +460,6 @@ def render_prediction_section():
               },
               {
                   "Descriptor Name": "Fraction Csp3",
-<div>
                   "Value": f"{fractional_csp3:.2f}",
                   "Unit": "ratio",
                   "Category": "Saturation",
