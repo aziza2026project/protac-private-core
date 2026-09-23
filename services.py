@@ -32,7 +32,7 @@ def render_services_section():
           " etc.):"
       )
 
-      # تم إضافة accept_multiple_files=True لقبول عدة ملفات في نفس الريكويست
+      # السماح بجميع أنواع الملفات ورفع ملفات متعددة
       uploaded_files = st.file_uploader(
           "Attach Project Files (PDF, PDB, ZIP, TXT, Word, etc.):",
           accept_multiple_files=True,
@@ -46,7 +46,7 @@ def render_services_section():
               "name": client_name if client_name else "Anonymous",
               "email": client_email,
               "details": project_details,
-              "files": uploaded_files,  # حفظ قائمة الملفات المرفقة
+              "files": uploaded_files,
               "timestamp": datetime.datetime.now().strftime(
                   "%Y-%m-%d %H:%M:%S"
               ),
@@ -97,11 +97,16 @@ def render_services_section():
         ]
 
         total = len(st.session_state.client_requests)
+        # استخدام .get لتفادي أي خطأ مع الطلبات القديمة
         unread = sum(
-            1 for r in st.session_state.client_requests if not r["is_read"]
+            1
+            for r in st.session_state.client_requests
+            if not r.get("is_read", False)
         )
         responded = sum(
-            1 for r in st.session_state.client_requests if r["is_responded"]
+            1
+            for r in st.session_state.client_requests
+            if r.get("is_responded", False)
         )
 
         col1, col2, col3 = st.columns(3)
@@ -112,9 +117,12 @@ def render_services_section():
         st.markdown("---")
 
         for idx, req in requests_reversed:
-          if req["is_responded"]:
+          is_resp = req.get("is_responded", False)
+          is_rd = req.get("is_read", False)
+
+          if is_resp:
             status_icon = "✅"
-          elif not req["is_read"]:
+          elif not is_rd:
             status_icon = "🆕"
           else:
             status_icon = "👁️"
@@ -132,12 +140,10 @@ def render_services_section():
             st.markdown(f"**📧 Email:** {req['email']}")
             st.markdown(f"**📝 Project Details:**\n{req['details']}")
 
-            # عرض وتحميل الملفات المتعددة إن وجدت
-            if req["files"] and len(req["files"]) > 0:
-              st.markdown(
-                  f"**📎 Attached Files ({len(req['files'])} files):**"
-              )
-              for f_idx, file_obj in enumerate(req["files"]):
+            files_list = req.get("files", [])
+            if files_list and len(files_list) > 0:
+              st.markdown(f"**📎 Attached Files ({len(files_list)} files):**")
+              for f_idx, file_obj in enumerate(files_list):
                 st.download_button(
                     label=f"📥 Download {file_obj.name}",
                     data=file_obj,
@@ -150,7 +156,7 @@ def render_services_section():
             st.markdown("---")
             c1, c2 = st.columns(2)
             with c1:
-              if not req["is_responded"]:
+              if not is_resp:
                 if st.button(
                     "✔️ Mark as Responded", key=f"resp_btn_{idx}"
                 ):
