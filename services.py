@@ -6,7 +6,7 @@ import streamlit as st
 def render_services_section():
   st.subheader("🤝 Consultations & Scientific Collaboration")
 
-  # تهيئة صندوق الوارد في الذاكرة لتخزين الطلبات
+  # تهيئة صندوق الوارد في الذاكرة لضمان حفظ الطلبات
   if "client_requests" not in st.session_state:
     st.session_state.client_requests = []
 
@@ -24,7 +24,7 @@ def render_services_section():
         " directly:"
     )
 
-    with st.form("custom_consultation_form"):
+    with st.form("custom_consultation_form", clear_on_submit=True):
       client_name = st.text_input("Your Name / Institution:")
       client_email = st.text_input("Your Email Address:")
       project_details = st.text_area(
@@ -32,9 +32,10 @@ def render_services_section():
           " etc.):"
       )
 
-      uploaded_file = st.file_uploader(
-          "Attach Project File (PDB, SDF, CSV, TXT, or ZIP):",
-          type=["pdb", "sdf", "csv", "txt", "zip"],
+      # تم إضافة accept_multiple_files=True لقبول عدة ملفات في نفس الريكويست
+      uploaded_files = st.file_uploader(
+          "Attach Project Files (PDF, PDB, ZIP, TXT, Word, etc.):",
+          accept_multiple_files=True,
       )
 
       submitted = st.form_submit_button("🚀 Send Request & Files")
@@ -45,19 +46,18 @@ def render_services_section():
               "name": client_name if client_name else "Anonymous",
               "email": client_email,
               "details": project_details,
-              "file": uploaded_file,
+              "files": uploaded_files,  # حفظ قائمة الملفات المرفقة
               "timestamp": datetime.datetime.now().strftime(
-                  "%Y-%m-%d %H:%M"
-              ),  # توقيت الإرسال
-              "is_read": False,  # حالة القراءة
-              "is_responded": False,  # حالة الإجابة
+                  "%Y-%m-%d %H:%M:%S"
+              ),
+              "is_read": False,
+              "is_responded": False,
           }
-          # إدخال الطلب الجديد في أول القائمة
-          st.session_state.client_requests.insert(0, request_data)
+          st.session_state.client_requests.append(request_data)
 
           st.success(
-              f"✅ Thank you {client_name}! Your request and file have been"
-              " successfully saved."
+              f"✅ Thank you {client_name}! Your request and files have been"
+              " successfully saved in the inbox."
           )
         else:
           st.error(
@@ -92,7 +92,10 @@ def render_services_section():
       if len(st.session_state.client_requests) == 0:
         st.info("📭 Your inbox is currently empty. No new requests received.")
       else:
-        # إحصائيات سريعة للطلبات
+        requests_reversed = list(enumerate(st.session_state.client_requests))[
+            ::-1
+        ]
+
         total = len(st.session_state.client_requests)
         unread = sum(
             1 for r in st.session_state.client_requests if not r["is_read"]
@@ -108,8 +111,7 @@ def render_services_section():
 
         st.markdown("---")
 
-        for idx, req in enumerate(st.session_state.client_requests):
-          # تحديد الأيقونة حسب الحالة
+        for idx, req in requests_reversed:
           if req["is_responded"]:
             status_icon = "✅"
           elif not req["is_read"]:
@@ -118,44 +120,45 @@ def render_services_section():
             status_icon = "👁️"
 
           title_str = (
-              f"{status_icon} Request #{total - idx} | {req['name']}"
+              f"{status_icon} Request #{idx+1} | {req['name']}"
               f" ({req['email']}) — [{req['timestamp']}]"
           )
 
           with st.expander(title_str):
-            # بمجرد فتح الطلب، يصبح مقروءاً تلقائياً
-            if not req["is_read"]:
-              req["is_read"] = True
+            st.session_state.client_requests[idx]["is_read"] = True
 
             st.markdown(f"**🕒 Time:** {req['timestamp']}")
             st.markdown(f"**👤 Client Name:** {req['name']}")
             st.markdown(f"**📧 Email:** {req['email']}")
             st.markdown(f"**📝 Project Details:**\n{req['details']}")
 
-            if req["file"] is not None:
-              st.markdown(f"**📎 Attached File:** `{req['file'].name}`")
-              st.download_button(
-                  label=f"📥 Download {req['file'].name}",
-                  data=req["file"],
-                  file_name=req['file'].name,
-                  key=f"secure_download_btn_{idx}",
+            # عرض وتحميل الملفات المتعددة إن وجدت
+            if req["files"] and len(req["files"]) > 0:
+              st.markdown(
+                  f"**📎 Attached Files ({len(req['files'])} files):**"
               )
+              for f_idx, file_obj in enumerate(req["files"]):
+                st.download_button(
+                    label=f"📥 Download {file_obj.name}",
+                    data=file_obj,
+                    file_name=file_obj.name,
+                    key=f"secure_download_btn_{idx}_{f_idx}",
+                )
             else:
-              st.markdown("*No file attached with this request.*")
+              st.markdown("*No files attached with this request.*")
 
             st.markdown("---")
-            # أزرار لتغيير الحالة أو الحذف
             c1, c2 = st.columns(2)
             with c1:
               if not req["is_responded"]:
                 if st.button(
                     "✔️ Mark as Responded", key=f"resp_btn_{idx}"
                 ):
-                  req["is_responded"] = True
+                  st.session_state.client_requests[idx]["is_responded"] = True
                   st.rerun()
               else:
                 if st.button("🔄 Mark as Unanswered", key=f"unresp_btn_{idx}"):
-                  req["is_responded"] = False
+                  st.session_state.client_requests[idx]["is_responded"] = False
                   st.rerun()
             with c2:
               if st.button("🗑️ Delete Request", key=f"del_req_{idx}"):
