@@ -8,7 +8,7 @@ def render_services_section():
     with tab1:
         st.markdown("### Request a Custom Research Report")
         st.markdown("Need a deep-dive analysis, custom molecular docking, or tailored PROTAC design? You can contact me directly:")
-        st.info("📧 **Direct Contact Email:** aziza.mnasri@example.com")
+        st.info("📧 **Direct Contact Email:** azizamnasri10@gmail.com")
         st.markdown("Feel free to send an email with your project details, objectives, and timeline, and I will get back to you promptly.")
                 
     with tab2:
