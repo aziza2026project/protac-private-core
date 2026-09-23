@@ -10,6 +10,10 @@ def render_services_section():
   if "client_requests" not in st.session_state:
     st.session_state.client_requests = []
 
+  # تهيئة حالة الفلتر في الذاكرة إذا لم تكن موجودة
+  if "admin_filter" not in st.session_state:
+    st.session_state.admin_filter = "All"
+
   tab1, tab2, tab3 = st.tabs([
       "💡 Custom Consultation",
       "🔬 Research Collaboration",
@@ -92,10 +96,7 @@ def render_services_section():
       if len(st.session_state.client_requests) == 0:
         st.info("📭 Your inbox is currently empty. No new requests received.")
       else:
-        requests_reversed = list(enumerate(st.session_state.client_requests))[
-            ::-1
-        ]
-
+        # حساب الأعداد بحسب الحالات
         total = len(st.session_state.client_requests)
         unread = sum(
             1
@@ -108,73 +109,122 @@ def render_services_section():
             if r.get("is_responded", False)
         )
 
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Total Requests", total)
-        col2.metric("Unread", unread)
-        col3.metric("Responded", responded)
+        st.markdown("---")
+        st.markdown(
+            "📌 **Filter Requests:** Click below to filter by status:"
+        )
 
+        # أزرار تفاعلية لتصفية الطلبات مع أيقونات مميزة
+        col_f1, col_f2, col_f3 = st.columns(3)
+        with col_f1:
+          if st.button(f"📥 All Requests ({total})"):
+            st.session_state.admin_filter = "All"
+            st.rerun()
+        with col_f2:
+          if st.button(f"🆕 Unread ({unread})"):
+            st.session_state.admin_filter = "Unread"
+            st.rerun()
+        with col_f3:
+          if st.button(f"✅ Responded ({responded})"):
+            st.session_state.admin_filter = "Responded"
+            st.rerun()
+
+        st.markdown(
+            f"current Active Filter: **{st.session_state.admin_filter}**"
+        )
         st.markdown("---")
 
-        for idx, req in requests_reversed:
-          # استخدام .get لتفادي أي خطأ في الحقول الناقصة للطلبات القديمة
-          req_name = req.get("name", "Unknown")
-          req_email = req.get("email", "No Email")
-          req_time = req.get("timestamp", "Unknown Time")
-          req_details = req.get("details", "No details provided.")
+        # ترتيب الطلبات من الأحدث إلى الأقدم مع الاحتفاظ بالـ Index الأصلي
+        indexed_requests = list(enumerate(st.session_state.client_requests))[
+            ::-1
+        ]
+
+        # تصفية القائمة حسب اختيار المستخدم
+        filtered_requests = []
+        for idx, req in indexed_requests:
           is_resp = req.get("is_responded", False)
           is_rd = req.get("is_read", False)
 
-          if is_resp:
-            status_icon = "✅"
-          elif not is_rd:
-            status_icon = "🆕"
-          else:
-            status_icon = "👁️"
+          if st.session_state.admin_filter == "Unread" and (
+              is_rd or is_resp
+          ):
+            continue
+          if st.session_state.admin_filter == "Responded" and not is_resp:
+            continue
+          filtered_requests.append((idx, req))
 
-          title_str = (
-              f"{status_icon} Request #{idx+1} | {req_name} ({req_email}) —"
-              f" [{req_time}]"
+        if not filtered_requests:
+          st.info(
+              f"📭 No requests found under filter:"
+              f" {st.session_state.admin_filter}."
           )
+        else:
+          for idx, req in filtered_requests:
+            req_name = req.get("name", "Unknown")
+            req_email = req.get("email", "No Email")
+            req_time = req.get("timestamp", "Unknown Time")
+            req_details = req.get("details", "No details provided.")
+            is_resp = req.get("is_responded", False)
+            is_rd = req.get("is_read", False)
 
-          with st.expander(title_str):
-            st.session_state.client_requests[idx]["is_read"] = True
-
-            st.markdown(f"**🕒 Time:** {req_time}")
-            st.markdown(f"**👤 Client Name:** {req_name}")
-            st.markdown(f"**📧 Email:** {req_email}")
-            st.markdown(f"**📝 Project Details:**\n{req_details}")
-
-            files_list = req.get("files", [])
-            if files_list and len(files_list) > 0:
-              st.markdown(f"**📎 Attached Files ({len(files_list)} files):**")
-              for f_idx, file_obj in enumerate(files_list):
-                if file_obj is not None:
-                  st.download_button(
-                      label=f"📥 Download {file_obj.name}",
-                      data=file_obj,
-                      file_name=file_obj.name,
-                      key=f"secure_download_btn_{idx}_{f_idx}",
-                  )
+            # تمييز الأيقونات بحسب الحالة بدقة
+            if is_resp:
+              status_icon = "✅ [Responded]"
+            elif not is_rd:
+              status_icon = "🆕 [Unread]"
             else:
-              st.markdown("*No files attached with this request.*")
+              status_icon = "👁️ [Read / Unanswered]"
 
-            st.markdown("---")
-            c1, c2 = st.columns(2)
-            with c1:
-              if not is_resp:
-                if st.button(
-                    "✔️ Mark as Responded", key=f"resp_btn_{idx}"
-                ):
-                  st.session_state.client_requests[idx]["is_responded"] = True
-                  st.rerun()
+            title_str = (
+                f"{status_icon} Request #{idx+1} | {req_name} ({req_email}) —"
+                f" [{req_time}]"
+            )
+
+            with st.expander(title_str):
+              # تحديث حالة القراءة تلقائياً عند فتح الطلب
+              if not req.get("is_read", False):
+                st.session_state.client_requests[idx]["is_read"] = True
+
+              st.markdown(f"**🕒 Time:** {req_time}")
+              st.markdown(f"**👤 Client Name:** {req_name}")
+              st.markdown(f"**📧 Email:** {req_email}")
+              st.markdown(f"**📝 Project Details:**\n{req_details}")
+
+              files_list = req.get("files", [])
+              if files_list and len(files_list) > 0:
+                st.markdown(f"**📎 Attached Files ({len(files_list)} files):**")
+                for f_idx, file_obj in enumerate(files_list):
+                  if file_obj is not None:
+                    st.download_button(
+                        label=f"📥 Download {file_obj.name}",
+                        data=file_obj,
+                        file_name=file_obj.name,
+                        key=f"secure_download_btn_{idx}_{f_idx}",
+                    )
               else:
-                if st.button("🔄 Mark as Unanswered", key=f"unresp_btn_{idx}"):
-                  st.session_state.client_requests[idx]["is_responded"] = False
+                st.markdown("*No files attached with this request.*")
+
+              st.markdown("---")
+              c1, c2 = st.columns(2)
+              with c1:
+                if not is_resp:
+                  if st.button(
+                      "✔️ Mark as Responded", key=f"resp_btn_{idx}"
+                  ):
+                    st.session_state.client_requests[idx]["is_responded"] = True
+                    st.rerun()
+                else:
+                  if st.button(
+                      "🔄 Mark as Unanswered", key=f"unresp_btn_{idx}"
+                  ):
+                    st.session_state.client_requests[idx]["is_responded"] = (
+                        False
+                    )
+                    st.rerun()
+              with c2:
+                if st.button("🗑️ Delete Request", key=f"del_req_{idx}"):
+                  st.session_state.client_requests.pop(idx)
                   st.rerun()
-            with c2:
-              if st.button("🗑️ Delete Request", key=f"del_req_{idx}"):
-                st.session_state.client_requests.pop(idx)
-                st.rerun()
 
     elif admin_password:
       st.error("❌ Incorrect password. Access denied.")
