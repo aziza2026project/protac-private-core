@@ -1,8 +1,9 @@
+import io
 import pandas as pd
+import qrcode
 import streamlit as st
 from auth_checker import check_email_access
 from prediction_hub import render_prediction_section
-from qrcode_page import render_qrcode_page
 from services import render_services_section
 from subscription import render_subscription_section
 
@@ -57,6 +58,45 @@ def get_integrated_protac_database():
     return merged_df
   except Exception:
     return None
+
+
+def render_qrcode_page():
+  st.markdown("## 📱 Web App QR Code & Access Hub")
+  st.markdown(
+      "هذه الصفحة مخصصة لتوليد وتحميل رمز الاستجابة السريعة (QR Code) الخاص"
+      " بمنصتك للبحوث العلمية، البوسترات، والمؤتمرات."
+  )
+
+  col1, col2 = st.columns([1, 1])
+
+  with col1:
+    st.markdown("### 📌 تفاصيل الرابط المباشر:")
+    app_url = "https://protac-app-core.streamlit.app"
+    st.info(f"🔗 **رابط المنصة:** `{app_url}`")
+    st.markdown(
+        "يمكنك مشاركة هذا الرابط مباشرة في قسم *Availability of Data and"
+        " Software* في مقالك العلمي."
+    )
+
+    qr = qrcode.QRCode(version=1, box_size=10, border=5)
+    qr.add_data(app_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    byte_im = buf.getvalue()
+
+    st.download_button(
+        label="📥 تحميل صورة QR Code (PNG عالي الجودة)",
+        data=byte_im,
+        file_name="PROTAC_Platform_QRCode.png",
+        mime="image/png",
+    )
+
+  with col2:
+    st.markdown("### 👁️ معاينة الرمز المباشر:")
+    st.image(byte_im, width=240)
 
 
 if app_mode == "Prediction Tool":
