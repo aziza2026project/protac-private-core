@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 from auth_checker import check_email_access
 from prediction_hub import render_prediction_section
+from qrcode_page import render_qrcode_page
 from services import render_services_section
 from subscription import render_subscription_section
 
@@ -18,10 +19,15 @@ st.markdown(
 )
 
 st.sidebar.title("📌 Navigation Menu")
-# القائمة الجانبية باللغة الإنجليزية بالكامل وخالية من أي جداول معروضة
+# إضافة خيار QR Code إلى القائمة الجانبية
 app_mode = st.sidebar.selectbox(
     "Choose Section:",
-    ["Prediction Tool", "Subscription Plans", "Consultations & Collaboration"],
+    [
+        "Prediction Tool",
+        "Subscription Plans",
+        "Consultations & Collaboration",
+        "📱 App QR Code",
+    ],
 )
 
 st.sidebar.markdown("---")
@@ -66,3 +72,6 @@ elif app_mode == "Subscription Plans":
 
 elif app_mode == "Consultations & Collaboration":
   render_services_section()
+
+elif app_mode == "📱 App QR Code":
+  render_qrcode_page()
