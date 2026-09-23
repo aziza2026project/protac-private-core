@@ -279,7 +279,7 @@ def render_prediction_section():
         st.error("Please enter a valid SMILES string first.")
 
   # =========================================================================
-  # TAB 3: LINKER OPTIMIZATION MODULE (COMPLETELY UPDATED)
+  # TAB 3: LINKER OPTIMIZATION MODULE (FULLY EXPANDED & CORRECTED)
   # =========================================================================
   with tab_linker:
     st.markdown("### 🔗 PROTAC Linker Optimization Module")
@@ -297,15 +297,18 @@ def render_prediction_section():
           key="opt_warhead",
       )
     with col_l2:
+      # مصطلح علمي دقيق وموحد تماماً
       e3_smiles = st.text_input(
           "⚓ E3 Ligand Binding Moiety SMILES (e.g., Thalidomide/VHL binder):",
-          placeholder="e.g., E3 ligase binding moiety SMILES...",
+          placeholder=(
+              "e.g., E3 ligand binding moiety SMILES (Thalidomide/VHL)..."
+          ),
           key="opt_e3",
       )
 
     st.markdown("#### ⚙️ Linker Library & Scanning Parameters")
     
-    # القائمة الموسعة والمحدثة لجميع أنواع اللينكرز
+    # قائمة موسعة وشاملة لكل أنواع اللينكرز الممكنة في الكيمياء الدوائية
     linker_types = st.multiselect(
         "Select Linker Chemotypes to Scan:",
         [
@@ -314,6 +317,8 @@ def render_prediction_section():
             "Rigid / Aromatic Linkers",
             "Amide / Peptide-based Linkers",
             "Alynyl / Unsaturated Linkers",
+            "Piperazine / Piperidine-containing Linkers",
+            "Hydrazide / Ether-linked Chains",
         ],
         default=[
             "Alkyl Chains (-(CH2)n-)",
@@ -335,8 +340,8 @@ def render_prediction_section():
     if st.button("🚀 Run Linker Optimization Scan", key="run_linker_opt_btn"):
       if warhead_smiles and e3_smiles and linker_types:
         st.success(
-            "✅ Warhead and E3 Ligand successfully registered. Comprehensive"
-            " virtual linker library generated!"
+            "✅ Warhead and E3 Ligand Binding Moiety successfully registered."
+            " Comprehensive virtual linker library generated!"
         )
         st.markdown("---")
         st.markdown("### 📊 Linker Optimization Results & Recommendations")
@@ -348,7 +353,11 @@ def render_prediction_section():
             rot_bonds_est = n + 3
             tpsa_est = round(90.0 + (n * 8.5), 2)
             
-            chem_bonus = 0.4 if "PEG" in l_type else (0.2 if "Rigid" in l_type else 0.0)
+            chem_bonus = (
+                0.4
+                if "PEG" in l_type
+                else (0.3 if "Rigid" in l_type or "Amide" in l_type else 0.0)
+            )
             score_est = round(-7.2 - (n * 0.1) + chem_bonus, 2)
             
             optimization_data.append({
@@ -374,6 +383,6 @@ def render_prediction_section():
         )
       else:
         st.error(
-            "Please provide Warhead SMILES, E3 Ligand SMILES, and select at"
-            " least one linker chemotype."
+            "Please provide Warhead SMILES, E3 Ligand Binding Moiety SMILES, and"
+            " select at least one linker chemotype."
         )
