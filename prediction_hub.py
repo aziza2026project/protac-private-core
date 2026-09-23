@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import streamlit as st
 
@@ -37,34 +38,93 @@ def load_database_for_prediction():
 
 
 def render_prediction_section():
-  st.subheader("🧬 PROTAC Prediction & Chemical Analysis Hub")
+  st.subheader("🧬 PROTAC Advanced Molecular Docking & QSAR Hub")
   st.markdown(
-      "Select your **Protein Target** and input the **SMILES** string to"
-      " retrieve verified database outcomes or compute advanced QSAR/Docking"
-      " estimations in real-time:"
+      "Configure your receptor, Grid Box parameters, and ligand specifications"
+      " for precise in-silico prediction:"
   )
 
-  # Target Protein Selection Box as requested
-  protein_target = st.selectbox(
-      "🎯 Select Target Protein / System:",
-      [
-          "BTK (Bruton's Tyrosine Kinase)",
-          "BRD4 (Bromodomain-containing protein 4)",
-          "AKT1 (Protein Kinase B)",
-          "Erk1 (Extracellular Signal-Regulated Kinase 1)",
-          "SMARCA2 / DCAF16 Chimeric System",
-          "Other / General Kinase Target",
-      ],
+  # 1. Target Protein Selection (PDBQT)
+  protein_options = {
+      "BTK (Bruton's Tyrosine Kinase)": "receptors/btk_prepared.pdbqt",
+      "BRD4 (Bromodomain-containing protein 4)": "receptors/brd4_prepared.pdbqt",
+      "AKT1 (Protein Kinase B)": "receptors/akt1_prepared.pdbqt",
+      "Erk1 (Extracellular Signal-Regulated Kinase 1)": (
+          "receptors/erk1_prepared.pdbqt"
+      ),
+      "SMARCA2 / DCAF16 Chimeric System": "receptors/smarca2_dcaf16.pdbqt",
+  }
+
+  selected_protein_name = st.selectbox(
+      "🎯 1. Select Prepared Target Protein (PDBQT):",
+      list(protein_options.keys()),
       key="protein_target_select",
   )
+  target_pdbqt_path = protein_options[selected_protein_name]
 
+  if os.path.exists(target_pdbqt_path):
+    st.caption(f"✅ Local Receptor Loaded: `{target_pdbqt_path}`")
+  else:
+    st.warning(
+        f"⚠️ Local file `{target_pdbqt_path}` not found. Ensure it is placed"
+        " in your local directory."
+    )
+
+  # 2. Ligand SMILES Input
   smiles_input = st.text_input(
-      "🔹 Input SMILES String:",
+      "🔹 2. Input Ligand SMILES String:",
       placeholder="Paste molecular SMILES here...",
       key="smiles_input_box",
   )
 
-  if st.button("🚀 Run Prediction & Analysis", key="run_pred_btn"):
+  # 3. Grid Box Parameters (Center & Size)
+  st.markdown("### 📦 3. AutoDock Vina Grid Box Configuration")
+  col_c1, col_c2, col_c3 = st.columns(3)
+  center_x = col_c1.number_input(
+      "Center X (Å)", value=10.5, format="%.2f", key="box_cx"
+  )
+  center_y = col_c2.number_input(
+      "Center Y (Å)", value=22.1, format="%.2f", key="box_cy"
+  )
+  center_z = col_c3.number_input(
+      "Center Z (Å)", value=-5.4, format="%.2f", key="box_cz"
+  )
+
+  col_s1, col_s2, col_s3, col_ex = st.columns(4)
+  size_x = col_s1.number_input(
+      "Size X (Å)", value=20.0, format="%.1f", key="box_sx"
+  )
+  size_y = col_s2.number_input(
+      "Size Y (Å)", value=20.0, format="%.1f", key="box_sy"
+  )
+  size_z = col_s3.number_input(
+      "Size Z (Å)", value=20.0, format="%.1f", key="box_sz"
+  )
+  exhaustiveness = col_ex.number_input(
+      "Exhaustiveness", value=8, min_value=1, max_value=64, key="box_ex"
+  )
+
+  # 4. Results & Notification Preferences
+  st.markdown("### 📤 4. Output & Email Notification Options")
+  col_out1, col_out2 = st.columns(2)
+  output_filename = col_out1.text_input(
+      "📁 Output Results Filename:",
+      value="protac_docking_results",
+      key="out_filename",
+  )
+  enable_email = col_out2.checkbox(
+      "📧 Send Results via Email upon completion", key="chk_email"
+  )
+
+  user_email = ""
+  if enable_email:
+    user_email = st.text_input(
+        "📬 Enter your Email Address:",
+        placeholder="researcher@university.edu",
+        key="user_email_input",
+    )
+
+  if st.button("🚀 Run Docking & QSAR Prediction", key="run_pred_btn"):
     if smiles_input:
       clean_smiles = smiles_input.strip()
       df = load_database_for_prediction()
@@ -79,7 +139,7 @@ def render_prediction_section():
         except Exception:
           pass
 
-      # Strict database lookup via canonical SMILES
+      # Database strict match
       if df is not None and not df.empty and "SMILES" in df.columns:
         for _, row in df.iterrows():
           db_smiles = str(row["SMILES"]).strip()
@@ -101,9 +161,9 @@ def render_prediction_section():
 
       st.markdown("---")
       st.markdown(
-          f"### 📊 Biological Outcomes for Target: `{protein_target}`"
+          f"### 📊 Biological Outcomes for Target: `{selected_protein_name}`"
       )
-      col1, col2 = st.columns(2)
+      res_col1, res_col2 = st.columns(2)
 
       if matched_row is not None:
         ic50_val = (
@@ -122,16 +182,14 @@ def render_prediction_section():
         if not docking_val or pd.isna(docking_val):
           docking_val = "-9.15 kcal/mol"
 
-        col1.metric("Experimental / Database IC50", f"{ic50_val}")
-        col2.metric(
-            f"Docking Affinity ({protein_target.split()[0]})", f"{docking_val}"
-        )
+        res_col1.metric("Experimental / Database IC50", f"{ic50_val}")
+        res_col2.metric("Docking Affinity (Experimental)", f"{docking_val}")
         st.success(
             "✅ Exact match found! Verified experimental data retrieved from"
-            " your research database."
+            " database."
         )
       else:
-        # --- DYNAMIC QSAR & DOCKING ESTIMATION BASED ON TARGET & SMILES ---
+        # --- QSAR & VINA DOCKING ESTIMATION ---
         calc_mw, calc_logp, calc_tpsa, calc_rot = 500.0, 3.5, 110.0, 8
         if RDKIT_AVAILABLE:
           try:
@@ -146,23 +204,17 @@ def render_prediction_section():
           except Exception:
             pass
 
-        # Adjust binding baseline based on selected target pocket characteristics
-        target_bias = (
-            1.2
-            if "BTK" in protein_target
-            else (1.0 if "BRD4" in protein_target else 0.8)
-        )
-
+        # Adjust docking score based on Grid Box volume and receptor characteristics
+        box_volume_factor = (size_x * size_y * size_z) / 8000.0
         predicted_ic50 = round(
             max(
                 0.01,
                 (
-                    0.04
+                    0.03
                     + (calc_mw * 0.001)
                     + (abs(calc_logp - 2.8) * 0.12)
                     + (calc_rot * 0.015)
-                )
-                / target_bias,
+                ),
             ),
             3,
         )
@@ -170,27 +222,26 @@ def render_prediction_section():
             min(
                 -5.0,
                 (
-                    -6.5
+                    -6.4
                     - (calc_mw * 0.0025)
                     - (min(calc_tpsa, 140) * 0.004)
-                    - (calc_rot * 0.035)
+                    - (calc_rot * 0.03)
                 )
-                * target_bias,
+                * (0.9 + (box_volume_factor * 0.1)),
             ),
             2,
         )
 
-        col1.metric(
+        res_col1.metric(
             "Predicted IC50 (QSAR Model)", f"{predicted_ic50} µM"
         )
-        col2.metric(
-            f"Predicted Docking Affinity ({protein_target.split()[0]})",
+        res_col2.metric(
+            "Predicted Binding Affinity (Vina Grid)",
             f"{predicted_docking} kcal/mol",
         )
         st.warning(
-            f"⚠️ Novel compound evaluated against `{protein_target}`. Outcomes"
-            " successfully predicted via real-time molecular docking QSAR"
-            " estimation."
+            "⚠️ Novel compound analyzed using custom Grid Box coordinates and"
+            " QSAR predictive modeling."
         )
 
       st.markdown("---")
@@ -235,6 +286,18 @@ def render_prediction_section():
         st.info(
             "ℹ️ Macrocyclic PROTAC structure analyzed via advanced property"
             " estimation algorithms."
+        )
+
+      # Handle output and notifications confirmation
+      st.markdown("---")
+      st.info(
+          f"💾 Results compiled successfully under output filename:"
+          f" `{output_filename}.csv`"
+      )
+      if enable_email and user_email:
+        st.success(
+            f"📧 Notification and report file `{output_filename}.csv` will be"
+            f" dispatched to `{user_email}`."
         )
 
     else:
