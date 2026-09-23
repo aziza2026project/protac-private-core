@@ -87,7 +87,7 @@ def render_services_section():
     )
 
     # يمكنك تغيير كلمة السر هنا كما ترغبين (مثلاً: aziza2026 أو أي كلمة سر أخرى)
-    if admin_password == "aziza2026":
+    if admin_password == "Fatmah@2021":
       st.success("🔓 Access Granted: Welcome to your secure inbox.")
 
       if len(st.session_state.client_requests) == 0:
