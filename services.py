@@ -1,16 +1,45 @@
 import datetime
+import json
+import os
 import pandas as pd
 import streamlit as st
+
+# ملف قاعدة البيانات المحلي ومجلد حفظ الملفات
+DB_FILE = "client_requests_db.json"
+UPLOAD_DIR = "client_uploaded_files"
+
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+def load_persistent_requests():
+  if os.path.exists(DB_FILE):
+    try:
+      with open(DB_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+    except:
+      return []
+  return []
+
+
+def save_persistent_requests(requests_list):
+  # تجهيز البيانات للحفظ (بدون كائنات الملفات المباشرة، سنحفظ مساراتها)
+  data_to_save = []
+  for req in requests_list:
+    req_copy = req.copy()
+    # نحتفظ بمسارات الملفات بدلاً من كائن الـ uploaded_file
+    data_to_save.append(req_copy)
+
+  with open(DB_FILE, "w", encoding="utf-8") as f:
+    json.dump(data_to_save, f, ensure_ascii=False, indent=4)
 
 
 def render_services_section():
   st.subheader("🤝 Consultations & Scientific Collaboration")
 
-  # تهيئة صندوق الوارد في الذاكرة لضمان حفظ الطلبات
+  # تهيئة الطلبات من الملف الدائم
   if "client_requests" not in st.session_state:
-    st.session_state.client_requests = []
+    st.session_state.client_requests = load_persistent_requests()
 
-  # تهيئة حالة الفلتر في الذاكرة إذا لم تكن موجودة
   if "admin_filter" not in st.session_state:
     st.session_state.admin_filter = "All"
 
@@ -36,7 +65,6 @@ def render_services_section():
           " etc.):"
       )
 
-      # السماح بجميع أنواع الملفات ورفع ملفات متعددة
       uploaded_files = st.file_uploader(
           "Attach Project Files (PDF, PDB, ZIP, TXT, Word, etc.):",
           accept_multiple_files=True,
@@ -46,22 +74,32 @@ def render_services_section():
 
       if submitted:
         if client_email and project_details:
+          saved_file_info = []
+          if uploaded_files:
+            for uf in uploaded_files:
+              file_path = os.path.join(UPLOAD_DIR, uf.name)
+              with open(file_path, "wb") as f:
+                f.write(uf.getbuffer())
+              saved_file_info.append({"name": uf.name, "path": file_path})
+
           request_data = {
               "name": client_name if client_name else "Anonymous",
               "email": client_email,
               "details": project_details,
-              "files": uploaded_files,
+              "files": saved_file_info,
               "timestamp": datetime.datetime.now().strftime(
                   "%Y-%m-%d %H:%M:%S"
               ),
               "is_read": False,
               "is_responded": False,
           }
+
           st.session_state.client_requests.append(request_data)
+          save_persistent_requests(st.session_state.client_requests)
 
           st.success(
               f"✅ Thank you {client_name}! Your request and files have been"
-              " successfully saved in the inbox."
+              " successfully saved."
           )
         else:
           st.error(
@@ -96,7 +134,6 @@ def render_services_section():
       if len(st.session_state.client_requests) == 0:
         st.info("📭 Your inbox is currently empty. No new requests received.")
       else:
-        # حساب الأعداد بحسب الحالات
         total = len(st.session_state.client_requests)
         unread = sum(
             1
@@ -114,7 +151,6 @@ def render_services_section():
             "📌 **Filter Requests:** Click below to filter by status:"
         )
 
-        # أزرار تفاعلية لتصفية الطلبات مع أيقونات مميزة
         col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
           if st.button(f"📥 All Requests ({total})"):
@@ -130,16 +166,14 @@ def render_services_section():
             st.rerun()
 
         st.markdown(
-            f"current Active Filter: **{st.session_state.admin_filter}**"
+            f"Current Active Filter: **{st.session_state.admin_filter}**"
         )
         st.markdown("---")
 
-        # ترتيب الطلبات من الأحدث إلى الأقدم مع الاحتفاظ بالـ Index الأصلي
         indexed_requests = list(enumerate(st.session_state.client_requests))[
             ::-1
         ]
 
-        # تصفية القائمة حسب اختيار المستخدم
         filtered_requests = []
         for idx, req in indexed_requests:
           is_resp = req.get("is_responded", False)
@@ -167,7 +201,6 @@ def render_services_section():
             is_resp = req.get("is_responded", False)
             is_rd = req.get("is_read", False)
 
-            # تمييز الأيقونات بحسب الحالة بدقة
             if is_resp:
               status_icon = "✅ [Responded]"
             elif not is_rd:
@@ -181,9 +214,9 @@ def render_services_section():
             )
 
             with st.expander(title_str):
-              # تحديث حالة القراءة تلقائياً عند فتح الطلب
               if not req.get("is_read", False):
                 st.session_state.client_requests[idx]["is_read"] = True
+                save_persistent_requests(st.session_state.client_requests)
 
               st.markdown(f"**🕒 Time:** {req_time}")
               st.markdown(f"**👤 Client Name:** {req_name}")
@@ -193,14 +226,17 @@ def render_services_section():
               files_list = req.get("files", [])
               if files_list and len(files_list) > 0:
                 st.markdown(f"**📎 Attached Files ({len(files_list)} files):**")
-                for f_idx, file_obj in enumerate(files_list):
-                  if file_obj is not None:
-                    st.download_button(
-                        label=f"📥 Download {file_obj.name}",
-                        data=file_obj,
-                        file_name=file_obj.name,
-                        key=f"secure_download_btn_{idx}_{f_idx}",
-                    )
+                for f_idx, file_info in enumerate(files_list):
+                  f_path = file_info.get("path")
+                  f_name = file_info.get("name")
+                  if f_path and os.path.exists(f_path):
+                    with open(f_path, "rb") as f_data:
+                      st.download_button(
+                          label=f"📥 Download {f_name}",
+                          data=f_data,
+                          file_name=f_name,
+                          key=f"secure_download_btn_{idx}_{f_idx}",
+                      )
               else:
                 st.markdown("*No files attached with this request.*")
 
@@ -212,6 +248,7 @@ def render_services_section():
                       "✔️ Mark as Responded", key=f"resp_btn_{idx}"
                   ):
                     st.session_state.client_requests[idx]["is_responded"] = True
+                    save_persistent_requests(st.session_state.client_requests)
                     st.rerun()
                 else:
                   if st.button(
@@ -220,10 +257,12 @@ def render_services_section():
                     st.session_state.client_requests[idx]["is_responded"] = (
                         False
                     )
+                    save_persistent_requests(st.session_state.client_requests)
                     st.rerun()
               with c2:
                 if st.button("🗑️ Delete Request", key=f"del_req_{idx}"):
                   st.session_state.client_requests.pop(idx)
+                  save_persistent_requests(st.session_state.client_requests)
                   st.rerun()
 
     elif admin_password:
