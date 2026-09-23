@@ -14,5 +14,5 @@ def render_services_section():
     with tab2:
         st.markdown("### Academic & Industrial Partnership")
         st.markdown("Interested in co-authoring papers, joint research grants, or technological integration? Let's connect.")
-        st.success("🤝 **For Collaboration Inquiries:** aziza.mnasri@example.com")
+        st.success("🤝 **For Collaboration Inquiries:** azizamnasri10gmail.com")
         st.markdown("Send your institution name, proposal, or collaboration idea directly to my email.")
