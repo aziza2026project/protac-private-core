@@ -279,7 +279,7 @@ def render_prediction_section():
         st.error("Please enter a valid SMILES string first.")
 
   # =========================================================================
-  # TAB 3: LINKER OPTIMIZATION MODULE (UPDATED & EXPANDED)
+  # TAB 3: LINKER OPTIMIZATION MODULE (COMPLETELY UPDATED)
   # =========================================================================
   with tab_linker:
     st.markdown("### 🔗 PROTAC Linker Optimization Module")
@@ -298,14 +298,14 @@ def render_prediction_section():
       )
     with col_l2:
       e3_smiles = st.text_input(
-          "⚓ E3 Ligand SMILES (e.g., Thalidomide/VHL binder):",
+          "⚓ E3 Ligand Binding Moiety SMILES (e.g., Thalidomide/VHL binder):",
           placeholder="e.g., E3 ligase binding moiety SMILES...",
           key="opt_e3",
       )
 
     st.markdown("#### ⚙️ Linker Library & Scanning Parameters")
     
-    # Expanded list of linker chemotypes as requested
+    # القائمة الموسعة والمحدثة لجميع أنواع اللينكرز
     linker_types = st.multiselect(
         "Select Linker Chemotypes to Scan:",
         [
@@ -319,6 +319,7 @@ def render_prediction_section():
             "Alkyl Chains (-(CH2)n-)",
             "PEG Chains (-(PEG)n-)",
             "Rigid / Aromatic Linkers",
+            "Amide / Peptide-based Linkers",
         ],
         key="opt_linker_types",
     )
@@ -347,7 +348,6 @@ def render_prediction_section():
             rot_bonds_est = n + 3
             tpsa_est = round(90.0 + (n * 8.5), 2)
             
-            # Adjust score based on chemotype characteristics
             chem_bonus = 0.4 if "PEG" in l_type else (0.2 if "Rigid" in l_type else 0.0)
             score_est = round(-7.2 - (n * 0.1) + chem_bonus, 2)
             
