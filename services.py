@@ -5,14 +5,15 @@ import streamlit as st
 def render_services_section():
   st.subheader("🤝 Consultations & Scientific Collaboration")
 
-  # تهيئة صندوق الوارد في الذاكرة لتخزين الطلبات والملفات
+  # تهيئة صندوق الوارد في الذاكرة لتخزين الطلبات
   if "client_requests" not in st.session_state:
     st.session_state.client_requests = []
 
+  # تقسيم الواجهة إلى تابز العميل العادية
   tab1, tab2, tab3 = st.tabs([
       "💡 Custom Consultation",
       "🔬 Research Collaboration",
-      "📥 Admin Inbox (Client Requests)",
+      "🔐 Admin Portal",
   ])
 
   with tab1:
@@ -40,18 +41,17 @@ def render_services_section():
 
       if submitted:
         if client_email and project_details:
-          # حفظ الطلب والملف في صندوق الوارد المحلي
           request_data = {
               "name": client_name if client_name else "Anonymous",
               "email": client_email,
               "details": project_details,
-              "file": uploaded_file,  # تخزين الملف المرفق
+              "file": uploaded_file,
           }
           st.session_state.client_requests.append(request_data)
 
           st.success(
               f"✅ Thank you {client_name}! Your request and file have been"
-              " successfully saved. I will check them in my inbox."
+              " successfully saved."
           )
         else:
           st.error(
@@ -75,34 +75,43 @@ def render_services_section():
     )
 
   with tab3:
-    st.markdown("### 📥 Received Client Requests & Files")
+    st.markdown("### 🔐 Admin Secure Inbox")
     st.markdown(
-        "Here you can view all project requests and download files sent by"
-        " clients:"
+        "This area is restricted. Please enter your administrator password to"
+        " view client requests and files:"
     )
 
-    if len(st.session_state.client_requests) == 0:
-      st.info(
-          "📭 Your inbox is currently empty. No new requests have been"
-          " submitted yet."
-      )
-    else:
-      for idx, req in enumerate(st.session_state.client_requests):
-        with st.expander(
-            f"📌 Request #{idx+1} from {req['name']} ({req['email']})"
-        ):
-          st.markdown(f"**Client Name:** {req['name']}")
-          st.markdown(f"**Email:** {req['email']}")
-          st.markdown(f"**Project Details:**\n{req['details']}")
+    # خانة إدخال كلمة السر الخاصة بك
+    admin_password = st.text_input(
+        "Admin Password:", type="password", key="admin_pass_input"
+    )
 
-          if req["file"] is not None:
-            st.markdown(f"**Attached File:** `{req['file'].name}`")
-            # زر لتحميل الملف المرفق من قبل العميل
-            st.download_button(
-                label=f"📥 Download {req['file'].name}",
-                data=req["file"],
-                file_name=req["file"].name,
-                key=f"download_btn_{idx}",
-            )
-          else:
-            st.markdown("*No file attached with this request.*")
+    # يمكنك تغيير كلمة السر هنا كما ترغبين (مثلاً: aziza2026 أو أي كلمة سر أخرى)
+    if admin_password == "aziza2026":
+      st.success("🔓 Access Granted: Welcome to your secure inbox.")
+
+      if len(st.session_state.client_requests) == 0:
+        st.info("📭 Your inbox is currently empty. No new requests received.")
+      else:
+        for idx, req in enumerate(st.session_state.client_requests):
+          with st.expander(
+              f"📌 Request #{idx+1} from {req['name']} ({req['email']})"
+          ):
+            st.markdown(f"**Client Name:** {req['name']}")
+            st.markdown(f"**Email:** {req['email']}")
+            st.markdown(f"**Project Details:**\n{req['details']}")
+
+            if req["file"] is not None:
+              st.markdown(f"**Attached File:** `{req['file'].name}`")
+              st.download_button(
+                  label=f"📥 Download {req['file'].name}",
+                  data=req["file"],
+                  file_name=req["file"].name,
+                  key=f"secure_download_btn_{idx}",
+              )
+            else:
+              st.markdown("*No file attached with this request.*")
+    elif admin_password:
+      st.error("❌ Incorrect password. Access denied.")
+    else:
+      st.warning("⚠️ Please enter your password to view the requests.")
