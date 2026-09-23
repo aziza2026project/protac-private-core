@@ -344,7 +344,10 @@ def render_prediction_section():
                 
                 if len(numeric_cols) >= 2:
                     target_col = st.selectbox("🎯 Select Target Variable to Predict:", numeric_cols, key="ml_target_col")
-                    feature_cols = st.multiselect("📊 Select Feature Columns for Training:", [c for c in numeric_cols if c != target_col], default=numeric_cols[:min(4, len(numeric_cols)-1)], key="ml_feature_cols")
+                    feature_cols = st.multiselect(
+    "Select Feature Columns for Training:",
+    [c for c in numeric_cols],
+) default=numeric_cols[:min(4, len(numeric_cols)-1)], key="ml_feature_cols")
                     
                     if feature_cols and target_col:
                         df_clean = merged_data.dropna(subset=feature_cols + [target_col])
