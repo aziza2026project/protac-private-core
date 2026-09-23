@@ -97,7 +97,6 @@ def render_services_section():
         ]
 
         total = len(st.session_state.client_requests)
-        # استخدام .get لتفادي أي خطأ مع الطلبات القديمة
         unread = sum(
             1
             for r in st.session_state.client_requests
@@ -117,6 +116,11 @@ def render_services_section():
         st.markdown("---")
 
         for idx, req in requests_reversed:
+          # استخدام .get لتفادي أي خطأ في الحقول الناقصة للطلبات القديمة
+          req_name = req.get("name", "Unknown")
+          req_email = req.get("email", "No Email")
+          req_time = req.get("timestamp", "Unknown Time")
+          req_details = req.get("details", "No details provided.")
           is_resp = req.get("is_responded", False)
           is_rd = req.get("is_read", False)
 
@@ -128,28 +132,29 @@ def render_services_section():
             status_icon = "👁️"
 
           title_str = (
-              f"{status_icon} Request #{idx+1} | {req['name']}"
-              f" ({req['email']}) — [{req['timestamp']}]"
+              f"{status_icon} Request #{idx+1} | {req_name} ({req_email}) —"
+              f" [{req_time}]"
           )
 
           with st.expander(title_str):
             st.session_state.client_requests[idx]["is_read"] = True
 
-            st.markdown(f"**🕒 Time:** {req['timestamp']}")
-            st.markdown(f"**👤 Client Name:** {req['name']}")
-            st.markdown(f"**📧 Email:** {req['email']}")
-            st.markdown(f"**📝 Project Details:**\n{req['details']}")
+            st.markdown(f"**🕒 Time:** {req_time}")
+            st.markdown(f"**👤 Client Name:** {req_name}")
+            st.markdown(f"**📧 Email:** {req_email}")
+            st.markdown(f"**📝 Project Details:**\n{req_details}")
 
             files_list = req.get("files", [])
             if files_list and len(files_list) > 0:
               st.markdown(f"**📎 Attached Files ({len(files_list)} files):**")
               for f_idx, file_obj in enumerate(files_list):
-                st.download_button(
-                    label=f"📥 Download {file_obj.name}",
-                    data=file_obj,
-                    file_name=file_obj.name,
-                    key=f"secure_download_btn_{idx}_{f_idx}",
-                )
+                if file_obj is not None:
+                  st.download_button(
+                      label=f"📥 Download {file_obj.name}",
+                      data=file_obj,
+                      file_name=file_obj.name,
+                      key=f"secure_download_btn_{idx}_{f_idx}",
+                  )
             else:
               st.markdown("*No files attached with this request.*")
 
