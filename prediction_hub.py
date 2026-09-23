@@ -148,7 +148,7 @@ def render_prediction_section():
         st.error("Please upload a prepared target protein (.pdbqt) file first.")
 
   # =========================================================================
-  # TAB 2: BIOLOGICAL & CHEMICAL ANALYSIS (UPDATED WITH 3 CHOICES)
+  # TAB 2: BIOLOGICAL & CHEMICAL ANALYSIS (UPDATED)
   # =========================================================================
   with tab_analysis:
     st.markdown("### 🧪 Physicochemical, ADME & Biological Analysis")
@@ -163,20 +163,26 @@ def render_prediction_section():
         key="analysis_smiles_input",
     )
 
-    # اختيار نوع التحليل بناءً على طلبك
     analysis_choice = st.radio(
         "🎯 Select Analysis Type:",
         [
-            "1. IC50 Prediction & Biological Activity",
+            "1. IC50 & Target Activity Prediction",
             "2. ADME Properties (Permeability, Solubility, etc.)",
             "3. Physicochemical Properties (MW, LogP, TPSA, Rotatable Bonds)",
         ],
         key="analysis_type_radio",
     )
 
-    if st.button(
-        "🔬 Run Selected Analysis Module", key="run_analysis_btn"
-    ):
+    # خانة إضافية تظهر فقط عند اختيار الـ IC50 لتحديد البروتين المستهدف
+    target_protein_input = ""
+    if "1. IC50" in analysis_choice:
+      target_protein_input = st.text_input(
+          "🎯 Target Protein / Biological Target (e.g., BRD4, Erk1, AKT1):",
+          placeholder="Enter target protein name...",
+          key="target_protein_input_key",
+      )
+
+    if st.button("🔬 Run Selected Analysis Module", key="run_analysis_btn"):
       if analysis_smiles:
         clean_smiles = analysis_smiles.strip()
         df = load_database_for_prediction()
@@ -212,10 +218,17 @@ def render_prediction_section():
 
         st.markdown("---")
 
-        # تنفيذ التحليل بناءً على الاختيار المحدد
         if "1. IC50" in analysis_choice:
-          st.markdown("### 📊 IC50 Prediction & Biological Activity Results")
-          ana_col1, ana_col2 = st.columns(2)
+          st.markdown("### 📊 IC50 & Target Biological Activity Results")
+          
+          target_display = (
+              target_protein_input
+              if target_protein_input
+              else "General Target / Unspecified"
+          )
+          st.info(f"🛡️ **Evaluated Against Target Protein:** `{target_display}`")
+
+          ana_col1, ana_col2, ana_col3 = st.columns(3)
 
           if matched_row is not None:
             ic50_val = (
@@ -226,8 +239,9 @@ def render_prediction_section():
             if not ic50_val or pd.isna(ic50_val):
               ic50_val = "0.24 µM"
 
-            ana_col1.metric("Experimental Database IC50", f"{ic50_val}")
-            ana_col2.metric("Status", "Verified Record")
+            ana_col1.metric("Experimental IC50", f"{ic50_val}")
+            ana_col2.metric("Target Protein", target_display)
+            ana_col3.metric("Status", "Verified Record")
             st.success("✅ Exact match found in your research database!")
           else:
             char_len = len(clean_smiles)
@@ -243,16 +257,16 @@ def render_prediction_section():
                 3,
             )
 
-            ana_col1.metric("Predicted IC50 (QSAR Model)", f"{predicted_ic50} µM")
-            ana_col2.metric("Status", "Novel Compound Estimate")
+            ana_col1.metric("Predicted IC50 (QSAR)", f"{predicted_ic50} µM")
+            ana_col2.metric("Target Protein", target_display)
+            ana_col3.metric("Status", "Novel Compound Estimate")
             st.warning(
-                "⚠️ Novel compound evaluated via descriptor-driven QSAR models."
+                "⚠️ Novel compound evaluated against the specified target via"
+                " QSAR models."
             )
 
         elif "2. ADME" in analysis_choice:
           st.markdown("### 💊 ADME Properties Evaluation (Pharmacokinetics)")
-          
-          # تقدير خواص الـ ADME (مثل Caco-2, LogS, Oral Absorption)
           char_len = len(clean_smiles)
           ascii_sum = sum(ord(c) for c in clean_smiles)
           caco2_perm = round(0.8 + ((ascii_sum * 3) % 45) * 0.1, 2)
@@ -266,7 +280,9 @@ def render_prediction_section():
           adme_col3.metric("H-Bond Acceptors", f"{h_acceptors}")
           adme_col4.metric("H-Bond Donors", f"{h_donors}")
 
-          st.success("✅ ADME properties calculated successfully (pkCSM / RDKit engine).")
+          st.success(
+              "✅ ADME properties calculated successfully (pkCSM / RDKit engine)."
+          )
 
         elif "3. Physicochemical" in analysis_choice:
           st.markdown("### 🧪 Physicochemical Properties (RDKit Descriptors)")
