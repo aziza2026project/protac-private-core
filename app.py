@@ -19,7 +19,6 @@ st.markdown(
 )
 
 st.sidebar.title("📌 Navigation Menu")
-# إضافة خيار QR Code إلى القائمة الجانبية
 app_mode = st.sidebar.selectbox(
     "Choose Section:",
     [
@@ -38,7 +37,6 @@ st.sidebar.markdown(
 )
 
 
-# دالة خلفية سرية (Backend Function) لقراءة ودمج الجداول في الكواليس فقط للاستخدام البرمجي
 @st.cache_data
 def get_integrated_protac_database():
   try:
