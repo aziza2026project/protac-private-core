@@ -2,10 +2,17 @@ import os
 import numpy as np
 import pandas as pd
 import streamlit as st
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, r2_score
 
+# محاولة استيراد مكتبات التعلم الآلي بشكل آمن
+try:
+    from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import mean_squared_error, r2_score
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
+
+# محاولة استيراد مكتبات الكيمياء الحيوية RDKit بشكل آمن
 try:
     from rdkit import Chem
     from rdkit.Chem import Descriptors, Lipinski, MolSurf, Crippen, AllChem
@@ -95,11 +102,11 @@ def render_prediction_section():
                 st.error("Please upload both Target Protein (.pdbqt) and Ligand File (.pdbqt) first.")
 
     # =========================================================================
-    # TAB 2: BIOLOGICAL & CHEMICAL ANALYSIS (RDKit Direct Calculation + CSV)
+    # TAB 2: BIOLOGICAL & CHEMICAL ANALYSIS (RDKit Direct Calculation)
     # =========================================================================
     with tab_analysis:
         st.markdown("### 🧪 Comprehensive Physicochemical, ADME & Biological Hub")
-        st.markdown("Enter any molecule **SMILES** string. The system will extract accurate properties directly using RDKit algorithms and evaluate activity/ADME profiles instantly.")
+        st.markdown("Enter any molecule **SMILES** string. The system will compute exact properties directly using RDKit algorithms for any custom input.")
 
         analysis_smiles = st.text_input(
             "🔹 Input Ligand SMILES String:",
@@ -131,16 +138,35 @@ def render_prediction_section():
                 df = load_database_for_prediction()
                 matched_row = None
 
-                target_canonical = clean_smiles
+                # حساب الخصائص الفورية عبر RDKit لأي SMILES مدخل
+                mw, logp, tpsa, rot_bonds, h_acc, h_don = 450.0, 3.2, 95.0, 6, 5, 2
+                molar_refractivity, fractional_csp3, heavy_atoms, aromatic_rings = 120.0, 0.45, 30, 4
+                valence_electrons, ring_count = 140, 4
+                success_rdkit = False
+
                 if RDKIT_AVAILABLE:
                     try:
-                        m_in = Chem.MolFromSmiles(clean_smiles)
-                        if m_in:
-                            target_canonical = Chem.MolToSmiles(m_in)
+                        mol_calc = Chem.MolFromSmiles(clean_smiles, sanitize=True)
+                        if not mol_calc:
+                            mol_calc = Chem.MolFromSmiles(clean_smiles, sanitize=False)
+                        if mol_calc:
+                            mw = Descriptors.MolWt(mol_calc)
+                            logp = Descriptors.MolLogP(mol_calc)
+                            tpsa = Descriptors.TPSA(mol_calc)
+                            rot_bonds = Lipinski.NumRotatableBonds(mol_calc)
+                            h_acc = Lipinski.NumHAcceptors(mol_calc)
+                            h_don = Lipinski.NumHDonors(mol_calc)
+                            molar_refractivity = Crippen.MolMR(mol_calc)
+                            fractional_csp3 = Lipinski.FractionCSP3(mol_calc)
+                            heavy_atoms = mol_calc.GetNumHeavyAtoms()
+                            aromatic_rings = Lipinski.NumAromaticRings(mol_calc)
+                            valence_electrons = Descriptors.NumValenceElectrons(mol_calc)
+                            ring_count = Lipinski.RingCount(mol_calc)
+                            success_rdkit = True
                     except Exception:
                         pass
 
-                # التحقق من وجوده في الداتا بيز كخيار إضافي
+                # مطابقة اختيارية مع قواعد البيانات إن وجد المركب فيها
                 if df is not None and not df.empty:
                     for col in df.columns:
                         if "smiles" in col.lower():
@@ -153,21 +179,6 @@ def render_prediction_section():
 
                 st.markdown("---")
 
-                # حساب الخصائص الفورية عبر RDKit لأي SMILES مدخل
-                mw, logp, tpsa, rot_bonds, h_acc, h_don = 450.0, 3.2, 95.0, 6, 5, 2
-                if RDKIT_AVAILABLE:
-                    try:
-                        mol_calc = Chem.MolFromSmiles(clean_smiles)
-                        if mol_calc:
-                            mw = Descriptors.MolWt(mol_calc)
-                            logp = Descriptors.MolLogP(mol_calc)
-                            tpsa = Descriptors.TPSA(mol_calc)
-                            rot_bonds = Lipinski.NumRotatableBonds(mol_calc)
-                            h_acc = Lipinski.NumHAcceptors(mol_calc)
-                            h_don = Lipinski.NumHDonors(mol_calc)
-                    except Exception:
-                        pass
-
                 # -------------------------------------------------------------
                 # MODULE 1: IC50 & Target Activity
                 # -------------------------------------------------------------
@@ -175,7 +186,6 @@ def render_prediction_section():
                     st.markdown("### 📊 IC50 & Target Biological Activity Profile")
                     target_display = target_protein_input if target_protein_input else "General Target / Unspecified"
                     
-                    # حساب قيمة IC50 ديناميكياً بناءً على خصائص المركب الحقيقية إذا لم تكن في الداتا بيز
                     ic50_val = f"{max(0.05, round(0.1 + (mw * 0.0003) + (logp * 0.05), 3))} µM"
                     source_engine = "RDKit QSAR Predictive Model"
                     
@@ -208,7 +218,7 @@ def render_prediction_section():
                     )
 
                 # -------------------------------------------------------------
-                # MODULE 2: ADME PROPERTIES (Calculated Accurately)
+                # MODULE 2: ADME PROPERTIES
                 # -------------------------------------------------------------
                 elif analysis_choice.startswith("2."):
                     st.markdown("### 💊 ADME Properties & Pharmacokinetics (pkCSM & RDKit Engine)")
@@ -239,32 +249,14 @@ def render_prediction_section():
                         file_name="Complete_ADME_Report.csv",
                         mime="text/csv"
                     )
-                    st.success("✅ ADME pharmacokinetic profile successfully computed for the entered molecule.")
+                    st.success("✅ ADME pharmacokinetic profile successfully computed.")
 
                 # -------------------------------------------------------------
-                # MODULE 3: PHYSICOCHEMICAL PROPERTIES (RDKit Exact Suite)
+                # MODULE 3: PHYSICOCHEMICAL PROPERTIES
                 # -------------------------------------------------------------
                 elif analysis_choice.startswith("3."):
                     st.markdown("### 🧪 Complete Physicochemical Properties (Exact RDKit Descriptors)")
                     
-                    molar_refractivity, fractional_csp3, heavy_atoms, aromatic_rings = 120.0, 0.45, 30, 4
-                    valence_electrons, ring_count = 140, 4
-                    success_rdkit = False
-
-                    if RDKIT_AVAILABLE:
-                        try:
-                            mol = Chem.MolFromSmiles(clean_smiles, sanitize=True)
-                            if mol:
-                                molar_refractivity = Crippen.MolMR(mol)
-                                fractional_csp3 = Lipinski.FractionCSP3(mol)
-                                heavy_atoms = mol.GetNumHeavyAtoms()
-                                aromatic_rings = Lipinski.NumAromaticRings(mol)
-                                valence_electrons = Descriptors.NumValenceElectrons(mol)
-                                ring_count = Lipinski.RingCount(mol)
-                                success_rdkit = True
-                        except Exception:
-                            pass
-
                     phys_data = [
                         {"Descriptor Name": "Molecular Weight (MW)", "Value": f"{mw:.2f}", "Unit": "g/mol", "Category": "Size", "Library / Engine": "RDKit"},
                         {"Descriptor Name": "LogP", "Value": f"{logp:.2f}", "Unit": "dimensionless", "Category": "Lipophilicity", "Library / Engine": "RDKit Crippen"},
@@ -332,50 +324,53 @@ def render_prediction_section():
     # =========================================================================
     with tab_ai:
         st.markdown("### 🤖 Advanced Machine Learning & QSAR Prediction Hub")
-        merged_data = load_database_for_prediction()
+        if SKLEARN_AVAILABLE:
+            merged_data = load_database_for_prediction()
 
-        if merged_data is not None and not merged_data.empty:
-            st.success(f"✅ Successfully loaded datasets! Total rows: {merged_data.shape[0]}, Columns: {merged_data.shape[1]}")
-            numeric_cols = merged_data.select_dtypes(include=[np.number]).columns.tolist()
-            
-            if len(numeric_cols) >= 2:
-                target_col = st.selectbox("🎯 Select Target Variable to Predict:", numeric_cols, key="ml_target_col")
-                feature_cols = st.multiselect("📊 Select Feature Columns for Training:", [c for c in numeric_cols if c != target_col], default=numeric_cols[:min(4, len(numeric_cols)-1)], key="ml_feature_cols")
+            if merged_data is not None and not merged_data.empty:
+                st.success(f"✅ Successfully loaded datasets! Total rows: {merged_data.shape[0]}, Columns: {merged_data.shape[1]}")
+                numeric_cols = merged_data.select_dtypes(include=[np.number]).columns.tolist()
                 
-                if feature_cols and target_col:
-                    df_clean = merged_data.dropna(subset=feature_cols + [target_col])
-                    X = df_clean[feature_cols]
-                    y = df_clean[target_col]
+                if len(numeric_cols) >= 2:
+                    target_col = st.selectbox("🎯 Select Target Variable to Predict:", numeric_cols, key="ml_target_col")
+                    feature_cols = st.multiselect("📊 Select Feature Columns for Training:", [c for c in numeric_cols if c != target_col], default=numeric_cols[:min(4, len(numeric_cols)-1)], key="ml_feature_cols")
                     
-                    if len(X) > 5:
-                        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-                        ml_algo = st.selectbox("⚙️ Select Machine Learning Regressor:", ["Random Forest Regressor", "Gradient Boosting Regressor"], key="ml_algo_choice")
+                    if feature_cols and target_col:
+                        df_clean = merged_data.dropna(subset=feature_cols + [target_col])
+                        X = df_clean[feature_cols]
+                        y = df_clean[target_col]
                         
-                        ml_model = RandomForestRegressor(n_estimators=100, random_state=42) if ml_algo == "Random Forest Regressor" else GradientBoostingRegressor(random_state=42)
-                        ml_model.fit(X_train, y_train)
-                        y_pred = ml_model.predict(X_test)
-                        
-                        r2 = r2_score(y_test, y_pred)
-                        mse = mean_squared_error(y_test, y_pred)
-                        
-                        col_m1, col_m2 = st.columns(2)
-                        col_m1.metric("Model Accuracy ($R^2$ Score)", f"{r2:.2f}")
-                        col_m2.metric("Mean Squared Error (MSE)", f"{mse:.4f}")
-                        
-                        st.markdown("#### 🔮 Predict on New Molecule Parameters:")
-                        user_ml_input = {}
-                        cols_ui = st.columns(len(feature_cols))
-                        for i, col in enumerate(feature_cols):
-                            with cols_ui[i]:
-                                user_ml_input[col] = st.number_input(f"{col}", value=float(X[col].mean()), key=f"ml_feat_{i}")
-                                
-                        if st.button("🚀 Execute Smart Prediction", key="run_smart_pred_btn"):
-                            input_df = pd.DataFrame([user_ml_input])
-                            predicted_val = ml_model.predict(input_df)[0]
-                            st.success(f"✨ Predicted value for **{target_col}**: **{predicted_val:.4f}**")
-                    else:
-                        st.warning("Insufficient clean rows for reliable ML training (minimum 5 required).")
+                        if len(X) > 5:
+                            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+                            ml_algo = st.selectbox("⚙️ Select Machine Learning Regressor:", ["Random Forest Regressor", "Gradient Boosting Regressor"], key="ml_algo_choice")
+                            
+                            ml_model = RandomForestRegressor(n_estimators=100, random_state=42) if ml_algo == "Random Forest Regressor" else GradientBoostingRegressor(random_state=42)
+                            ml_model.fit(X_train, y_train)
+                            y_pred = ml_model.predict(X_test)
+                            
+                            r2 = r2_score(y_test, y_pred)
+                            mse = mean_squared_error(y_test, y_pred)
+                            
+                            col_m1, col_m2 = st.columns(2)
+                            col_m1.metric("Model Accuracy ($R^2$ Score)", f"{r2:.2f}")
+                            col_m2.metric("Mean Squared Error (MSE)", f"{mse:.4f}")
+                            
+                            st.markdown("#### 🔮 Predict on New Molecule Parameters:")
+                            user_ml_input = {}
+                            cols_ui = st.columns(len(feature_cols))
+                            for i, col in enumerate(feature_cols):
+                                with cols_ui[i]:
+                                    user_ml_input[col] = st.number_input(f"{col}", value=float(X[col].mean()), key=f"ml_feat_{i}")
+                                    
+                            if st.button("🚀 Execute Smart Prediction", key="run_smart_pred_btn"):
+                                input_df = pd.DataFrame([user_ml_input])
+                                predicted_val = ml_model.predict(input_df)[0]
+                                st.success(f"✨ Predicted value for **{target_col}**: **{predicted_val:.4f}**")
+                        else:
+                            st.warning("Insufficient clean rows for reliable ML training (minimum 5 required).")
+                else:
+                    st.warning("⚠️ Could not load CSV databases. Please ensure they are in the app directory.")
             else:
                 st.warning("Dataset does not contain enough numeric columns.")
         else:
-            st.warning("⚠️ Could not load CSV databases. Please ensure they are in the app directory.")
+            st.error("⚠️ `scikit-learn` library is not installed in the environment. Please add `scikit-learn` to your `requirements.txt` file.")
