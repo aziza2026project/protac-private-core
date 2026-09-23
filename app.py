@@ -62,41 +62,35 @@ def get_integrated_protac_database():
 
 def render_qrcode_page():
   st.markdown("## 📱 Web App QR Code & Access Hub")
-  st.markdown(
-      "هذه الصفحة مخصصة لتوليد وتحميل رمز الاستجابة السريعة (QR Code) الخاص"
-      " بمنصتك للبحوث العلمية، البوسترات، والمؤتمرات."
-  )
+  st.markdown("---")
 
   col1, col2 = st.columns([1, 1])
 
+  app_url = "https://protac-app-core.streamlit.app"
+
+  qr = qrcode.QRCode(version=1, box_size=10, border=5)
+  qr.add_data(app_url)
+  qr.make(fit=True)
+  img = qr.make_image(fill_color="black", back_color="white")
+
+  buf = io.BytesIO()
+  img.save(buf, format="PNG")
+  byte_im = buf.getvalue()
+
   with col1:
-    st.markdown("### 📌 تفاصيل الرابط المباشر:")
-    app_url = "https://protac-app-core.streamlit.app"
-    st.info(f"🔗 **رابط المنصة:** `{app_url}`")
-    st.markdown(
-        "يمكنك مشاركة هذا الرابط مباشرة في قسم *Availability of Data and"
-        " Software* في مقالك العلمي."
-    )
-
-    qr = qrcode.QRCode(version=1, box_size=10, border=5)
-    qr.add_data(app_url)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    byte_im = buf.getvalue()
-
+    st.markdown("### 📌 Direct Link")
+    st.info(f"🔗 `{app_url}`")
+    st.markdown("### 📥 Download")
     st.download_button(
-        label="📥 تحميل صورة QR Code (PNG عالي الجودة)",
+        label="📥 Download QR Code (PNG)",
         data=byte_im,
         file_name="PROTAC_Platform_QRCode.png",
         mime="image/png",
     )
 
   with col2:
-    st.markdown("### 👁️ معاينة الرمز المباشر:")
-    st.image(byte_im, width=240)
+    st.markdown("### 👁️ Live Preview")
+    st.image(byte_im, width=220)
 
 
 if app_mode == "Prediction Tool":
