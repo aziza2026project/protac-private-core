@@ -22,19 +22,32 @@ def load_persistent_requests():
 
 
 def save_persistent_requests(requests_list):
-  # تنظيف البيانات والتأكد من أنها قابلة للحفظ (JSON Serialiazable)
+  # تنظيف البيانات بالكامل لضمان أنها تخلو من أي كائنات غير قابلة للحفظ في JSON
   data_to_save = []
   for req in requests_list:
-    req_copy = req.copy()
-    # التأكد من أن حقل الملفات يحتوي فقط على أسماء ومسارات وليست كائنات برمجية
     clean_files = []
-    for f in req_copy.get("files", []):
+    for f in req.get("files", []):
       if isinstance(f, dict):
-        clean_files.append(
-            {"name": f.get("name", "file"), "path": f.get("path", "")}
-        )
-    req_copy["files"] = clean_files
-    data_to_save.append(req_copy)
+        clean_files.append({
+            "name": str(f.get("name", "file")),
+            "path": str(f.get("path", "")),
+        })
+
+    req_clean = {
+        "name": str(req.get("name", "Anonymous")),
+        "email": str(req.get("email", "")),
+        "details": str(req.get("details", "")),
+        "files": clean_files,
+        "timestamp": str(
+            req.get(
+                "timestamp",
+                datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+        ),
+        "is_read": bool(req.get("is_read", False)),
+        "is_responded": bool(req.get("is_responded", False)),
+    }
+    data_to_save.append(req_clean)
 
   with open(DB_FILE, "w", encoding="utf-8") as f:
     json.dump(data_to_save, f, ensure_ascii=False, indent=4)
