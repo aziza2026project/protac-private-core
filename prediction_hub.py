@@ -139,7 +139,6 @@ def render_prediction_section():
                 df = load_database_for_prediction()
                 matched_row = None
 
-                # بحث دقيق في قواعد البيانات
                 if df is not None and not df.empty:
                     for col in df.columns:
                         if "smiles" in col.lower():
@@ -150,7 +149,6 @@ def render_prediction_section():
                             if matched_row is not None:
                                 break
 
-                # تحليل مرن للـ SMILES حتى لو كان معقداً أو طويلاً (PROTACs)
                 mw, logp, tpsa, rot_bonds, h_acc, h_don = 750.5, 4.8, 145.2, 14, 10, 3
                 molar_refractivity, fractional_csp3, heavy_atoms, aromatic_rings = 210.0, 0.55, 52, 6
                 valence_electrons, ring_count = 240, 7
@@ -181,7 +179,6 @@ def render_prediction_section():
                     except Exception:
                         success_parsed = False
                 
-                # إذا لم تنجح مكتبة RDKit، نقوم بتقدير القيم بناءً على طول الـ SMILES لضمان عدم ظهور N/A أبداً
                 if not success_parsed:
                     char_len = len(clean_smiles)
                     mw = round(400.0 + char_len * 1.5, 2)
@@ -194,9 +191,6 @@ def render_prediction_section():
 
                 st.markdown("---")
 
-                # -------------------------------------------------------------
-                # MODULE 1: IC50 & Target Activity
-                # -------------------------------------------------------------
                 if analysis_choice.startswith("1."):
                     st.markdown("### 📊 IC50 & Target Biological Activity Profile")
                     target_display = target_protein_input if target_protein_input else "General Target / Unspecified"
@@ -232,9 +226,6 @@ def render_prediction_section():
                         mime="text/csv"
                     )
 
-                # -------------------------------------------------------------
-                # MODULE 2: ADME PROPERTIES
-                # -------------------------------------------------------------
                 elif analysis_choice.startswith("2."):
                     st.markdown("### 💊 ADME Properties & Pharmacokinetics (pkCSM & RDKit)")
                     
@@ -266,9 +257,6 @@ def render_prediction_section():
                     )
                     st.success("✅ ADME pharmacokinetic profile successfully computed.")
 
-                # -------------------------------------------------------------
-                # MODULE 3: PHYSICOCHEMICAL PROPERTIES
-                # -------------------------------------------------------------
                 elif analysis_choice.startswith("3."):
                     st.markdown("### 🧪 Complete Physicochemical Properties (Exact Descriptors)")
                     
@@ -345,9 +333,11 @@ def render_prediction_section():
                 if len(numeric_cols) >= 2:
                     target_col = st.selectbox("🎯 Select Target Variable to Predict:", numeric_cols, key="ml_target_col")
                     feature_cols = st.multiselect(
-    "Select Feature Columns for Training:",
-    [c for c in numeric_cols],
-) default=numeric_cols[:min(4, len(numeric_cols)-1)], key="ml_feature_cols")
+                        "Select Feature Columns for Training:",
+                        [c for c in numeric_cols if c != target_col],
+                        default=[c for c in numeric_cols if c != target_col][:min(4, len(numeric_cols)-1)],
+                        key="ml_feature_cols"
+                    )
                     
                     if feature_cols and target_col:
                         df_clean = merged_data.dropna(subset=feature_cols + [target_col])
@@ -366,7 +356,7 @@ def render_prediction_section():
                             mse = mean_squared_error(y_test, y_pred)
                             
                             col_m1, col_m2 = st.columns(2)
-                            col_m1.metric("Model Accuracy ($R^2$ Score)", f"{r2:.2f}")
+                            col_m1.metric("Model Accuracy (R2 Score)", f"{r2:.2f}")
                             col_m2.metric("Mean Squared Error (MSE)", f"{mse:.4f}")
                             
                             st.markdown("#### 🔮 Predict on New Molecule Parameters:")
@@ -382,6 +372,8 @@ def render_prediction_section():
                                 st.success(f"✨ Predicted value for **{target_col}**: **{predicted_val:.4f}**")
                         else:
                             st.warning("Insufficient clean rows for reliable ML training (minimum 5 required).")
+                    else:
+                        st.warning("Please select at least one feature column.")
                 else:
                     st.warning("Dataset does not contain enough numeric columns.")
             else:
