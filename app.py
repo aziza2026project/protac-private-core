@@ -22,34 +22,32 @@ st.markdown(
 st.sidebar.title("📌 Navigation Menu")
 
 # =========================================================================
-# SECURE DEVELOPER ACCESS (Hidden in Sidebar Expander)
+# CLEAN SIDEBAR BUTTONS & NAVIGATION
 # =========================================================================
+# Order requested: 1. Subscription Plans, 2. Prediction Tool, 3. Consultations & Collaboration
+nav_selection = st.sidebar.radio(
+    "Choose Section:",
+    [
+        "💳 Subscription Plans",
+        "🔬 Prediction Tool",
+        "🤝 Consultations & Collaboration",
+        "📱 App QR Code"
+    ],
+    label_visibility="collapsed"
+)
+
 st.sidebar.markdown("---")
-unlock_ai = False
+
+# =========================================================================
+# SECURE DEVELOPER ACCESS (Clean Expander)
+# =========================================================================
 with st.sidebar.expander("⚙️ Developer & AI Hub Access"):
-    dev_password = st.text_input("Enter Password:", type="password", key="sidebar_dev_pass")
+    dev_password = st.text_input("Password:", type="password", key="sidebar_dev_pass")
     CORRECT_PASSWORD = "aziza_protac_2026"
     
-    if dev_password == CORRECT_PASSWORD:
-        st.sidebar.success("Access Granted!")
-        unlock_ai = True
-    else:
-        if dev_password != "":
-            st.sidebar.error("Incorrect password")
-        unlock_ai = False
-
-# Build navigation options dynamically based on developer access
-nav_options = [
-    "Prediction Tool",
-    "Subscription Plans",
-    "Consultations & Collaboration",
-    "📱 App QR Code",
-]
-
-if unlock_ai:
-    nav_options.insert(1, "🤖 AI & QSAR Prediction Hub (Developer)")
-
-app_mode = st.sidebar.selectbox("Choose Section:", nav_options)
+    is_developer = (dev_password == CORRECT_PASSWORD)
+    if is_developer:
+        st.success("Access Granted!")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Developer:** Aziza Mnasri (PhD)")
@@ -118,19 +116,21 @@ def render_qrcode_page():
 # =========================================================================
 st.markdown("---")
 
-if app_mode == "Prediction Tool":
+if nav_selection == "💳 Subscription Plans":
+    render_subscription_section()
+
+elif nav_selection == "🔬 Prediction Tool":
     is_allowed = check_email_access()
     if is_allowed:
         render_prediction_section()
+        
+        # If developer mode is unlocked, show AI Hub neatly below prediction tool
+        if is_developer:
+            st.markdown("---")
+            render_ai_prediction_hub()
 
-elif unlock_ai and app_mode == "🤖 AI & QSAR Prediction Hub (Developer)":
-    render_ai_prediction_hub()
-
-elif app_mode == "Subscription Plans":
-    render_subscription_section()
-
-elif app_mode == "Consultations & Collaboration":
+elif nav_selection == "🤝 Consultations & Collaboration":
     render_services_section()
 
-elif app_mode == "📱 App QR Code":
+elif nav_selection == "📱 App QR Code":
     render_qrcode_page()
