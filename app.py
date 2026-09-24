@@ -13,6 +13,26 @@ st.set_page_config(
     layout="wide",
 )
 
+# Custom CSS for gorgeous scientific styling & custom button colors
+st.markdown("""
+    <style>
+    .stButton>button {
+        background-color: #1f4e78;
+        color: white;
+        border-radius: 6px;
+        font-weight: 600;
+        border: none;
+    }
+    .stButton>button:hover {
+        background-color: #16385c;
+        color: white;
+    }
+    h3 {
+        color: #1f4e78;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # Initialize session state for navigation
 if "active_page" not in st.session_state:
     st.session_state.active_page = "home"
@@ -36,9 +56,17 @@ st.sidebar.markdown("---")
 with st.sidebar.expander("⚙️ Developer & AI Hub Access"):
     dev_password = st.text_input("Password:", type="password", key="sidebar_dev_pass")
     CORRECT_PASSWORD = "aziza_protac_2026"
-    is_developer = (dev_password == CORRECT_PASSWORD)
-    if is_developer:
+    
+    # Store developer state in session_state so it persists properly across pages
+    if dev_password == CORRECT_PASSWORD:
+        st.session_state.is_developer = True
         st.sidebar.success("Access Granted!")
+    else:
+        if dev_password != "":
+            st.sidebar.error("Incorrect Password")
+        st.session_state.is_developer = False
+
+is_developer = st.session_state.get("is_developer", False)
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Developer:** Aziza Mnasri (PhD)")
@@ -69,26 +97,23 @@ def render_home_page():
     
     with col1:
         st.markdown("### 💳 Subscription Plans")
-        st.write("Explore our flexible subscription tiers tailored for researchers and labs.")
         if st.button("Open Subscriptions", use_container_width=True, key="btn_sub"):
             st.session_state.active_page = "subscription"
             st.rerun()
             
     with col2:
         st.markdown("### 🔬 Prediction Tool")
-        st.write("Perform molecular docking, physicochemical analysis, and linker optimization.")
         if st.button("Open Prediction Tool", use_container_width=True, key="btn_pred"):
             st.session_state.active_page = "prediction"
             st.rerun()
             
     with col3:
-        st.markdown("### 🤝 Consultations")
-        st.write("Connect for expert consultation, custom drug discovery, and collaboration.")
+        st.markdown("### 🤝 Consultations & Collaboration")
         if st.button("Open Consultations", use_container_width=True, key="btn_serv"):
             st.session_state.active_page = "consultations"
             st.rerun()
 
-    # If developer mode is active, show AI Hub right on the home page or below
+    # Advanced AI Hub ONLY shows on home page if developer mode is unlocked via sidebar password
     if is_developer:
         st.markdown("---")
         render_ai_prediction_hub()
@@ -140,6 +165,7 @@ elif st.session_state.active_page == "prediction":
     is_allowed = check_email_access()
     if is_allowed:
         render_prediction_section()
+        # AI Hub inside Prediction section ONLY if developer mode is active
         if is_developer:
             st.markdown("---")
             render_ai_prediction_hub()
