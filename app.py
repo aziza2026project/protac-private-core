@@ -20,15 +20,16 @@ st.markdown(
 )
 
 st.sidebar.title("📌 Navigation Menu")
-app_mode = st.sidebar.selectbox(
-    "Choose Section:",
-    [
-        "Prediction Tool",
-        "Subscription Plans",
-        "Consultations & Collaboration",
-        "📱 App QR Code",
-    ],
-)
+
+# Navigation options
+nav_options = [
+    "Prediction Tool",
+    "Subscription Plans",
+    "Consultations & Collaboration",
+    "📱 App QR Code",
+]
+
+app_mode = st.sidebar.selectbox("Choose Section:", nav_options)
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Developer:** Aziza Mnasri (PhD)")
@@ -47,11 +48,11 @@ with st.sidebar.expander("⚙️ Developer & AI Hub Access"):
     CORRECT_PASSWORD = "aziza_protac_2026"
     
     if dev_password == CORRECT_PASSWORD:
-        st.success("Access Granted!")
+        st.sidebar.success("Access Granted!")
         unlock_ai = True
     else:
         if dev_password != "":
-            st.error("Incorrect password")
+            st.sidebar.error("Incorrect password")
         unlock_ai = False
 
 
@@ -112,16 +113,15 @@ def render_qrcode_page():
 # =========================================================================
 # MAIN APP ROUTING
 # =========================================================================
-# If developer mode is unlocked via password in the sidebar, show the AI Hub
+st.markdown("---")
+
+# If developer password is correct, show AI Hub. Otherwise, show normal app navigation.
 if unlock_ai:
-    st.markdown("---")
     render_ai_prediction_hub()
 else:
-    # Normal navigation for users
     if app_mode == "Prediction Tool":
         is_allowed = check_email_access()
         if is_allowed:
-            st.markdown("---")
             render_prediction_section()
 
     elif app_mode == "Subscription Plans":
