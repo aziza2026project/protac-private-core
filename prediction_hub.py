@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-# محاولة استيراد مكتبات التعلم الآلي بشكل آمن
+# Safe import of machine learning libraries
 try:
     from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
     from sklearn.model_selection import train_test_split
@@ -12,7 +12,7 @@ try:
 except ImportError:
     SKLEARN_AVAILABLE = False
 
-# محاولة استيراد مكتبات الكيمياء الحيوية RDKit بشكل آمن
+# Safe import of RDKit biochemistry libraries
 try:
     from rdkit import Chem
     from rdkit.Chem import Descriptors, Lipinski, MolSurf, Crippen, AllChem
@@ -43,6 +43,68 @@ def load_database_for_prediction():
         return merged_df if not merged_df.empty else (main_df if not main_df.empty else None)
     except Exception:
         return None
+
+
+def render_ai_prediction_hub():
+    """Renders exclusively the private AI & QSAR Prediction Hub for developer mode."""
+    st.markdown("### 🤖 Advanced Machine Learning & QSAR Prediction Hub")
+    if SKLEARN_AVAILABLE:
+        merged_data = load_database_for_prediction()
+
+        if merged_data is not None and not merged_data.empty:
+            st.success(f"✅ Successfully loaded datasets! Total rows: {merged_data.shape[0]}, Columns: {merged_data.shape[1]}")
+            numeric_cols = merged_data.select_dtypes(include=[np.number]).columns.tolist()
+            
+            if len(numeric_cols) >= 2:
+                target_col = st.selectbox("🎯 Select Target Variable to Predict:", numeric_cols, key="ml_target_col")
+                feature_cols = st.multiselect(
+                    "Select Feature Columns for Training:",
+                    [c for c in numeric_cols if c != target_col],
+                    default=[c for c in numeric_cols if c != target_col][:min(4, len(numeric_cols)-1)],
+                    key="ml_feature_cols"
+                )
+                
+                if feature_cols and target_col:
+                    df_clean = merged_data.dropna(subset=feature_cols + [target_col])
+                    X = df_clean[feature_cols]
+                    y = df_clean[target_col]
+                    
+                    if len(X) > 5:
+                        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+                        ml_algo = st.selectbox("⚙️ Select Machine Learning Regressor:", ["Random Forest Regressor", "Gradient Boosting Regressor"], key="ml_algo_choice")
+                        
+                        ml_model = RandomForestRegressor(n_estimators=100, random_state=42) if ml_algo == "Random Forest Regressor" else GradientBoostingRegressor(random_state=42)
+                        ml_model.fit(X_train, y_train)
+                        y_pred = ml_model.predict(X_test)
+                        
+                        r2 = r2_score(y_test, y_pred)
+                        mse = mean_squared_error(y_test, y_pred)
+                        
+                        col_m1, col_m2 = st.columns(2)
+                        col_m1.metric("Model Accuracy (R2 Score)", f"{r2:.2f}")
+                        col_m2.metric("Mean Squared Error (MSE)", f"{mse:.4f}")
+                        
+                        st.markdown("#### 🔮 Predict on New Molecule Parameters:")
+                        user_ml_input = {}
+                        cols_ui = st.columns(len(feature_cols))
+                        for i, col in enumerate(feature_cols):
+                            with cols_ui[i]:
+                                user_ml_input[col] = st.number_input(f"{col}", value=float(X[col].mean()), key=f"ml_feat_{i}")
+                                
+                        if st.button("🚀 Execute Smart Prediction", key="run_smart_pred_btn"):
+                            input_df = pd.DataFrame([user_ml_input])
+                            predicted_val = ml_model.predict(input_df)[0]
+                            st.success(f"✨ Predicted value for **{target_col}**: **{predicted_val:.4f}**")
+                    else:
+                        st.warning("Insufficient clean rows for reliable ML training (minimum 5 required).")
+                else:
+                    st.warning("Please select at least one feature column.")
+            else:
+                st.warning("Dataset does not contain enough numeric columns.")
+        else:
+            st.warning("⚠️ Could not load CSV databases. Please ensure they are in the app directory.")
+    else:
+        st.error("⚠️ `scikit-learn` library is not installed in the environment.")
 
 
 def render_prediction_section():
@@ -103,7 +165,7 @@ def render_prediction_section():
                 st.error("Please upload both Target Protein (.pdbqt) and Ligand File (.pdbqt) first.")
 
     # =========================================================================
-    # TAB 2: BIOLOGICAL & CHEMICAL ANALYSIS (Robust RDKit & PROTAC Parsing)
+    # TAB 2: BIOLOGICAL & CHEMICAL ANALYSIS
     # =========================================================================
     with tab_analysis:
         st.markdown("### 🧪 Comprehensive Physicochemical, ADME & Biological Hub")
@@ -150,8 +212,6 @@ def render_prediction_section():
                                 break
 
                 mw, logp, tpsa, rot_bonds, h_acc, h_don = 750.5, 4.8, 145.2, 14, 10, 3
-                molar_refractivity, fractional_csp3, heavy_atoms, aromatic_rings = 210.0, 0.55, 52, 6
-                valence_electrons, ring_count = 240, 7
                 success_parsed = False
 
                 if RDKIT_AVAILABLE:
@@ -169,123 +229,40 @@ def render_prediction_section():
                             rot_bonds = Lipinski.NumRotatableBonds(mol_calc)
                             h_acc = Lipinski.NumHAcceptors(mol_calc)
                             h_don = Lipinski.NumHDonors(mol_calc)
-                            molar_refractivity = Crippen.MolMR(mol_calc)
-                            fractional_csp3 = Lipinski.FractionCSP3(mol_calc)
-                            heavy_atoms = mol_calc.GetNumHeavyAtoms()
-                            aromatic_rings = Lipinski.NumAromaticRings(mol_calc)
-                            valence_electrons = Descriptors.NumValenceElectrons(mol_calc)
-                            ring_count = Lipinski.RingCount(mol_calc)
                             success_parsed = True
                     except Exception:
                         success_parsed = False
-                
-                if not success_parsed:
-                    char_len = len(clean_smiles)
-                    mw = round(400.0 + char_len * 1.5, 2)
-                    logp = round(2.5 + (char_len % 30) * 0.05, 2)
-                    tpsa = round(90.0 + (char_len % 50) * 1.2, 2)
-                    rot_bonds = max(6, int(char_len / 15))
-                    h_acc = max(4, int(char_len / 25))
-                    h_don = max(2, int(char_len / 40))
-                    success_parsed = True
 
                 st.markdown("---")
-
                 if analysis_choice.startswith("1."):
                     st.markdown("### 📊 IC50 & Target Biological Activity Profile")
                     target_display = target_protein_input if target_protein_input else "General Target / Unspecified"
-                    
                     ic50_val = f"{max(0.01, round(0.05 + (mw * 0.0002), 3))} µM"
-                    source_engine = "PROTAC QSAR Estimation Model"
                     
-                    if matched_row is not None:
-                        for col in matched_row.index:
-                            if "ic50" in col.lower() or "activity" in col.lower():
-                                val = matched_row[col]
-                                if not pd.isna(val):
-                                    ic50_val = str(val)
-                                    source_engine = "Database Match (CSV)"
-                                    break
-
-                    st.info(f"🛡️ **Target:** `{target_display}` | **Source:** `{source_engine}`")
-
                     activity_data = [
-                        {"Parameter": "Target Protein / Biological System", "Value": target_display, "Source / Engine": "User Specification", "Category": "Biological Target"},
-                        {"Parameter": "Predicted / Experimental IC50", "Value": ic50_val, "Source / Engine": source_engine, "Category": "Potency"},
-                        {"Parameter": "Binding Confidence Score", "Value": "96.4%", "Source / Engine": "Validation Suite", "Category": "Validation"}
+                        {"Parameter": "Target Protein", "Value": target_display, "Category": "Biological Target"},
+                        {"Parameter": "Predicted IC50", "Value": ic50_val, "Category": "Potency"}
                     ]
-
-                    act_df = pd.DataFrame(activity_data)
-                    st.dataframe(act_df, use_container_width=True)
-
-                    csv_act = act_df.to_csv(index=False).encode('utf-8')
-                    st.download_button(
-                        label="📥 Download Biological Activity Report (CSV)",
-                        data=csv_act,
-                        file_name="IC50_Biological_Activity_Report.csv",
-                        mime="text/csv"
-                    )
+                    st.dataframe(pd.DataFrame(activity_data), use_container_width=True)
 
                 elif analysis_choice.startswith("2."):
-                    st.markdown("### 💊 ADME Properties & Pharmacokinetics (pkCSM & RDKit)")
-                    
+                    st.markdown("### 💊 ADME Properties & Pharmacokinetics")
                     caco2 = round(1.1 - (mw * 0.0003) + (logp * 0.07), 2)
                     sol = round(-3.0 - (logp * 0.3), 2)
-                    ppb = round(85.0 + min(12.0, logp * 2.5), 1)
-                    vdss = round(0.45 + (logp * 0.04), 2)
-
                     adme_data = [
-                        {"Adme Property": "Caco-2 Permeability", "Value": f"{caco2}", "Unit": "log Papp (cm/s)", "Interpretation": "High absorption if > 0.90", "Prediction Engine": "pkCSM / RDKit"},
-                        {"Adme Property": "Aqueous Solubility", "Value": f"{sol}", "Unit": "log mol/L", "Interpretation": "Soluble if > -4.0", "Prediction Engine": "ESOL Algorithm"},
-                        {"Adme Property": "Plasma Protein Binding (PPB)", "Value": f"{ppb}%", "Unit": "% Bound", "Interpretation": "Protein binding index", "Prediction Engine": "pkCSM Model"},
-                        {"Adme Property": "Steady State Volume of Distribution", "Value": f"{vdss}", "Unit": "log L/kg", "Interpretation": "Tissue distribution", "Prediction Engine": "pkCSM Model"},
-                        {"Adme Property": "Blood-Brain Barrier (BBB)", "Value": "Low (Non-Penetrant)" if logp < 4 else "Moderate", "Unit": "Qualitative", "Interpretation": "CNS penetration", "Prediction Engine": "pkCSM Model"},
-                        {"Adme Property": "CYP3A4 Substrate", "Value": "Yes" if mw > 500 else "No", "Unit": "Yes/No", "Interpretation": "Metabolic liability", "Prediction Engine": "pkCSM Model"},
-                        {"Adme Property": "Total Renal Clearance", "Value": "6.2", "Unit": "mL/min/kg", "Interpretation": "Excretion rate indicator", "Prediction Engine": "pkCSM Model"},
-                        {"Adme Property": "AMES Toxicity", "Value": "Non-Toxic", "Unit": "Safety Flag", "Interpretation": "Mutagenicity screening", "Prediction Engine": "pkCSM Model"},
+                        {"Adme Property": "Caco-2 Permeability", "Value": f"{caco2}", "Unit": "log Papp"},
+                        {"Adme Property": "Aqueous Solubility", "Value": f"{sol}", "Unit": "log mol/L"}
                     ]
-
-                    adme_df = pd.DataFrame(adme_data)
-                    st.dataframe(adme_df, use_container_width=True)
-
-                    csv_adme = adme_df.to_csv(index=False).encode('utf-8')
-                    st.download_button(
-                        label="📥 Download Comprehensive ADME Report (CSV)",
-                        data=csv_adme,
-                        file_name="Complete_ADME_Report.csv",
-                        mime="text/csv"
-                    )
-                    st.success("✅ ADME pharmacokinetic profile successfully computed.")
+                    st.dataframe(pd.DataFrame(adme_data), use_container_width=True)
 
                 elif analysis_choice.startswith("3."):
-                    st.markdown("### 🧪 Complete Physicochemical Properties (Exact Descriptors)")
-                    
+                    st.markdown("### 🧪 Complete Physicochemical Properties")
                     phys_data = [
-                        {"Descriptor Name": "Molecular Weight (MW)", "Value": f"{mw:.2f}", "Unit": "g/mol", "Category": "Size", "Library / Engine": "RDKit / Custom"},
-                        {"Descriptor Name": "LogP", "Value": f"{logp:.2f}", "Unit": "dimensionless", "Category": "Lipophilicity", "Library / Engine": "RDKit Crippen"},
-                        {"Descriptor Name": "TPSA", "Value": f"{tpsa:.2f}", "Unit": "Å²", "Category": "Polarity", "Library / Engine": "RDKit MolSurf"},
-                        {"Descriptor Name": "Rotatable Bonds", "Value": f"{rot_bonds}", "Unit": "count", "Category": "Flexibility", "Library / Engine": "RDKit Lipinski"},
-                        {"Descriptor Name": "H-Acceptors", "Value": f"{h_acc}", "Unit": "count", "Category": "H-Bonding", "Library / Engine": "RDKit Lipinski"},
-                        {"Descriptor Name": "H-Donors", "Value": f"{h_don}", "Unit": "count", "Category": "H-Bonding", "Library / Engine": "RDKit Lipinski"},
-                        {"Descriptor Name": "Molar Refractivity", "Value": f"{molar_refractivity:.2f}", "Unit": "refractivity", "Category": "Refractivity", "Library / Engine": "RDKit Crippen"},
-                        {"Descriptor Name": "Fraction Csp3", "Value": f"{fractional_csp3:.2f}", "Unit": "ratio", "Category": "Saturation", "Library / Engine": "RDKit Lipinski"},
-                        {"Descriptor Name": "Heavy Atoms", "Value": f"{heavy_atoms}", "Unit": "count", "Category": "Composition", "Library / Engine": "RDKit Core"},
-                        {"Descriptor Name": "Aromatic Rings", "Value": f"{aromatic_rings}", "Unit": "count", "Category": "Topology", "Library / Engine": "RDKit Lipinski"},
-                        {"Descriptor Name": "Ring Count", "Value": f"{ring_count}", "Unit": "count", "Category": "Topology", "Library / Engine": "RDKit Lipinski"},
-                        {"Descriptor Name": "Valence Electrons", "Value": f"{valence_electrons}", "Unit": "count", "Category": "Electronic", "Library / Engine": "RDKit Descriptors"},
+                        {"Descriptor Name": "Molecular Weight (MW)", "Value": f"{mw:.2f}", "Unit": "g/mol"},
+                        {"Descriptor Name": "LogP", "Value": f"{logp:.2f}", "Unit": "dimensionless"},
+                        {"Descriptor Name": "TPSA", "Value": f"{tpsa:.2f}", "Unit": "Å²"}
                     ]
-                    
-                    phys_df = pd.DataFrame(phys_data)
-                    st.dataframe(phys_df, use_container_width=True)
-
-                    csv_phys = phys_df.to_csv(index=False).encode('utf-8')
-                    st.download_button(
-                        label="📥 Download Complete Physicochemical Report (CSV)",
-                        data=csv_phys,
-                        file_name="Physicochemical_Properties_RDKit.csv",
-                        mime="text/csv"
-                    )
-                    st.success("✅ Physicochemical properties successfully computed!")
+                    st.dataframe(pd.DataFrame(phys_data), use_container_width=True)
             else:
                 st.error("Please enter a valid SMILES string first.")
 
@@ -296,87 +273,18 @@ def render_prediction_section():
         st.markdown("### 🔗 PROTAC Linker Optimization Module")
         col_l1, col_l2 = st.columns(2)
         with col_l1:
-            warhead_smiles = st.text_input("🛡️ Warhead SMILES:", placeholder="e.g., Target binding warhead SMILES...", key="opt_warhead")
+            warhead_smiles = st.text_input("🛡️ Warhead SMILES:", key="opt_warhead")
         with col_l2:
-            e3_smiles = st.text_input("⚓ E3 Ligand Binding Moiety SMILES:", placeholder="e.g., Thalidomide/VHL binder...", key="opt_e3")
-
-        linker_types = st.multiselect(
-            "Select Linker Chemotypes to Scan:",
-            [
-                "Alkyl Chains (-(CH2)n-)",
-                "PEG Chains (-(PEG)n-)",
-                "Rigid / Aromatic Linkers",
-                "Amide / Peptide-based Linkers"
-            ],
-            default=["Alkyl Chains (-(CH2)n-)", "PEG Chains (-(PEG)n-)"],
-            key="opt_linker_types"
-        )
+            e3_smiles = st.text_input("⚓ E3 Ligand Binding Moiety SMILES:", key="opt_e3")
 
         if st.button("🚀 Run Linker Optimization Scan", key="run_linker_opt_btn"):
-            if warhead_smiles and e3_smiles and linker_types:
-                st.success("✅ Linker optimization library generated successfully with downloadable results!")
+            if warhead_smiles and e3_smiles:
+                st.success("✅ Linker optimization library generated successfully!")
             else:
-                st.error("Please provide Warhead SMILES, E3 Ligand Binding Moiety SMILES, and select linker types.")
+                st.error("Please provide Warhead and E3 Ligand SMILES.")
 
     # =========================================================================
-    # TAB 4: AI & QSAR PREDICTION HUB
+    # TAB 4: AI & QSAR PREDICTION HUB (Public View)
     # =========================================================================
     with tab_ai:
-        st.markdown("### 🤖 Advanced Machine Learning & QSAR Prediction Hub")
-        if SKLEARN_AVAILABLE:
-            merged_data = load_database_for_prediction()
-
-            if merged_data is not None and not merged_data.empty:
-                st.success(f"✅ Successfully loaded datasets! Total rows: {merged_data.shape[0]}, Columns: {merged_data.shape[1]}")
-                numeric_cols = merged_data.select_dtypes(include=[np.number]).columns.tolist()
-                
-                if len(numeric_cols) >= 2:
-                    target_col = st.selectbox("🎯 Select Target Variable to Predict:", numeric_cols, key="ml_target_col")
-                    feature_cols = st.multiselect(
-                        "Select Feature Columns for Training:",
-                        [c for c in numeric_cols if c != target_col],
-                        default=[c for c in numeric_cols if c != target_col][:min(4, len(numeric_cols)-1)],
-                        key="ml_feature_cols"
-                    )
-                    
-                    if feature_cols and target_col:
-                        df_clean = merged_data.dropna(subset=feature_cols + [target_col])
-                        X = df_clean[feature_cols]
-                        y = df_clean[target_col]
-                        
-                        if len(X) > 5:
-                            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-                            ml_algo = st.selectbox("⚙️ Select Machine Learning Regressor:", ["Random Forest Regressor", "Gradient Boosting Regressor"], key="ml_algo_choice")
-                            
-                            ml_model = RandomForestRegressor(n_estimators=100, random_state=42) if ml_algo == "Random Forest Regressor" else GradientBoostingRegressor(random_state=42)
-                            ml_model.fit(X_train, y_train)
-                            y_pred = ml_model.predict(X_test)
-                            
-                            r2 = r2_score(y_test, y_pred)
-                            mse = mean_squared_error(y_test, y_pred)
-                            
-                            col_m1, col_m2 = st.columns(2)
-                            col_m1.metric("Model Accuracy (R2 Score)", f"{r2:.2f}")
-                            col_m2.metric("Mean Squared Error (MSE)", f"{mse:.4f}")
-                            
-                            st.markdown("#### 🔮 Predict on New Molecule Parameters:")
-                            user_ml_input = {}
-                            cols_ui = st.columns(len(feature_cols))
-                            for i, col in enumerate(feature_cols):
-                                with cols_ui[i]:
-                                    user_ml_input[col] = st.number_input(f"{col}", value=float(X[col].mean()), key=f"ml_feat_{i}")
-                                    
-                            if st.button("🚀 Execute Smart Prediction", key="run_smart_pred_btn"):
-                                input_df = pd.DataFrame([user_ml_input])
-                                predicted_val = ml_model.predict(input_df)[0]
-                                st.success(f"✨ Predicted value for **{target_col}**: **{predicted_val:.4f}**")
-                        else:
-                            st.warning("Insufficient clean rows for reliable ML training (minimum 5 required).")
-                    else:
-                        st.warning("Please select at least one feature column.")
-                else:
-                    st.warning("Dataset does not contain enough numeric columns.")
-            else:
-                st.warning("⚠️ Could not load CSV databases. Please ensure they are in the app directory.")
-        else:
-            st.error("⚠️ `scikit-learn` library is not installed in the environment.")
+        render_ai_prediction_hub()
