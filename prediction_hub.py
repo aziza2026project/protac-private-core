@@ -8,6 +8,7 @@ try:
     from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
     from sklearn.model_selection import train_test_split
     from sklearn.metrics import mean_squared_error, r2_score
+    from sklearn.preprocessing import StandardScaler
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
@@ -23,6 +24,7 @@ except ImportError:
 
 @st.cache_data
 def load_database_for_prediction():
+    """Loads and merges chemical datasets for QSAR modeling and property prediction."""
     try:
         protacs_df = pd.read_csv("PROTACS.csv") if os.path.exists("PROTACS.csv") else pd.DataFrame()
         main_df = pd.read_csv("database.csv") if os.path.exists("database.csv") else pd.DataFrame()
@@ -46,7 +48,7 @@ def load_database_for_prediction():
 
 
 def render_ai_prediction_hub():
-    """Renders exclusively the private AI & QSAR Prediction Hub for developer mode."""
+    """Renders exclusively the private AI & QSAR Prediction Hub for developer mode with advanced scaling and data sanitization."""
     st.markdown("### 🤖 Advanced Machine Learning & QSAR Prediction Hub (Developer Mode)")
     if SKLEARN_AVAILABLE:
         merged_data = load_database_for_prediction()
@@ -65,7 +67,7 @@ def render_ai_prediction_hub():
             if len(numeric_cols) >= 2:
                 default_target_idx = 0
                 for idx, col in enumerate(numeric_cols):
-                    if any(kw in col.lower() for kw in ["ic50", "score", "affinity", "activity", "pIC50"]):
+                    if any(kw in col.lower() for kw in ["ic50", "score", "affinity", "activity", "pic50"]):
                         default_target_idx = idx
                         break
 
@@ -81,14 +83,20 @@ def render_ai_prediction_hub():
                 
                 if feature_cols and target_col:
                     df_clean = merged_data.dropna(subset=feature_cols + [target_col])
-                    X = df_clean[feature_cols]
-                    y = df_clean[target_col]
                     
-                    if len(X) > 5:
-                        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+                    if len(df_clean) > 5:
+                        X = df_clean[feature_cols]
+                        y = df_clean[target_col]
+                        
+                        # Apply Feature Scaling for better model stability and performance
+                        scaler = StandardScaler()
+                        X_scaled = scaler.fit_transform(X)
+                        X_scaled_df = pd.DataFrame(X_scaled, columns=feature_cols)
+                        
+                        X_train, X_test, y_train, y_test = train_test_split(X_scaled_df, y, test_size=0.2, random_state=42)
                         ml_algo = st.selectbox("⚙️ Select Machine Learning Regressor:", ["Random Forest Regressor", "Gradient Boosting Regressor"], key="ml_algo_choice")
                         
-                        ml_model = RandomForestRegressor(n_estimators=100, random_state=42) if ml_algo == "Random Forest Regressor" else GradientBoostingRegressor(random_state=42)
+                        ml_model = RandomForestRegressor(n_estimators=150, random_state=42) if ml_algo == "Random Forest Regressor" else GradientBoostingRegressor(random_state=42)
                         ml_model.fit(X_train, y_train)
                         y_pred = ml_model.predict(X_test)
                         
@@ -108,7 +116,8 @@ def render_ai_prediction_hub():
                                 
                         if st.button("🚀 Execute Smart Prediction", key="run_smart_pred_btn"):
                             input_df = pd.DataFrame([user_ml_input])
-                            predicted_val = ml_model.predict(input_df)[0]
+                            input_scaled = scaler.transform(input_df)
+                            predicted_val = ml_model.predict(input_scaled)[0]
                             st.success(f"✨ Predicted value for **{target_col}**: **{predicted_val:.4f}**")
                     else:
                         st.warning("Insufficient clean rows for reliable ML training (minimum 5 required).")
@@ -123,10 +132,10 @@ def render_ai_prediction_hub():
 
 
 def render_prediction_section():
+    """Renders the main PROTAC prediction and analysis suite."""
     st.subheader("🧬 PROTAC In-Silico Platform & Advanced Research Hub")
     st.markdown("Welcome to your professional computational suite. Choose a module below:")
 
-    # Only 3 tabs for normal users (Docking, Analysis, Linker Optimization)
     tab_docking, tab_analysis, tab_linker = st.tabs([
         "🔬 1. Molecular Docking Module",
         "📊 2. Biological & Chemical Analysis",
