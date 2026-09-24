@@ -13,22 +13,33 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS for gorgeous scientific styling & custom button colors
+# Custom CSS for perfect alignment, smaller balanced headers, and sleek styling
 st.markdown("""
     <style>
+    /* Styling the buttons */
     .stButton>button {
         background-color: #1f4e78;
         color: white;
         border-radius: 6px;
         font-weight: 600;
         border: none;
+        width: 100%;
+        padding: 0.5rem;
     }
     .stButton>button:hover {
         background-color: #16385c;
         color: white;
     }
-    h3 {
+    
+    /* Balanced headers for the 3 main cards */
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 700;
         color: #1f4e78;
+        margin-bottom: 1rem;
+        min-height: 3rem;
+        display: flex;
+        align-items: center;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -57,10 +68,8 @@ with st.sidebar.expander("⚙️ Developer & AI Hub Access"):
     dev_password = st.text_input("Password:", type="password", key="sidebar_dev_pass")
     CORRECT_PASSWORD = "aziza_protac_2026"
     
-    # Store developer state in session_state so it persists properly across pages
     if dev_password == CORRECT_PASSWORD:
         st.session_state.is_developer = True
-        st.sidebar.success("Access Granted!")
     else:
         if dev_password != "":
             st.sidebar.error("Incorrect Password")
@@ -92,24 +101,25 @@ st.markdown("---")
 def render_home_page():
     st.markdown("## 🌟 Welcome to PROTAC Research Hub")
     st.markdown("Choose a section below to get started with your research, design, and collaboration workflow:")
+    st.markdown("")
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("### 💳 Subscription Plans")
-        if st.button("Open Subscriptions", use_container_width=True, key="btn_sub"):
+        st.markdown('<div class="card-title">💳 Subscription Plans</div>', unsafe_allow_html=True)
+        if st.button("Open Subscriptions", key="btn_sub"):
             st.session_state.active_page = "subscription"
             st.rerun()
             
     with col2:
-        st.markdown("### 🔬 Prediction Tool")
-        if st.button("Open Prediction Tool", use_container_width=True, key="btn_pred"):
+        st.markdown('<div class="card-title">🔬 Prediction Tool</div>', unsafe_allow_html=True)
+        if st.button("Open Prediction Tool", key="btn_pred"):
             st.session_state.active_page = "prediction"
             st.rerun()
             
     with col3:
-        st.markdown("### 🤝 Consultations & Collaboration")
-        if st.button("Open Consultations", use_container_width=True, key="btn_serv"):
+        st.markdown('<div class="card-title">🤝 Consultations & Collaboration</div>', unsafe_allow_html=True)
+        if st.button("Open Consultations", key="btn_serv"):
             st.session_state.active_page = "consultations"
             st.rerun()
 
@@ -165,7 +175,6 @@ elif st.session_state.active_page == "prediction":
     is_allowed = check_email_access()
     if is_allowed:
         render_prediction_section()
-        # AI Hub inside Prediction section ONLY if developer mode is active
         if is_developer:
             st.markdown("---")
             render_ai_prediction_hub()
