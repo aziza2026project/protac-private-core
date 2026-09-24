@@ -107,16 +107,16 @@ def render_qrcode_page():
   with col2:
     st.markdown("### 👁️ Live Preview")
     st.image(byte_im, width=220)
-
-
 # =========================================================================
 # MAIN APP ROUTING
 # =========================================================================
 if unlock_ai:
+    # If password is correct, override everything and show the AI Hub in the main view
     st.markdown("---")
     st.markdown("## 🤖 Restricted Area: AI & QSAR Prediction Hub")
     render_prediction_section()
 else:
+    # Normal user navigation
     if app_mode == "Prediction Tool":
       is_allowed = check_email_access()
       if is_allowed:
@@ -131,3 +131,4 @@ else:
 
     elif app_mode == "📱 App QR Code":
       render_qrcode_page()
+
