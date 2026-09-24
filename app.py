@@ -21,23 +21,6 @@ st.markdown(
 
 st.sidebar.title("📌 Navigation Menu")
 
-# Navigation options
-nav_options = [
-    "Prediction Tool",
-    "Subscription Plans",
-    "Consultations & Collaboration",
-    "📱 App QR Code",
-]
-
-app_mode = st.sidebar.selectbox("Choose Section:", nav_options)
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("**Developer:** Aziza Mnasri (PhD)")
-st.sidebar.markdown(
-    "**Profile:** Independent Researcher (Organic Chemistry & Computational "
-    "Drug Discovery)"
-)
-
 # =========================================================================
 # SECURE DEVELOPER ACCESS (Hidden in Sidebar Expander)
 # =========================================================================
@@ -54,6 +37,26 @@ with st.sidebar.expander("⚙️ Developer & AI Hub Access"):
         if dev_password != "":
             st.sidebar.error("Incorrect password")
         unlock_ai = False
+
+# Build navigation options dynamically based on developer access
+nav_options = [
+    "Prediction Tool",
+    "Subscription Plans",
+    "Consultations & Collaboration",
+    "📱 App QR Code",
+]
+
+if unlock_ai:
+    nav_options.insert(1, "🤖 AI & QSAR Prediction Hub (Developer)")
+
+app_mode = st.sidebar.selectbox("Choose Section:", nav_options)
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("**Developer:** Aziza Mnasri (PhD)")
+st.sidebar.markdown(
+    "**Profile:** Independent Researcher (Organic Chemistry & Computational "
+    "Drug Discovery)"
+)
 
 
 @st.cache_data
@@ -115,20 +118,19 @@ def render_qrcode_page():
 # =========================================================================
 st.markdown("---")
 
-# If developer password is correct, show AI Hub. Otherwise, show normal app navigation.
-if unlock_ai:
+if app_mode == "Prediction Tool":
+    is_allowed = check_email_access()
+    if is_allowed:
+        render_prediction_section()
+
+elif unlock_ai and app_mode == "🤖 AI & QSAR Prediction Hub (Developer)":
     render_ai_prediction_hub()
-else:
-    if app_mode == "Prediction Tool":
-        is_allowed = check_email_access()
-        if is_allowed:
-            render_prediction_section()
 
-    elif app_mode == "Subscription Plans":
-        render_subscription_section()
+elif app_mode == "Subscription Plans":
+    render_subscription_section()
 
-    elif app_mode == "Consultations & Collaboration":
-        render_services_section()
+elif app_mode == "Consultations & Collaboration":
+    render_services_section()
 
-    elif app_mode == "📱 App QR Code":
-        render_qrcode_page()
+elif app_mode == "📱 App QR Code":
+    render_qrcode_page()
