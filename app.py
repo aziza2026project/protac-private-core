@@ -27,6 +27,7 @@ app_mode = st.sidebar.selectbox(
         "Subscription Plans",
         "Consultations & Collaboration",
         "📱 App QR Code",
+        "🤖 Developer AI Hub (Protected)",
     ],
 )
 
@@ -38,93 +39,13 @@ st.sidebar.markdown(
 )
 
 # =========================================================================
-# SECURE DEVELOPER ACCESS (Hidden in Sidebar Expander)
-# =========================================================================
-st.sidebar.markdown("---")
-with st.sidebar.expander("⚙️ Developer & AI Hub Access"):
-    dev_password = st.text_input("Enter Password:", type="password", key="sidebar_dev_pass")
-    CORRECT_PASSWORD = "aziza_protac_2026"  # You can change this password anytime
-    
-    if dev_password == CORRECT_PASSWORD:
-        st.success("Access Granted!")
-        unlock_ai = True
-    else:
-        if dev_password != "":
-            st.error("Incorrect password")
-        unlock_ai = False
-
-
-@st.cache_data
-def get_integrated_protac_database():
-  try:
-    main_df = pd.read_csv("database.csv")
-    warheads_df = pd.read_csv("WARHEADS.csv")
-    linkers_df = pd.read_csv("LINKERS.csv")
-    e3_df = pd.read_csv("E3_LIGANDS.csv")
-
-    merged_df = main_df.merge(
-        warheads_df, on="Warhead_ID", how="left", suffixes=("", "_warhead")
-    )
-    merged_df = merged_df.merge(
-        linkers_df, on="Linker_ID", how="left", suffixes=("", "_linker")
-    )
-    merged_df = merged_df.merge(
-        e3_df, on="E3_Ligand_ID", how="left", suffixes=("", "_e3")
-    )
-    return merged_df
-  except Exception:
-    return None
-
-
-def render_qrcode_page():
-  st.markdown("## 📱 Web App QR Code & Access Hub")
-  st.markdown("---")
-
-  col1, col2 = st.columns([1, 1])
-
-  app_url = "https://protac-app-core.streamlit.app"
-
-  qr = qrcode.QRCode(version=1, box_size=10, border=5)
-  qr.add_data(app_url)
-  qr.make(fit=True)
-  img = qr.make_image(fill_color="black", back_color="white")
-
-  buf = io.BytesIO()
-  img.save(buf, format="PNG")
-  byte_im = buf.getvalue()
-
-  with col1:
-    st.markdown("### 📌 Direct Link")
-    st.info(f"🔗 `{app_url}`")
-    st.markdown("### 📥 Download")
-    st.download_button(
-        label="📥 Download QR Code (PNG)",
-        data=byte_im,
-        file_name="PROTAC_Platform_QRCode.png",
-        mime="image/png",
-    )
-
-  with col2:
-    st.markdown("### 👁️ Live Preview")
-    st.image(byte_im, width=220)
-
-# =========================================================================
 # MAIN APP ROUTING
 # =========================================================================
 if app_mode == "Prediction Tool":
-    # If developer mode is unlocked via password, give direct access to AI Hub or show regular features with AI preference
-    if unlock_ai:
+    is_allowed = check_email_access()
+    if is_allowed:
         st.markdown("---")
-        st.info("🔓 Developer Mode Active: Advanced AI & QSAR Hub Unlocked.")
-        render_ai_prediction_hub()
-        st.markdown("---")
-        st.markdown("### 🔬 Standard Prediction & Docking Modules")
         render_prediction_section()
-    else:
-        is_allowed = check_email_access()
-        if is_allowed:
-            st.markdown("---")
-            render_prediction_section()
 
 elif app_mode == "Subscription Plans":
     render_subscription_section()
@@ -134,3 +55,18 @@ elif app_mode == "Consultations & Collaboration":
 
 elif app_mode == "📱 App QR Code":
     render_qrcode_page()
+
+elif app_mode == "🤖 Developer AI Hub (Protected)":
+    st.markdown("---")
+    st.markdown("### 🔐 Developer Authentication Required")
+    dev_password = st.text_input("Enter Developer Password:", type="password", key="dev_page_pass")
+    CORRECT_PASSWORD = "aziza_protac_2026"
+    
+    if dev_password == CORRECT_PASSWORD:
+        st.success("Access Granted! Welcome to the AI & QSAR Prediction Hub.")
+        st.markdown("---")
+        render_ai_prediction_hub()
+    elif dev_password != "":
+        st.error("Incorrect password. Access denied.")
+    else:
+        st.info("Please enter the password to access the advanced AI prediction features.")
