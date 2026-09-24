@@ -27,7 +27,6 @@ app_mode = st.sidebar.selectbox(
         "Subscription Plans",
         "Consultations & Collaboration",
         "📱 App QR Code",
-        "🤖 AI & QSAR Hub (Developer)",
     ],
 )
 
@@ -37,6 +36,22 @@ st.sidebar.markdown(
     "**Profile:** Independent Researcher (Organic Chemistry & Computational "
     "Drug Discovery)"
 )
+
+# =========================================================================
+# SECURE DEVELOPER ACCESS (Hidden in Sidebar Expander)
+# =========================================================================
+st.sidebar.markdown("---")
+with st.sidebar.expander("⚙️ Developer & AI Hub Access"):
+    dev_password = st.text_input("Enter Password:", type="password", key="sidebar_dev_pass")
+    CORRECT_PASSWORD = "aziza_protac_2026"  # You can change this password anytime
+    
+    if dev_password == CORRECT_PASSWORD:
+        st.success("Access Granted!")
+        unlock_ai = True
+    else:
+        if dev_password != "":
+            st.error("Incorrect password")
+        unlock_ai = False
 
 
 @st.cache_data
@@ -94,40 +109,25 @@ def render_qrcode_page():
     st.image(byte_im, width=220)
 
 
-def render_ai_hub_with_password():
-  st.markdown("## 🤖 AI & QSAR Prediction Hub (Secure Area)")
-  st.markdown("---")
-  
-  # Developer Password Protection
-  dev_password = st.text_input("🔐 Enter Developer Password:", type="password", key="dev_pass_input")
-  
-  # You can change the password below to whatever you prefer
-  CORRECT_PASSWORD = "aziza_protac_2026"
-  
-  if dev_password == CORRECT_PASSWORD:
-      st.success("🔓 Access Granted! Welcome to your private machine learning hub.")
-      st.markdown("---")
-      render_prediction_section() # Or render your QSAR module function here
-  elif dev_password == "":
-      st.info("ℹ️ Please enter your secure developer password to access this advanced machine learning section.")
-  else:
-      st.error("❌ Incorrect password. Access denied.")
-
-
-if app_mode == "Prediction Tool":
-  is_allowed = check_email_access()
-  if is_allowed:
+# =========================================================================
+# MAIN APP ROUTING
+# =========================================================================
+if unlock_ai:
     st.markdown("---")
+    st.markdown("## 🤖 Restricted Area: AI & QSAR Prediction Hub")
     render_prediction_section()
+else:
+    if app_mode == "Prediction Tool":
+      is_allowed = check_email_access()
+      if is_allowed:
+        st.markdown("---")
+        render_prediction_section()
 
-elif app_mode == "Subscription Plans":
-  render_subscription_section()
+    elif app_mode == "Subscription Plans":
+      render_subscription_section()
 
-elif app_mode == "Consultations & Collaboration":
-  render_services_section()
+    elif app_mode == "Consultations & Collaboration":
+      render_services_section()
 
-elif app_mode == "📱 App QR Code":
-  render_qrcode_page()
-
-elif app_mode == "🤖 AI & QSAR Hub (Developer)":
-  render_ai_hub_with_password()
+    elif app_mode == "📱 App QR Code":
+      render_qrcode_page()
