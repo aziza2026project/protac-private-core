@@ -3,7 +3,7 @@ import pandas as pd
 import qrcode
 import streamlit as st
 from auth_checker import check_email_access
-from prediction_hub import render_prediction_section
+from prediction_hub import render_prediction_section, render_ai_prediction_hub
 from services import render_services_section
 from subscription import render_subscription_section
 
@@ -107,6 +107,7 @@ def render_qrcode_page():
   with col2:
     st.markdown("### 👁️ Live Preview")
     st.image(byte_im, width=220)
+
 # =========================================================================
 # MAIN APP ROUTING
 # =========================================================================
