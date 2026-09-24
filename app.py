@@ -111,22 +111,26 @@ def render_qrcode_page():
 # =========================================================================
 # MAIN APP ROUTING
 # =========================================================================
-if unlock_ai:
-    st.markdown("---")
-    # Call only the private AI prediction hub function directly!
-    render_ai_prediction_hub()
-else:
-    if app_mode == "Prediction Tool":
-      is_allowed = check_email_access()
-      if is_allowed:
+if app_mode == "Prediction Tool":
+    # If developer mode is unlocked via password, give direct access to AI Hub or show regular features with AI preference
+    if unlock_ai:
         st.markdown("---")
+        st.info("🔓 Developer Mode Active: Advanced AI & QSAR Hub Unlocked.")
+        render_ai_prediction_hub()
+        st.markdown("---")
+        st.markdown("### 🔬 Standard Prediction & Docking Modules")
         render_prediction_section()
+    else:
+        is_allowed = check_email_access()
+        if is_allowed:
+            st.markdown("---")
+            render_prediction_section()
 
-    elif app_mode == "Subscription Plans":
-      render_subscription_section()
+elif app_mode == "Subscription Plans":
+    render_subscription_section()
 
-    elif app_mode == "Consultations & Collaboration":
-      render_services_section()
+elif app_mode == "Consultations & Collaboration":
+    render_services_section()
 
-    elif app_mode == "📱 App QR Code":
-      render_qrcode_page()
+elif app_mode == "📱 App QR Code":
+    render_qrcode_page()
