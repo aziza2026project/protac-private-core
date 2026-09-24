@@ -38,7 +38,7 @@ st.sidebar.markdown(
 )
 
 # =========================================================================
-# SECURE DEVELOPER ACCESS (Hidden in Sidebar Expander - Only for You)
+# SECURE DEVELOPER ACCESS (Hidden in Sidebar Expander)
 # =========================================================================
 st.sidebar.markdown("---")
 unlock_ai = False
@@ -112,22 +112,23 @@ def render_qrcode_page():
 # =========================================================================
 # MAIN APP ROUTING
 # =========================================================================
+# If developer mode is unlocked via password in the sidebar, show the AI Hub
 if unlock_ai:
     st.markdown("---")
-    # If you enter the password in the sidebar, the AI Hub opens up cleanly here!
     render_ai_prediction_hub()
 else:
+    # Normal navigation for users
     if app_mode == "Prediction Tool":
-      is_allowed = check_email_access()
-      if is_allowed:
-        st.markdown("---")
-        render_prediction_section()
+        is_allowed = check_email_access()
+        if is_allowed:
+            st.markdown("---")
+            render_prediction_section()
 
     elif app_mode == "Subscription Plans":
-      render_subscription_section()
+        render_subscription_section()
 
     elif app_mode == "Consultations & Collaboration":
-      render_services_section()
+        render_services_section()
 
     elif app_mode == "📱 App QR Code":
-      render_qrcode_page()
+        render_qrcode_page()
