@@ -15,8 +15,8 @@ st.set_page_config(
 
 st.title("🧬 PROTAC Research & Prediction Platform")
 st.markdown(
-    "Welcome to the professional platform for PROTAC design, physicochemical"
-    " property calculation, and scientific collaboration."
+    "Welcome to the professional platform for PROTAC design, physicochemical "
+    "property calculation, and scientific collaboration."
 )
 
 st.sidebar.title("📌 Navigation Menu")
@@ -27,14 +27,15 @@ app_mode = st.sidebar.selectbox(
         "Subscription Plans",
         "Consultations & Collaboration",
         "📱 App QR Code",
+        "🤖 AI & QSAR Hub (Developer)",
     ],
 )
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Developer:** Aziza Mnasri (PhD)")
 st.sidebar.markdown(
-    "**Profile:** Independent Researcher (Organic Chemistry & Computational"
-    " Drug Discovery)"
+    "**Profile:** Independent Researcher (Organic Chemistry & Computational "
+    "Drug Discovery)"
 )
 
 
@@ -93,6 +94,26 @@ def render_qrcode_page():
     st.image(byte_im, width=220)
 
 
+def render_ai_hub_with_password():
+  st.markdown("## 🤖 AI & QSAR Prediction Hub (Secure Area)")
+  st.markdown("---")
+  
+  # Developer Password Protection
+  dev_password = st.text_input("🔐 Enter Developer Password:", type="password", key="dev_pass_input")
+  
+  # You can change the password below to whatever you prefer
+  CORRECT_PASSWORD = "aziza_protac_2026"
+  
+  if dev_password == CORRECT_PASSWORD:
+      st.success("🔓 Access Granted! Welcome to your private machine learning hub.")
+      st.markdown("---")
+      render_prediction_section() # Or render your QSAR module function here
+  elif dev_password == "":
+      st.info("ℹ️ Please enter your secure developer password to access this advanced machine learning section.")
+  else:
+      st.error("❌ Incorrect password. Access denied.")
+
+
 if app_mode == "Prediction Tool":
   is_allowed = check_email_access()
   if is_allowed:
@@ -107,3 +128,6 @@ elif app_mode == "Consultations & Collaboration":
 
 elif app_mode == "📱 App QR Code":
   render_qrcode_page()
+
+elif app_mode == "🤖 AI & QSAR Hub (Developer)":
+  render_ai_hub_with_password()
