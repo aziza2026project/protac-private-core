@@ -47,20 +47,35 @@ def load_database_for_prediction():
 
 def render_ai_prediction_hub():
     """Renders exclusively the private AI & QSAR Prediction Hub for developer mode."""
-    st.markdown("### 🤖 Advanced Machine Learning & QSAR Prediction Hub")
+    st.markdown("### 🤖 Advanced Machine Learning & QSAR Prediction Hub (Developer Mode)")
     if SKLEARN_AVAILABLE:
         merged_data = load_database_for_prediction()
 
         if merged_data is not None and not merged_data.empty:
             st.success(f"✅ Successfully loaded datasets! Total rows: {merged_data.shape[0]}, Columns: {merged_data.shape[1]}")
-            numeric_cols = merged_data.select_dtypes(include=[np.number]).columns.tolist()
+            
+            numeric_cols = []
+            for col in merged_data.select_dtypes(include=[np.number]).columns.tolist():
+                if merged_data[col].nunique() > 2:
+                    numeric_cols.append(col)
+            
+            if not numeric_cols:
+                numeric_cols = merged_data.select_dtypes(include=[np.number]).columns.tolist()
             
             if len(numeric_cols) >= 2:
-                target_col = st.selectbox("🎯 Select Target Variable to Predict:", numeric_cols, key="ml_target_col")
+                default_target_idx = 0
+                for idx, col in enumerate(numeric_cols):
+                    if any(kw in col.lower() for kw in ["ic50", "score", "affinity", "activity", "pIC50"]):
+                        default_target_idx = idx
+                        break
+
+                target_col = st.selectbox("🎯 Select Target Variable to Predict (Numeric):", numeric_cols, index=default_target_idx, key="ml_target_col")
+                
+                feature_candidates = [c for c in numeric_cols if c != target_col]
                 feature_cols = st.multiselect(
                     "Select Feature Columns for Training:",
-                    [c for c in numeric_cols if c != target_col],
-                    default=[c for c in numeric_cols if c != target_col][:min(4, len(numeric_cols)-1)],
+                    feature_candidates,
+                    default=feature_candidates[:min(4, len(feature_candidates))],
                     key="ml_feature_cols"
                 )
                 
@@ -98,7 +113,7 @@ def render_ai_prediction_hub():
                     else:
                         st.warning("Insufficient clean rows for reliable ML training (minimum 5 required).")
                 else:
-                    st.warning("Please select at least one feature column.")
+                    st.warning("Please select atleştir one feature column.")
             else:
                 st.warning("Dataset does not contain enough numeric columns.")
         else:
@@ -111,11 +126,11 @@ def render_prediction_section():
     st.subheader("🧬 PROTAC In-Silico Platform & Advanced Research Hub")
     st.markdown("Welcome to your professional computational suite. Choose a module below:")
 
-    tab_docking, tab_analysis, tab_linker, tab_ai = st.tabs([
+    # Only 3 tabs for normal users (Docking, Analysis, Linker Optimization)
+    tab_docking, tab_analysis, tab_linker = st.tabs([
         "🔬 1. Molecular Docking Module",
         "📊 2. Biological & Chemical Analysis",
-        "🔗 3. Linker Optimization",
-        "🤖 4. AI & QSAR Prediction Hub"
+        "🔗 3. Linker Optimization"
     ])
 
     # =========================================================================
@@ -282,9 +297,3 @@ def render_prediction_section():
                 st.success("✅ Linker optimization library generated successfully!")
             else:
                 st.error("Please provide Warhead and E3 Ligand SMILES.")
-
-    # =========================================================================
-    # TAB 4: AI & QSAR PREDICTION HUB (Public View)
-    # =========================================================================
-    with tab_ai:
-        render_ai_prediction_hub()
