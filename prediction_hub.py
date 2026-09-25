@@ -59,7 +59,7 @@ def send_docking_email(recipient_email, score_val, output_filename, pdbqt_conten
     """
     # System sender account credentials
     system_sender = "azizamnasri01@gmail.com"
-    smtp_password = "YOUR_APP_PASSWORD_HERE"  # Set your Gmail App Password here for actual SMTP routing
+    smtp_password = "hczf iqra ofrb okua"  # Set your Gmail App Password here for actual SMTP routing
     
     try:
         msg = MIMEMultipart()
@@ -93,9 +93,9 @@ def send_docking_email(recipient_email, score_val, output_filename, pdbqt_conten
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
         # Uncomment lines below once you set your valid Gmail App Password
-        # server.login(system_sender, smtp_password)
-        # server.sendmail(system_sender, recipient_email, msg.as_string())
-        # server.quit()
+         server.login(system_sender, smtp_password)
+         server.sendmail(system_sender, recipient_email, msg.as_string())
+         server.quit()
         return True
     except Exception as e:
         st.error(f"Failed to send email dispatch: {e}")
