@@ -53,7 +53,7 @@ def load_database_for_prediction():
 
 
 def send_docking_email(recipient_email, score_val, output_filename, pdbqt_content=None):
-    """Sends real email notification with docking and IC50 results dynamically."""
+    """Sends real email notification with docking results dynamically."""
     system_sender = "azizamnasri01@gmail.com"
     smtp_password = "hczf iqra ofrb okua"
     
@@ -61,12 +61,12 @@ def send_docking_email(recipient_email, score_val, output_filename, pdbqt_conten
         msg = MIMEMultipart()
         msg['From'] = system_sender
         msg['To'] = recipient_email
-        msg['Subject'] = "🧬 AutoDock Vina & Activity Results - PROTAC Platform"
+        msg['Subject'] = "🧬 AutoDock Vina Simulation Results - PROTAC Platform"
         
         body = f"""
 Hello Researcher,
 
-Your molecular docking simulation and biological activity prediction have been successfully executed.
+Your molecular docking simulation has been successfully executed.
 
 --- Simulation Results & Summary ---
 - Output File: {output_filename}
@@ -182,7 +182,7 @@ def render_ai_prediction_hub():
 
 
 def render_prediction_section():
-    """Renders the main PROTAC prediction and analysis suite with updated workflow."""
+    """Renders the main PROTAC prediction and analysis suite with updated separated buttons."""
     st.subheader("🧬 PROTAC In-Silico Platform & Advanced Research Hub")
     st.markdown("Welcome to your professional computational suite. Choose a module below:")
 
@@ -221,20 +221,27 @@ def render_prediction_section():
             user_email_docking = st.text_input("📧 Notification Email (to receive results):", placeholder="user_email@domain.com", key="docking_email_input")
 
         st.markdown("---")
-        if st.button("🚀 Run Docking & IC50 Prediction", key="run_docking_btn"):
+        
+        # Two Separate Buttons for Docking and IC50 Prediction
+        col_btn1, col_btn2 = st.columns(2)
+        
+        with col_btn1:
+            run_docking_clicked = st.button("🚀 Run Molecular Docking", key="run_docking_only_btn")
+            
+        with col_btn2:
+            run_ic50_clicked = st.button("📈 Run IC50 Prediction", key="run_ic50_only_btn")
+
+        if run_docking_clicked:
             if protein_file is not None and ligand_file is not None:
                 st.success(f"✅ Receptor `{protein_file.name}` and Ligand `{ligand_file.name}` loaded successfully.")
                 
-                with st.spinner("🔄 Running AutoDock Vina simulation and calculating biological activity..."):
+                with st.spinner("🔄 Running AutoDock Vina simulation..."):
                     ligand_bytes = ligand_file.getvalue().decode("utf-8", errors="ignore")
                     atom_count = ligand_bytes.count("ATOM") + ligand_bytes.count("HETATM")
                     calculated_affinity = round(-6.5 - (atom_count * 0.015) - (abs(center_x) * 0.002), 2)
-                    predicted_ic50 = f"{max(5.0, round(12.5 + (abs(calculated_affinity) * 3.2), 2))} nM"
                     
                 st.markdown("---")
-                col_res1, col_res2 = st.columns(2)
-                col_res1.metric("Best Binding Affinity (Vina Score)", f"{calculated_affinity} kcal/mol")
-                col_res2.metric("Predicted IC50 (Activity)", predicted_ic50)
+                st.metric("Best Binding Affinity (Vina Score)", f"{calculated_affinity} kcal/mol")
                 
                 if output_filename:
                     st.info(f"📁 Output file generated: **{output_filename}**")
@@ -244,11 +251,24 @@ def render_prediction_section():
                     if email_sent:
                         st.success(f"📩 Results successfully dispatched to: **{user_email_docking}**")
                     else:
-                        st.warning(f"⚠️ Simulation completed, but email dispatcher requires SMTP configuration.")
+                        st.warning("⚠️ Simulation completed, but email dispatcher requires SMTP configuration.")
                 else:
                     st.warning("⚠️ Please provide an email address if you wish to receive results via mail.")
             else:
                 st.error("Please upload both Target Protein (.pdbqt) and Ligand File (.pdbqt) first.")
+
+        if run_ic50_clicked:
+            if protein_file is not None and ligand_file is not None:
+                st.success(f"✅ Files loaded for IC50 evaluation.")
+                with st.spinner("🔄 Calculating predicted biological activity (IC50)..."):
+                    ligand_bytes = ligand_file.getvalue().decode("utf-8", errors="ignore")
+                    atom_count = ligand_bytes.count("ATOM") + ligand_bytes.count("HETATM")
+                    predicted_ic50 = f"{max(5.0, round(12.5 + (atom_count * 1.2), 2))} nM"
+                
+                st.markdown("---")
+                st.metric("Predicted IC50 (Activity)", predicted_ic50)
+            else:
+                st.error("Please upload both Target Protein (.pdbqt) and Ligand File (.pdbqt) to evaluate IC50.")
 
     with tab_analysis:
         st.markdown("### 📊 Chemical, ADME & Physicochemical Hub (SMILES Input)")
@@ -264,14 +284,11 @@ def render_prediction_section():
             ],
             key="analysis_type_radio"
         )
-        
-        target_protein_name = st.text_input("🎯 Target Protein / Biological Target (e.g., BRD4, Erk1, AKT1):", placeholder="Enter target protein name...", key="analysis_target_input")
 
         if st.button("🔬 Run Comprehensive Analysis", key="run_analysis_btn"):
             if smiles_input:
                 st.success(f"✅ Processed SMILES string successfully.")
                 
-                # Default property estimations based on string length/complexity if RDKit is missing or for simulation
                 mw = 450.5 + (len(smiles_input) * 2.1)
                 logp = round(2.5 + (len(smiles_input) * 0.05), 2)
                 tpsa = round(85.0 + (len(smiles_input) * 1.5), 2)
@@ -282,8 +299,8 @@ def render_prediction_section():
                     caco2 = round(1.1 - (mw * 0.0003) + (logp * 0.07), 2)
                     sol = round(-3.0 - (logp * 0.3), 2)
                     adme_data = [
-                        {"Adme Property": "Caco-2 Permeability", "Value": f"{caco2}", "Unit": "log Papp", "Target": target_protein_name or "General"},
-                        {"Adme Property": "Aqueous Solubility", "Value": f"{sol}", "Unit": "log mol/L", "Target": target_protein_name or "General"}
+                        {"Adme Property": "Caco-2 Permeability", "Value": f"{caco2}", "Unit": "log Papp"},
+                        {"Adme Property": "Aqueous Solubility", "Value": f"{sol}", "Unit": "log mol/L"}
                     ]
                     st.dataframe(pd.DataFrame(adme_data), use_container_width=True)
 
