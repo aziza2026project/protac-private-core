@@ -48,7 +48,7 @@ def load_database_for_prediction():
 
 
 def render_ai_prediction_hub():
-    """Renders exclusively the private AI & QSAR Prediction Hub for developer mode with advanced scaling and data sanitization."""
+    """Renders exclusively the private AI & QSAR Prediction Hub for developer mode with fixed dynamic inputs."""
     st.markdown("### 🤖 Advanced Machine Learning & QSAR Prediction Hub (Developer Mode)")
     if SKLEARN_AVAILABLE:
         merged_data = load_database_for_prediction()
@@ -112,10 +112,12 @@ def render_ai_prediction_hub():
                         cols_ui = st.columns(len(feature_cols))
                         for i, col in enumerate(feature_cols):
                             with cols_ui[i]:
-                                user_ml_input[col] = st.number_input(f"{col}", value=float(X[col].mean()), key=f"ml_feat_{i}")
+                                default_val = float(X[col].mean()) if not X[col].empty else 0.0
+                                user_ml_input[col] = st.number_input(f"{col}", value=default_val, format="%.4f", key=f"ml_feat_{i}")
                                 
                         if st.button("🚀 Execute Smart Prediction", key="run_smart_pred_btn"):
-                            input_df = pd.DataFrame([user_ml_input])
+                            # Map user inputs precisely to match trained feature order and scale correctly
+                            input_df = pd.DataFrame([user_ml_input], columns=feature_cols)
                             input_scaled = scaler.transform(input_df)
                             predicted_val = ml_model.predict(input_scaled)[0]
                             st.success(f"✨ Predicted value for **{target_col}**: **{predicted_val:.4f}**")
