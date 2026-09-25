@@ -398,13 +398,3 @@ def render_prediction_section():
                     st.warning("⚠️ Please provide an email address if you wish to receive the linker report via mail.")
             else:
                 st.error("Please upload Target Protein (.pdbqt), provide Warhead SMILES, E3 Ligand SMILES, and Linker SMILES list.")
-
-# Main entry point for the app execution
-if __name__ == "__main__":
-    st.sidebar.title("⚙️ Navigation Menu")
-    app_mode = st.sidebar.selectbox("Choose Mode:", ["Research Platform", "Developer AI Hub"], key="sidebar_app_mode")
-    
-    if app_mode == "Research Platform":
-        render_prediction_section()
-    else:
-        render_ai_prediction_hub()
