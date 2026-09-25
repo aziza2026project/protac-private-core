@@ -12,6 +12,16 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 import py3Dmol
 
+# Safe import of machine learning libraries
+try:
+    from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import mean_squared_error, r2_score
+    from sklearn.preprocessing import StandardScaler
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
+
 st.set_page_config(
     page_title="PROTAC Research & Prediction Platform",
     page_icon="🧬",
@@ -43,6 +53,30 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
+@st.cache_data
+def load_database_for_prediction():
+    """Loads and merges chemical datasets for QSAR modeling and property prediction."""
+    try:
+        protacs_df = pd.read_csv("PROTACS.csv") if os.path.exists("PROTACS.csv") else pd.DataFrame()
+        main_df = pd.read_csv("database.csv") if os.path.exists("database.csv") else pd.DataFrame()
+        warheads_df = pd.read_csv("WARHEADS.csv") if os.path.exists("WARHEADS.csv") else pd.DataFrame()
+        linkers_df = pd.read_csv("LINKERS.csv") if os.path.exists("LINKERS.csv") else pd.DataFrame()
+        e3_df = pd.read_csv("E3_LIGANDS.csv") if os.path.exists("E3_LIGANDS.csv") else pd.DataFrame()
+
+        merged_df = protacs_df.copy()
+        if not main_df.empty and "Compound_ID" in merged_df.columns and "Compound_ID" in main_df.columns:
+            merged_df = merged_df.merge(main_df, on="Compound_ID", how="left", suffixes=("", "_main"))
+        if not warheads_df.empty and "Warhead_ID" in merged_df.columns and "Warhead_ID" in warheads_df.columns:
+            merged_df = merged_df.merge(warheads_df, on="Warhead_ID", how="left", suffixes=("", "_warhead"))
+        if not linkers_df.empty and "Linker_ID" in merged_df.columns and "Linker_ID" in linkers_df.columns:
+            merged_df = merged_df.merge(linkers_df, on="Linker_ID", how="left", suffixes=("", "_linker"))
+        if not e3_df.empty and "E3_Ligand_ID" in merged_df.columns and "E3_Ligand_ID" in e3_df.columns:
+            merged_df = merged_df.merge(e3_df, on="E3_Ligand_ID", how="left", suffixes=("", "_e3"))
+            
+        return merged_df if not merged_df.empty else (main_df if not main_df.empty else None)
+    except Exception:
+        return None
 
 def render_molecule_3d(smiles, width=700, height=350):
     try:
@@ -99,6 +133,8 @@ def send_formatted_html_email(recipient_email, result_title, html_content, outpu
 def main():
     if 'current_page' not in st.session_state:
         st.session_state['current_page'] = "Home Page"
+    if 'dev_authenticated' not in st.session_state:
+        st.session_state['dev_authenticated'] = False
 
     st.sidebar.markdown("### 🧬 Quick Navigation")
     
@@ -107,13 +143,16 @@ def main():
     if st.sidebar.button("📱 View App QR Code", key="nav_qr"):
         st.session_state['current_page'] = "QR Code"
 
+    # خانة إدخال كلمة السر الخاصة بالمطور لتحل محل الأزرار القديمة
     with st.sidebar.expander("⚙️ Developer & AI Hub Access"):
-        if st.button("🔬 Prediction Tool", key="nav_pred_sidebar"):
-            st.session_state['current_page'] = "Prediction Tool"
-        if st.button("💼 Consultations & Collaboration", key="nav_collab_sidebar"):
-            st.session_state['current_page'] = "Consultations"
-        if st.button("💳 Subscription Plans", key="nav_sub_sidebar"):
-            st.session_state['current_page'] = "Subscriptions"
+        dev_pass = st.text_input("Enter Developer Password:", type="password", key="dev_password_input")
+        if dev_pass == "aziza2026" or dev_pass == "azizamnasri": # يمكنك تعديل الباسورد هنا حسب ما تحبين
+            st.session_state['dev_authenticated'] = True
+            st.success("Access Granted!")
+            if st.button("Open AI & ML Hub", key="nav_ai_hub"):
+                st.session_state['current_page'] = "AI Hub"
+        elif dev_pass:
+            st.error("Incorrect Password")
 
     st.sidebar.markdown("---")
     st.sidebar.markdown("**Developer:** Aziza Mnasri (PhD)")
@@ -178,6 +217,51 @@ def main():
         st.subheader("💼 Consultations & Scientific Collaboration")
         st.markdown("For inquiries regarding dual-target PROTACs, docking score calibrations, and joint research publications.")
         st.info("You can reach out directly via institutional email or collaborative research channels.")
+
+    elif page == "AI Hub" and st.session_state['dev_authenticated']:
+        st.subheader("🤖 Advanced Machine Learning & QSAR Prediction Hub (Developer Mode)")
+        if SKLEARN_AVAILABLE:
+            merged_data = load_database_for_prediction()
+            if merged_data is not None and not merged_data.empty:
+                st.success(f"Successfully loaded datasets! Total rows: {merged_data.shape[0]}")
+                numeric_cols = [col for col in merged_data.select_dtypes(include=[np.number]).columns.tolist() if merged_data[col].nunique() > 2]
+                if len(numeric_cols) >= 2:
+                    target_col = st.selectbox("Select Target Variable (Numeric):", numeric_cols, key="ml_target")
+                    feature_candidates = [c for c in numeric_cols if c != target_col]
+                    feature_cols = st.multiselect("Select Feature Columns:", feature_candidates, default=feature_candidates[:min(4, len(feature_candidates))])
+                    
+                    if feature_cols and target_col:
+                        df_clean = merged_data.dropna(subset=feature_cols + [target_col])
+                        if len(df_clean) > 5:
+                            X = df_clean[feature_cols]
+                            y = df_clean[target_col]
+                            scaler = StandardScaler()
+                            X_scaled = scaler.fit_transform(X)
+                            X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+                            
+                            ml_model = RandomForestRegressor(n_estimators=150, random_state=42)
+                            ml_model.fit(X_train, y_train)
+                            y_pred = ml_model.predict(X_test)
+                            
+                            st.metric("Model Accuracy (R2 Score)", f"{r2_score(y_test, y_pred):.2f}")
+                            
+                            st.markdown("#### Predict on New Parameters:")
+                            user_inputs = {}
+                            cols_ui = st.columns(len(feature_cols))
+                            for i, col in enumerate(feature_cols):
+                                with cols_ui[i]:
+                                    user_inputs[col] = st.number_input(f"{col}", value=float(X[col].mean()), key=f"ml_f_{i}")
+                            
+                            if st.button("Execute Smart Prediction", key="run_ml_pred"):
+                                input_df = pd.DataFrame([user_inputs], columns=feature_cols)
+                                pred_val = ml_model.predict(scaler.transform(input_df))[0]
+                                st.success(f"Predicted value: **{pred_val:.4f}**")
+                        else:
+                            st.warning("Insufficient clean rows for ML training.")
+            else:
+                st.warning("Could not load CSV databases.")
+        else:
+            st.error("scikit-learn not available.")
 
     elif page == "Prediction Tool":
         st.subheader("PROTAC In-Silico Platform & Advanced Research Hub")
@@ -244,7 +328,6 @@ def main():
             
             st.markdown("---")
             col_b1, col_b2 = st.columns(2)
-            
             with col_b1:
                 run_adme_btn = st.button("Evaluate ADME Properties", key="run_adme_btn")
             with col_b2:
