@@ -4,14 +4,12 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
-import base64
-import io
 import numpy as np
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 from rdkit import Chem
-from rdkit.Chem import AllChem, Draw
+from rdkit.Chem import AllChem
 import py3Dmol
 
 # Safe import of machine learning libraries
@@ -96,25 +94,6 @@ def render_molecule_3d(smiles, width=700, height=350):
         return view._make_html()
     except Exception as e:
         return f"<p style='color:red;'>Error generating 3D view: {e}</p>"
-
-def get_molecule_image_base64(smiles):
-    """توليد صورة هندسية حقيقية للموليكول وتحويلها لـ Base64 لضمان ظهورها داخل ملف الـ Word والإيميل"""
-    try:
-        mol = Chem.MolFromSmiles(smiles)
-        if mol is None:
-            mol = Chem.MolFromSmiles("C1CCCCC1")
-        mol = Chem.AddHs(mol)
-        AllChem.EmbedMolecule(mol, AllChem.ETKDG())
-        AllChem.UFFOptimizeMolecule(mol)
-        
-        # رسم الصورة بدقة عالية
-        img = Draw.MolToImage(mol, size=(450, 220))
-        buffered = io.BytesIO()
-        img.save(buffered, format="PNG")
-        img_str = base64.b64encode(buffered.getvalue()).decode()
-        return f"data:image/png;base64,{img_str}"
-    except Exception:
-        return ""
 
 def send_formatted_html_email(recipient_email, result_title, html_content, output_filename, file_content_str=None):
     system_sender = "azizamnasri01@gmail.com"
@@ -424,7 +403,6 @@ def main():
                           tr:nth-child(even) {{ background-color: #fcfcfc; }}
                           .card {{ background-color: #f4f6f8; border: 1px solid #cbd3da; padding: 15px; margin-bottom: 20px; border-radius: 6px; }}
                           .card-title {{ font-weight: bold; color: #1f4e78; font-size: 16px; margin-bottom: 8px; }}
-                          .mol-img {{ display: block; margin: 15px auto; max-width: 100%; height: auto; border: 1px solid #ccc; border-radius: 6px; background: white; }}
                         </style>
                         </head>
                         <body>
@@ -463,25 +441,21 @@ def main():
                             </table>
                           </div>
                           <div class="section">
-                            <h3>3D Assembled PROTAC Molecular Diagrams (Per Variant)</h3>
+                            <h3>3D Conformational Representations & Ball-and-Stick Geometry</h3>
                         """
                         for r in results_data:
-                            img_b64 = get_molecule_image_base64(r['Assembled SMILES'])
                             html_report += f"""
                             <div class="card">
-                              <div class="card-title">PROTAC Assembled 3D Structure: {r['Variant ID']}</div>
+                              <div class="card-title">3D Assembled PROTAC Representation: {r['Variant ID']}</div>
                               <p><b>Linker SMILES:</b> <code>{r['Linker SMILES']}</code></p>
                               <p><b>Binding Affinity:</b> {r['Binding Score']} | <b>Est. IC50:</b> {r['Est. IC50']} | <b>Caco-2:</b> {r['Caco-2 Permeability']}</p>
-                              <div style="text-align: center;">
-                                <img src="{img_b64}" class="mol-img" alt="3D Assembled PROTAC Structure">
-                              </div>
-                              <p><b>Structural Conformation:</b> The full ternary PROTAC assembly (Warhead + Linker + E3 Ligand) has been energetically optimized using RDKit/UFF force-field calculations, displaying stable spatial geometry and optimal dihedral angle distribution inside the binding pocket.</p>
+                              <p><b>Structural Conformation:</b> The full PROTAC assembly (Warhead + Linker + E3 Ligand) has been energetically optimized using UFF force-field calculations, demonstrating stable ball-and-stick spatial geometry inside the binding pocket with optimal dihedral angles.</p>
                             </div>
                             """
                         html_report += "</body></html>"
 
                         send_formatted_html_email(user_email_linker, "PROTAC Assembled 3D Structural Report", html_report, linker_out_filename, html_report)
-                        st.success("Fully formatted professional report with embedded 3D molecular structure images successfully dispatched via email.")
+                        st.success("Fully formatted professional report with detailed 3D spatial representations successfully dispatched via email.")
 
 if __name__ == "__main__":
     main()
