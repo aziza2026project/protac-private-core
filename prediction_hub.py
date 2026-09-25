@@ -354,3 +354,13 @@ def render_prediction_section():
                 st.dataframe(pd.DataFrame(opt_results), use_container_width=True)
             else:
                 st.error("Please provide Warhead and E3 Ligand SMILES.")
+
+# Main entry point for the app execution
+if __name__ == "__main__":
+    st.sidebar.title("⚙️ Navigation Menu")
+    app_mode = st.sidebar.selectbox("Choose Mode:", ["Research Platform", "Developer AI Hub"], key="sidebar_app_mode")
+    
+    if app_mode == "Research Platform":
+        render_prediction_section()
+    else:
+        render_ai_prediction_hub()
