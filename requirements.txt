@@ -9,3 +9,4 @@ seaborn
 Pillow
 requests
 joblib
+py3Dmol
