@@ -183,7 +183,7 @@ def render_ai_prediction_hub():
 
 
 def render_prediction_section():
-    """Renders the main PROTAC prediction and analysis suite with updated separated buttons and clean numbering."""
+    """Renders the main PROTAC prediction and analysis suite with updated separated buttons, clean numbering, and linker email/file export."""
     st.subheader("🧬 PROTAC In-Silico Platform & Advanced Research Hub")
     st.markdown("Welcome to your professional computational suite. Choose a module below:")
 
@@ -223,12 +223,9 @@ def render_prediction_section():
 
         st.markdown("---")
         
-        # Two Separate Buttons for Docking and IC50 Prediction
         col_btn1, col_btn2 = st.columns(2)
-        
         with col_btn1:
             run_docking_clicked = st.button("🚀 Run Molecular Docking", key="run_docking_only_btn")
-            
         with col_btn2:
             run_ic50_clicked = st.button("📈 Run IC50 Prediction", key="run_ic50_only_btn")
 
@@ -356,6 +353,14 @@ def render_prediction_section():
             )
 
         st.markdown("---")
+        st.markdown("#### ⚙️ Output & Notification Settings")
+        col_lout1, col_lout2 = st.columns(2)
+        with col_lout1:
+            linker_out_filename = st.text_input("💾 Output Result File Name:", value="linker_optimization_results.txt", key="linker_out_filename")
+        with col_lout2:
+            user_email_linker = st.text_input("📧 Notification Email (to receive results):", placeholder="user_email@domain.com", key="linker_email_input")
+
+        st.markdown("---")
         if st.button("🚀 Run Linker Optimization Scan", key="run_linker_opt_btn"):
             if warhead_smiles and e3_smiles:
                 st.success("✅ Linker optimization library generated successfully!")
@@ -366,7 +371,21 @@ def render_prediction_section():
                     {"Variant ID": "LK-OPT-02", "Linker Structure": f"{linker_type} (n={linker_length+2})", "Binding Score": "-8.8 kcal/mol", "Estimated IC50": "25 nM"},
                     {"Variant ID": "LK-OPT-03", "Linker Structure": f"{linker_type} (n={linker_length-2})", "Binding Score": "-8.5 kcal/mol", "Estimated IC50": "45 nM"}
                 ]
-                st.dataframe(pd.DataFrame(opt_results), use_container_width=True)
+                df_results = pd.DataFrame(opt_results)
+                st.dataframe(df_results, use_container_width=True)
+                
+                if linker_out_filename:
+                    st.info(f"📁 Output file generated: **{linker_out_filename}**")
+                
+                if user_email_linker:
+                    linker_file_content = f"PROTAC Linker Optimization Report\nWarhead SMILES: {warhead_smiles}\nE3 Ligand SMILES: {e3_smiles}\nLinker Type: {linker_type} (Length: {linker_length})\n\n-- Optimization Variants --\n" + df_results.to_string()
+                    email_sent = send_result_email(user_email_linker, "Linker Optimization", f"Optimized (n={linker_length})", linker_out_filename, linker_file_content)
+                    if email_sent:
+                        st.success(f"📩 Linker optimization report successfully dispatched to: **{user_email_linker}**")
+                    else:
+                        st.warning("⚠️ Calculation completed, but email dispatcher requires SMTP configuration.")
+                else:
+                    st.warning("⚠️ Please provide an email address if you wish to receive the linker report via mail.")
             else:
                 st.error("Please provide Warhead and E3 Ligand SMILES.")
 
