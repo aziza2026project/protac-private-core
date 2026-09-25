@@ -18,7 +18,6 @@ st.set_page_config(
     layout="wide",
 )
 
-# تصميم نظيف وواضح للـ Sidebar والأزرار والبطاقات
 st.markdown("""
     <style>
     .stButton>button {
@@ -46,7 +45,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def render_molecule_3d(smiles, width=700, height=350):
-    """توليد ورسم الشكل ثلاثي الأبعاد تفاعلياً للموليكول باستخدام RDKit و py3Dmol"""
     try:
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
@@ -99,29 +97,29 @@ def send_formatted_html_email(recipient_email, result_title, html_content, outpu
         return False
 
 def main():
-    # تهيئة نظام التنقل في الـ Session State إذا لم تقم بإنشائه بعد
     if 'current_page' not in st.session_state:
         st.session_state['current_page'] = "Home Page"
 
-    # القائمة الجانبية (Sidebar) الأصلية المطابقة للصورة تماماً
+    # القائمة الجانبية تماماً مثل الصورة 1 (زرين فقط في الأعلى + زر الـ Developer المطوي)
     st.sidebar.markdown("### 🧬 Quick Navigation")
     
     if st.sidebar.button("🏠 Home Page", key="nav_home"):
         st.session_state['current_page'] = "Home Page"
     if st.sidebar.button("📱 View App QR Code", key="nav_qr"):
         st.session_state['current_page'] = "QR Code"
-    if st.sidebar.button("🔬 Prediction Tool", key="nav_pred_sidebar"):
-        st.session_state['current_page'] = "Prediction Tool"
-    if st.sidebar.button("💼 Consultations & Collaboration", key="nav_collab_sidebar"):
-        st.session_state['current_page'] = "Consultations"
-    if st.sidebar.button("💳 Subscription Plans", key="nav_sub_sidebar"):
-        st.session_state['current_page'] = "Subscriptions"
+
+    with st.sidebar.expander("⚙️ Developer & AI Hub Access"):
+        if st.button("🔬 Prediction Tool", key="nav_pred_sidebar"):
+            st.session_state['current_page'] = "Prediction Tool"
+        if st.button("💼 Consultations & Collaboration", key="nav_collab_sidebar"):
+            st.session_state['current_page'] = "Consultations"
+        if st.button("💳 Subscription Plans", key="nav_sub_sidebar"):
+            st.session_state['current_page'] = "Subscriptions"
 
     st.sidebar.markdown("---")
     st.sidebar.markdown("**Developer:** Aziza Mnasri (PhD)")
     st.sidebar.markdown("**Profile:** Independent Researcher<br>(Organic Chemistry & Computational Drug Discovery)", unsafe_allow_html=True)
 
-    # عرض الصفحات بناءً على اختيار المستخدم
     page = st.session_state['current_page']
 
     if page == "Home Page":
