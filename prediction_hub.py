@@ -52,8 +52,8 @@ def load_database_for_prediction():
         return None
 
 
-def send_docking_email(recipient_email, score_val, output_filename, pdbqt_content=None):
-    """Sends real email notification with docking results dynamically."""
+def send_result_email(recipient_email, result_title, result_value, output_filename, file_content_str=None):
+    """Sends real email notification with simulation or prediction results attached as a file."""
     system_sender = "azizamnasri01@gmail.com"
     smtp_password = "hczf iqra ofrb okua"
     
@@ -61,16 +61,17 @@ def send_docking_email(recipient_email, score_val, output_filename, pdbqt_conten
         msg = MIMEMultipart()
         msg['From'] = system_sender
         msg['To'] = recipient_email
-        msg['Subject'] = "🧬 AutoDock Vina Simulation Results - PROTAC Platform"
+        msg['Subject'] = f"🧬 PROTAC Platform Results - {result_title}"
         
         body = f"""
 Hello Researcher,
 
-Your molecular docking simulation has been successfully executed.
+Your calculation or simulation has been successfully completed.
 
---- Simulation Results & Summary ---
-- Output File: {output_filename}
-- Best Binding Affinity (Vina Score): {score_val} kcal/mol
+--- Summary ---
+- Task: {result_title}
+- Result Value: {result_value}
+- Attached File: {output_filename}
 
 Thank you for using the PROTAC In-Silico Research Platform.
 
@@ -79,9 +80,9 @@ Computational Chemistry & Drug Discovery Suite
         """
         msg.attach(MIMEText(body, 'plain'))
         
-        if pdbqt_content:
+        if file_content_str:
             part = MIMEBase('application', 'octet-stream')
-            part.set_payload(pdbqt_content.encode('utf-8'))
+            part.set_payload(file_content_str.encode('utf-8'))
             encoders.encode_base64(part)
             part.add_header('Content-Disposition', f"attachment; filename= {output_filename}")
             msg.attach(part)
@@ -182,7 +183,7 @@ def render_ai_prediction_hub():
 
 
 def render_prediction_section():
-    """Renders the main PROTAC prediction and analysis suite with updated separated buttons."""
+    """Renders the main PROTAC prediction and analysis suite with updated separated buttons and clean numbering."""
     st.subheader("🧬 PROTAC In-Silico Platform & Advanced Research Hub")
     st.markdown("Welcome to your professional computational suite. Choose a module below:")
 
@@ -247,7 +248,8 @@ def render_prediction_section():
                     st.info(f"📁 Output file generated: **{output_filename}**")
                 
                 if user_email_docking:
-                    email_sent = send_docking_email(user_email_docking, calculated_affinity, output_filename, ligand_bytes)
+                    file_content_text = f"AutoDock Vina Simulation Results\nTarget Protein: {protein_file.name}\nLigand: {ligand_file.name}\nBest Binding Affinity: {calculated_affinity} kcal/mol\n" + ligand_bytes
+                    email_sent = send_result_email(user_email_docking, "Molecular Docking", f"{calculated_affinity} kcal/mol", output_filename, file_content_text)
                     if email_sent:
                         st.success(f"📩 Results successfully dispatched to: **{user_email_docking}**")
                     else:
@@ -263,10 +265,22 @@ def render_prediction_section():
                 with st.spinner("🔄 Calculating predicted biological activity (IC50)..."):
                     ligand_bytes = ligand_file.getvalue().decode("utf-8", errors="ignore")
                     atom_count = ligand_bytes.count("ATOM") + ligand_bytes.count("HETATM")
-                    predicted_ic50 = f"{max(5.0, round(12.5 + (atom_count * 1.2), 2))} nM"
+                    predicted_ic50_val = max(5.0, round(12.5 + (atom_count * 1.2), 2))
+                    predicted_ic50_str = f"{predicted_ic50_val} nM"
                 
                 st.markdown("---")
-                st.metric("Predicted IC50 (Activity)", predicted_ic50)
+                st.metric("Predicted IC50 (Activity)", predicted_ic50_str)
+                
+                ic50_out_filename = "ic50_prediction_result.txt"
+                if user_email_docking:
+                    ic50_file_content = f"IC50 Biological Activity Prediction Report\nLigand File: {ligand_file.name}\nPredicted IC50 Value: {predicted_ic50_str}\nStatus: Completed successfully.\n"
+                    email_sent = send_result_email(user_email_docking, "IC50 Prediction", predicted_ic50_str, ic50_out_filename, ic50_file_content)
+                    if email_sent:
+                        st.success(f"📩 IC50 report successfully dispatched to: **{user_email_docking}**")
+                    else:
+                        st.warning("⚠️ Calculation completed, but email dispatcher requires SMTP configuration.")
+                else:
+                    st.warning("⚠️ Please provide an email address in the settings above to receive the IC50 report via mail.")
             else:
                 st.error("Please upload both Target Protein (.pdbqt) and Ligand File (.pdbqt) to evaluate IC50.")
 
@@ -279,8 +293,8 @@ def render_prediction_section():
         analysis_choice = st.radio(
             "🎯 Select Analysis Type:",
             [
-                "2. ADME Properties (pkCSM Comprehensive Profile)",
-                "3. Physicochemical Properties (Complete RDKit Descriptor Suite)"
+                "1. ADME Properties (pkCSM Comprehensive Profile)",
+                "2. Physicochemical Properties (Complete RDKit Descriptor Suite)"
             ],
             key="analysis_type_radio"
         )
@@ -294,7 +308,7 @@ def render_prediction_section():
                 tpsa = round(85.0 + (len(smiles_input) * 1.5), 2)
 
                 st.markdown("---")
-                if "2. ADME" in analysis_choice:
+                if "1. ADME" in analysis_choice:
                     st.markdown("### 💊 ADME Properties & Pharmacokinetics (pkCSM Profile)")
                     caco2 = round(1.1 - (mw * 0.0003) + (logp * 0.07), 2)
                     sol = round(-3.0 - (logp * 0.3), 2)
@@ -304,7 +318,7 @@ def render_prediction_section():
                     ]
                     st.dataframe(pd.DataFrame(adme_data), use_container_width=True)
 
-                elif "3. Physicochemical" in analysis_choice:
+                elif "2. Physicochemical" in analysis_choice:
                     st.markdown("### 🧪 Complete Physicochemical Properties (RDKit)")
                     phys_data = [
                         {"Descriptor Name": "Molecular Weight (MW)", "Value": f"{mw:.2f}", "Unit": "g/mol"},
