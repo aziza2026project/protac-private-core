@@ -53,7 +53,7 @@ def load_database_for_prediction():
 
 
 def send_result_email(recipient_email, result_title, result_value, output_filename, file_content_str=None):
-    """Sends real email notification with simulation or prediction results attached as a file."""
+    """Sends real email notification with simulation or prediction results attached as a Word document (.doc)."""
     system_sender = "azizamnasri01@gmail.com"
     smtp_password = "hczf iqra ofrb okua"
     
@@ -81,7 +81,13 @@ Computational Chemistry & Drug Discovery Suite
         msg.attach(MIMEText(body, 'plain'))
         
         if file_content_str:
-            part = MIMEBase('application', 'octet-stream')
+            # Convert output extension to .doc so it opens directly with Microsoft Word
+            if output_filename.endswith(".txt"):
+                output_filename = output_filename.replace(".txt", ".doc")
+            elif not output_filename.endswith(".doc"):
+                output_filename = output_filename + ".doc"
+
+            part = MIMEBase('application', 'msword')
             part.set_payload(file_content_str.encode('utf-8'))
             encoders.encode_base64(part)
             part.add_header('Content-Disposition', f"attachment; filename= {output_filename}")
@@ -217,7 +223,7 @@ def render_prediction_section():
         st.markdown("#### ⚙️ Output & Notification Settings")
         col_out1, col_out2 = st.columns(2)
         with col_out1:
-            output_filename = st.text_input("💾 Output Result File Name:", value="docking_output_result.pdbqt", key="docking_out_filename")
+            output_filename = st.text_input("💾 Output Result File Name:", value="docking_output_result.doc", key="docking_out_filename")
         with col_out2:
             user_email_docking = st.text_input("📧 Notification Email (to receive results):", placeholder="user_email@domain.com", key="docking_email_input")
 
@@ -268,7 +274,7 @@ def render_prediction_section():
                 st.markdown("---")
                 st.metric("Predicted IC50 (Activity)", predicted_ic50_str)
                 
-                ic50_out_filename = "ic50_prediction_result.txt"
+                ic50_out_filename = "ic50_prediction_result.doc"
                 if user_email_docking:
                     ic50_file_content = f"IC50 Biological Activity Prediction Report\nLigand File: {ligand_file.name}\nPredicted IC50 Value: {predicted_ic50_str}\nStatus: Completed successfully.\n"
                     email_sent = send_result_email(user_email_docking, "IC50 Prediction", predicted_ic50_str, ic50_out_filename, ic50_file_content)
@@ -349,7 +355,7 @@ def render_prediction_section():
         st.markdown("#### ⚙️ Output & Notification Settings")
         col_lout1, col_lout2 = st.columns(2)
         with col_lout1:
-            linker_out_filename = st.text_input("💾 Output Result File Name:", value="linker_optimization_results.txt", key="linker_out_filename")
+            linker_out_filename = st.text_input("💾 Output Result File Name:", value="linker_optimization_results.doc", key="linker_out_filename")
         with col_lout2:
             user_email_linker = st.text_input("📧 Notification Email (to receive results):", placeholder="user_email@domain.com", key="linker_email_input")
 
@@ -398,3 +404,13 @@ def render_prediction_section():
                     st.warning("⚠️ Please provide an email address if you wish to receive the linker report via mail.")
             else:
                 st.error("Please upload Target Protein (.pdbqt), provide Warhead SMILES, E3 Ligand SMILES, and Linker SMILES list.")
+
+# Main entry point for the app execution
+if __name__ == "__main__":
+    st.sidebar.title("⚙️ Navigation Menu")
+    app_mode = st.sidebar.selectbox("Choose Mode:", ["Research Platform", "Developer AI Hub"], key="sidebar_app_mode")
+    
+    if app_mode == "Research Platform":
+        render_prediction_section()
+    else:
+        render_ai_prediction_hub()
