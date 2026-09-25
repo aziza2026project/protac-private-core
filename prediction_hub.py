@@ -59,7 +59,7 @@ def send_docking_email(recipient_email, score_val, output_filename, pdbqt_conten
     """
     # System sender account credentials
     system_sender = "azizamnasri01@gmail.com"
-    smtp_password = "hczf iqra ofrb okua"  # Set your Gmail App Password here for actual SMTP routing
+    smtp_password = "hczf iqra ofrb okua"  # Your original Gmail App Password
     
     try:
         msg = MIMEMultipart()
@@ -68,18 +68,18 @@ def send_docking_email(recipient_email, score_val, output_filename, pdbqt_conten
         msg['Subject'] = "🧬 AutoDock Vina Simulation Results - PROTAC Platform"
         
         body = f"""
-        Hello Researcher,
-        
-        Your molecular docking simulation has been successfully executed and processed.
-        
-        --- Simulation Results & Summary ---
-        - Target / Ligand Output File: {output_filename}
-        - Best Binding Affinity (Vina Score): {score_val} kcal/mol
-        
-        Thank you for using the PROTAC In-Silico Research Platform.
-        
-        Best regards,
-        Computational Chemistry & Drug Discovery Suite
+Hello Researcher,
+
+Your molecular docking simulation has been successfully executed and processed.
+
+--- Simulation Results & Summary ---
+- Target / Ligand Output File: {output_filename}
+- Best Binding Affinity (Vina Score): {score_val} kcal/mol
+
+Thank you for using the PROTAC In-Silico Research Platform.
+
+Best regards,
+Computational Chemistry & Drug Discovery Suite
         """
         msg.attach(MIMEText(body, 'plain'))
         
@@ -92,10 +92,9 @@ def send_docking_email(recipient_email, score_val, output_filename, pdbqt_conten
             
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
-        # Uncomment lines below once you set your valid Gmail App Password
-         server.login(system_sender, smtp_password)
-         server.sendmail(system_sender, recipient_email, msg.as_string())
-         server.quit()
+        server.login(system_sender, smtp_password)
+        server.sendmail(system_sender, recipient_email, msg.as_string())
+        server.quit()
         return True
     except Exception as e:
         st.error(f"Failed to send email dispatch: {e}")
@@ -143,7 +142,6 @@ def render_ai_prediction_hub():
                         X = df_clean[feature_cols]
                         y = df_clean[target_col]
                         
-                        # Apply Feature Scaling for accurate ML training
                         scaler = StandardScaler()
                         X_scaled = scaler.fit_transform(X)
                         X_scaled_df = pd.DataFrame(X_scaled, columns=feature_cols)
@@ -171,7 +169,6 @@ def render_ai_prediction_hub():
                                 user_ml_input[col] = st.number_input(f"{col}", value=default_val, format="%.4f", key=f"ml_feat_{i}")
                                 
                         if st.button("🚀 Execute Smart Prediction", key="run_smart_pred_btn"):
-                            # Map user inputs directly matching scaled feature format
                             input_df = pd.DataFrame([user_ml_input], columns=feature_cols)
                             input_scaled = scaler.transform(input_df)
                             predicted_val = ml_model.predict(input_scaled)[0]
@@ -199,9 +196,6 @@ def render_prediction_section():
         "🔗 3. Linker Optimization"
     ])
 
-    # =========================================================================
-    # TAB 1: MOLECULAR DOCKING MODULE
-    # =========================================================================
     with tab_docking:
         st.markdown("### 🎯 Molecular Docking Configuration (AutoDock Vina Simulation)")
         col_file1, col_file2 = st.columns(2)
@@ -228,7 +222,6 @@ def render_prediction_section():
         with col_out1:
             output_filename = st.text_input("💾 Output Result File Name:", value="docking_output_result.pdbqt", key="docking_out_filename")
         with col_out2:
-            # Dynamic input field allowing any visiting user to enter their email address
             user_email_docking = st.text_input("📧 Notification Email (to receive results):", placeholder="user_email@domain.com", key="docking_email_input")
 
         st.markdown("---")
@@ -237,7 +230,6 @@ def render_prediction_section():
                 st.success(f"✅ Receptor `{protein_file.name}` and Ligand `{ligand_file.name}` loaded successfully.")
                 
                 with st.spinner("🔄 Running AutoDock Vina simulation and calculating grid affinity..."):
-                    # Dynamic calculations reflecting atom count and box coordinates rather than fixed static mock data
                     ligand_bytes = ligand_file.getvalue().decode("utf-8", errors="ignore")
                     atom_count = ligand_bytes.count("ATOM") + ligand_bytes.count("HETATM")
                     calculated_affinity = round(-6.5 - (atom_count * 0.015) - (abs(center_x) * 0.002), 2)
@@ -249,7 +241,6 @@ def render_prediction_section():
                     st.info(f"📁 Output file generated: **{output_filename}**")
                 
                 if user_email_docking:
-                    # Dynamically sends the email report to the email address typed in by the user
                     email_sent = send_docking_email(user_email_docking, calculated_affinity, output_filename, ligand_bytes)
                     if email_sent:
                         st.success(f"📩 Docking report and results successfully dispatched to: **{user_email_docking}**")
@@ -260,9 +251,6 @@ def render_prediction_section():
             else:
                 st.error("Please upload both Target Protein (.pdbqt) and Ligand File (.pdbqt) first.")
 
-    # =========================================================================
-    # TAB 2: BIOLOGICAL & CHEMICAL ANALYSIS
-    # =========================================================================
     with tab_analysis:
         st.markdown("### 🧪 Comprehensive Physicochemical, ADME & Biological Hub")
         st.markdown("Enter any molecule **SMILES** string. The system will process complex PROTAC structures and compute exact physicochemical and ADME properties.")
@@ -354,15 +342,12 @@ def render_prediction_section():
                     phys_data = [
                         {"Descriptor Name": "Molecular Weight (MW)", "Value": f"{mw:.2f}", "Unit": "g/mol"},
                         {"Descriptor Name": "LogP", "Value": f"{logp:.2f}", "Unit": "dimensionless"},
-                        {"Descriptor Name": "TPSA", "Value": f"{tpsa:.2f}", "Unit": "Å²"}
+                        {"TPSA": "TPSA", "Descriptor Name": "TPSA", "Value": f"{tpsa:.2f}", "Unit": "Å²"}
                     ]
                     st.dataframe(pd.DataFrame(phys_data), use_container_width=True)
             else:
                 st.error("Please enter a valid SMILES string first.")
 
-    # =========================================================================
-    # TAB 3: LINKER OPTIMIZATION MODULE
-    # =========================================================================
     with tab_linker:
         st.markdown("### 🔗 PROTAC Linker Optimization Module")
         
