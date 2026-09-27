@@ -14,7 +14,7 @@ import streamlit.components.v1 as components
 from rdkit import Chem
 from rdkit.Chem import AllChem
 import py3Dmol
-
+from prediction import render_molecular_docking_workspace
 # Safe import of machine learning libraries
 try:
     from sklearn.ensemble import RandomForestRegressor
@@ -332,7 +332,7 @@ def main():
                 st.markdown("---")
                 if active_mod == "Docking":
                     st.subheader("🎯 Workspace: Molecular Docking (AutoDock Vina)")
-                    st.write("Here you can configure your grid boxes, upload PDB files, run docking, and evaluate binding scores & IC50.")
+                   render_molecular_docking_workspace()
                     # Add your docking inputs/widgets here
                     
                 elif active_mod == "ADME":
