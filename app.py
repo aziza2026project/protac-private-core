@@ -158,6 +158,10 @@ def main():
         st.session_state['current_page'] = "Home Page"
     if 'dev_authenticated' not in st.session_state:
         st.session_state['dev_authenticated'] = False
+    if 'user_subscribed' not in st.session_state:
+        st.session_state['user_subscribed'] = False
+    if 'user_email' not in st.session_state:
+        st.session_state['user_email'] = ""
 
     st.sidebar.markdown("### 🧬 Quick Navigation")
     
@@ -185,7 +189,6 @@ def main():
     # 📌 PART 7: HOME PAGE & GENERAL DASHBOARD & SUB-PAGES
     # ==============================================================================
     
-    # Custom CSS for styling cards, descriptions, and large Home button
     st.markdown("""
         <style>
         .home-btn-large > button {
@@ -212,7 +215,6 @@ def main():
     """, unsafe_allow_html=True)
 
     if page == "Home Page":
-        # Extra large Home Page button at the top
         st.markdown('<div class="home-btn-large">', unsafe_allow_html=True)
         if st.button("🏠  Home Page", key="btn_home_top"):
             st.session_state['current_page'] = "Home Page"
@@ -259,8 +261,40 @@ def main():
         if st.button("⬅️ Back to Home Page", key="back_to_home_pred"):
             st.session_state['current_page'] = "Home Page"
             st.rerun()
+        
         st.title("🔬 PROTAC Prediction Tool")
         st.markdown("Molecular docking, binding affinity, and ADME property evaluation.")
+        st.markdown("---")
+
+        # Email Subscription Verification Gate for Prediction Tool
+        if not st.session_state['user_subscribed']:
+            st.warning("🔒 Subscription Verification Required: Please enter your registered email to access the prediction modules.")
+            entered_email = st.text_input("Enter your registered email address:", key="sub_email_input")
+            
+            if st.button("Verify & Access Tool", key="verify_email_btn"):
+                if "@" in entered_email and "." in entered_email:
+                    st.session_state['user_subscribed'] = True
+                    st.session_state['user_email'] = entered_email
+                    st.success(f"Access granted for: {entered_email}")
+                    st.rerun()
+                else:
+                    st.error("Please enter a valid email address.")
+        else:
+            st.success(f"✅ Verified Subscriber: {st.session_state['user_email']}")
+            if st.button("Logout / Change Email", key="logout_email_btn"):
+                st.session_state['user_subscribed'] = False
+                st.session_state['user_email'] = ""
+                st.rerun()
+            
+            st.markdown("---")
+            st.subheader("⚙️ Prediction Modules & Workflows")
+            
+            # Restored Columns and Dashboard tools
+            col_tool1, col_tool2 = st.columns(2)
+            with col_tool1:
+                st.info("🎯 **Molecular Docking (AutoDock Vina)**\n\nConfigure grid boxes, rotatable bonds, and binding energies for PROTAC complexes.")
+            with col_tool2:
+                st.info("📊 **ADME & Pharmacokinetics (pkCSM)**\n\nEvaluate Caco-2 permeability, solubility, and drug-likeness properties.")
 
     elif page == "Consultations":
         if st.button("⬅️ Back to Home Page", key="back_to_home_collab"):
