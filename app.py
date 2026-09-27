@@ -1,3 +1,6 @@
+# ==============================================================================
+# 📌 PART 1: IMPORTS & ENVIRONMENT CONFIGURATION
+# ==============================================================================
 import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -22,6 +25,10 @@ try:
 except ImportError:
     SKLEARN_AVAILABLE = False
 
+
+# ==============================================================================
+# 📌 PART 2: PAGE CONFIGURATION & CUSTOM CSS STYLING
+# ==============================================================================
 st.set_page_config(
     page_title="PROTAC Research & Prediction Platform",
     page_icon="🧬",
@@ -54,6 +61,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+
+# ==============================================================================
+# 📌 PART 3: DATABASE LOADING & UTILITY FUNCTIONS
+# ==============================================================================
 @st.cache_data
 def load_database_for_prediction():
     try:
@@ -77,6 +88,10 @@ def load_database_for_prediction():
     except Exception:
         return None
 
+
+# ==============================================================================
+# 📌 PART 4: 3D MOLECULAR STRUCTURE RENDERER (PY3DMOL)
+# ==============================================================================
 def render_molecule_3d(smiles, width=700, height=350):
     try:
         mol = Chem.MolFromSmiles(smiles)
@@ -95,6 +110,10 @@ def render_molecule_3d(smiles, width=700, height=350):
     except Exception as e:
         return f"<p style='color:red;'>Error generating 3D view: {e}</p>"
 
+
+# ==============================================================================
+# 📌 PART 5: EMAIL DISPATCH & REPORT GENERATION ENGINE
+# ==============================================================================
 def send_formatted_html_email(recipient_email, result_title, html_content, output_filename, file_content_str=None):
     system_sender = "azizamnasri01@gmail.com"
     smtp_password = "hczf iqra ofrb okua"
@@ -129,6 +148,10 @@ def send_formatted_html_email(recipient_email, result_title, html_content, outpu
         st.error(f"Failed to send email dispatch: {e}")
         return False
 
+
+# ==============================================================================
+# 📌 PART 6: SIDEBAR NAVIGATION & DEVELOPER AUTHENTICATION
+# ==============================================================================
 def main():
     if 'current_page' not in st.session_state:
         st.session_state['current_page'] = "Home Page"
@@ -158,6 +181,10 @@ def main():
 
     page = st.session_state['current_page']
 
+
+    # ==============================================================================
+    # 📌 PART 7: HOME PAGE & GENERAL DASHBOARD
+    # ==============================================================================
     if page == "Home Page":
         st.title("🧬 PROTAC Research & Prediction Platform")
         st.markdown("Welcome to the professional platform for PROTAC design, physicochemical property calculation, and scientific collaboration.")
@@ -201,6 +228,10 @@ def main():
                 st.session_state['current_page'] = "Consultations"
                 st.rerun()
 
+
+    # ==============================================================================
+    # 📌 PART 8: QR CODE & UTILITY PAGES (SUBSCRIPTIONS & CONSULTATIONS)
+    # ==============================================================================
     elif page == "QR Code":
         st.subheader("📱 App QR Code & Quick Access")
         st.markdown("Scan the QR code below to open the application directly on your mobile device or share it easily.")
@@ -216,6 +247,10 @@ def main():
         st.markdown("For inquiries regarding dual-target PROTACs, docking score calibrations, and joint research publications.")
         st.info("You can reach out directly via institutional email or collaborative research channels.")
 
+
+    # ==============================================================================
+    # 📌 PART 9: AI & QSAR PREDICTION HUB (DEVELOPER MODE)
+    # ==============================================================================
     elif page == "AI Hub" and st.session_state['dev_authenticated']:
         st.subheader("🤖 Advanced Machine Learning & QSAR Prediction Hub (Developer Mode)")
         if SKLEARN_AVAILABLE:
@@ -245,6 +280,10 @@ def main():
         else:
             st.error("scikit-learn not available.")
 
+
+    # ==============================================================================
+    # 📌 PART 10: PREDICTION TOOL SUITE (MAIN COMPUTATIONAL TABS)
+    # ==============================================================================
     elif page == "Prediction Tool":
         st.subheader("PROTAC In-Silico Platform & Advanced Research Hub")
         st.markdown("Welcome to your professional computational suite. Choose a module below:")
@@ -255,6 +294,9 @@ def main():
             "Linker Optimization"
         ])
 
+        # --------------------------------------------------------------------------
+        # 🔬 SUB-PART 10.1: MOLECULAR DOCKING & IC50 PREDICTION MODULE
+        # --------------------------------------------------------------------------
         with tab_docking:
             st.markdown("### Molecular Docking Configuration & IC50 Activity Prediction")
             col_file1, col_file2 = st.columns(2)
@@ -304,6 +346,9 @@ def main():
                     html_rep = f"<h3>IC50 Prediction Report</h3><p>Predicted IC50: <b>{ic50_val}</b></p>"
                     send_formatted_html_email(user_email_docking, "IC50 Prediction", html_rep, "ic50_result.doc", html_rep)
 
+        # --------------------------------------------------------------------------
+        # 💊 SUB-PART 10.2: CHEMICAL & ADME PROPERTIES MODULE (SMILES)
+        # --------------------------------------------------------------------------
         with tab_analysis:
             st.markdown("### Chemical & ADME Properties Analysis (SMILES)")
             adme_smiles = st.text_input("Enter Molecule SMILES for Evaluation:", value="CC(=O)OC1=CC=CC=C1C(=O)O", key="adme_smiles_input")
@@ -337,6 +382,9 @@ def main():
                 html_3d_phys = render_molecule_3d(adme_smiles, width=700, height=350)
                 components.html(html_3d_phys, height=370)
 
+        # --------------------------------------------------------------------------
+        # 🔗 SUB-PART 10.3: LINKER OPTIMIZATION & PROTAC ASSEMBLY MODULE
+        # --------------------------------------------------------------------------
         with tab_linker:
             st.markdown("### PROTAC Linker Optimization Module (Advanced Batch & Docking)")
             linker_protein_file = st.file_uploader("Upload Receptor for PROTAC Assembly Docking (.pdbqt)", type=["pdbqt"], key="linker_prot_file")
