@@ -150,7 +150,7 @@ def send_formatted_html_email(recipient_email, result_title, html_content, outpu
 
           
 
-    # ==============================================================================
+  # ==============================================================================
 # 📌 PART 6: SIDEBAR NAVIGATION & DEVELOPER AUTHENTICATION
 # ==============================================================================
 def main():
@@ -185,25 +185,28 @@ def main():
     # 📌 PART 7: HOME PAGE & GENERAL DASHBOARD & SUB-PAGES
     # ==============================================================================
     
-    # Global CSS to make buttons wrap text fully without truncation and enlarge Home button
+    # Custom CSS for styling cards, descriptions, and large Home button
     st.markdown("""
         <style>
-        /* Allow text wrapping in card buttons so nothing gets cut off */
-        .stButton > button {
-            white-space: normal !important;
-            height: auto !important;
-            padding: 15px !important;
-            border-radius: 12px !important;
-            font-weight: bold !important;
-        }
-        /* Extra large Home Page button styling */
         .home-btn-large > button {
-            font-size: 20px !important;
-            padding: 15px 30px !important;
+            font-size: 22px !important;
+            padding: 15px 35px !important;
             background-color: #1f4e78 !important;
             color: white !important;
             border-radius: 12px !important;
+            font-weight: bold !important;
             box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+        }
+        .desc-box {
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 13px;
+            color: #555;
+            min-height: 70px;
+            margin-bottom: 10px;
+            text-align: center;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -227,19 +230,22 @@ def main():
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            if st.button("💳 Subscription Plans\n\nExplore access levels and research tiers.", key="card_sub"):
+            if st.button("💳 Subscription Plans", key="btn_sub_card", use_container_width=True):
                 st.session_state['current_page'] = "Subscriptions"
                 st.rerun()
+            st.markdown('<div class="desc-box">Explore access levels and research tiers.</div>', unsafe_allow_html=True)
 
         with col2:
-            if st.button("🔬 Prediction Tool\n\nAccess molecular docking, IC50 predictions, and ADME modules.", key="card_pred"):
+            if st.button("🔬 Prediction Tool", key="btn_pred_card", use_container_width=True):
                 st.session_state['current_page'] = "Prediction Tool"
                 st.rerun()
+            st.markdown('<div class="desc-box">Access molecular docking, IC50 predictions, and ADME modules.</div>', unsafe_allow_html=True)
 
         with col3:
-            if st.button("💼 Consultations & Collaboration\n\nConnect for advanced computational chemistry projects.", key="card_collab"):
+            if st.button("💼 Consultations & Collaboration", key="btn_collab_card", use_container_width=True):
                 st.session_state['current_page'] = "Consultations"
                 st.rerun()
+            st.markdown('<div class="desc-box">Connect for advanced computational chemistry projects.</div>', unsafe_allow_html=True)
 
     elif page == "Subscriptions":
         if st.button("⬅️ Back to Home Page", key="back_to_home_sub"):
