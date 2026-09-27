@@ -1,3 +1,6 @@
+# ==============================================================================
+# 📌 PART 1: IMPORTS & ENVIRONMENT CONFIGURATION (QSAR & RDKIT)
+# ==============================================================================
 import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -27,6 +30,9 @@ except ImportError:
     RDKIT_AVAILABLE = False
 
 
+# ==============================================================================
+# 📌 PART 2: DATASET LOADING & MERGING ENGINE (CSV DATABASES)
+# ==============================================================================
 @st.cache_data
 def load_database_for_prediction():
     """Loads and merges chemical datasets for QSAR modeling and property prediction."""
@@ -52,6 +58,9 @@ def load_database_for_prediction():
         return None
 
 
+# ==============================================================================
+# 📌 PART 3: EMAIL DISPATCH & HTML REPORT ENGINE
+# ==============================================================================
 def send_formatted_html_email(recipient_email, result_title, html_content, output_filename, file_content_str=None):
     """Sends a professionally styled HTML email report with strict UTF-8 encoding for clean Word formatting."""
     system_sender = "azizamnasri01@gmail.com"
@@ -89,6 +98,9 @@ def send_formatted_html_email(recipient_email, result_title, html_content, outpu
         return False
 
 
+# ==============================================================================
+# 📌 PART 4: ADVANCED MACHINE LEARNING & QSAR PREDICTION HUB
+# ==============================================================================
 def render_ai_prediction_hub():
     """Renders exclusively the private AI & QSAR Prediction Hub for developer mode."""
     st.markdown("### Advanced Machine Learning & QSAR Prediction Hub (Developer Mode)")
