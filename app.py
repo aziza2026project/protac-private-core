@@ -153,6 +153,7 @@ def send_formatted_html_email(recipient_email, result_title, html_content, outpu
 # 📌 PART 6: SIDEBAR NAVIGATION & DEVELOPER AUTHENTICATION
 # ==============================================================================
 def main():
+    # Initialize session state variables for navigation and authentication
     if 'current_page' not in st.session_state:
         st.session_state['current_page'] = "Home Page"
     if 'dev_authenticated' not in st.session_state:
@@ -160,8 +161,7 @@ def main():
 
     st.sidebar.markdown("### 🧬 Quick Navigation")
     
-    if st.sidebar.button("🏠 Home Page", key="nav_home"):
-        st.session_state['current_page'] = "Home Page"
+    # Home Page button removed from sidebar and relocated to top of main page
     if st.sidebar.button("📱 View App QR Code", key="nav_qr"):
         st.session_state['current_page'] = "QR Code"
 
@@ -186,6 +186,13 @@ def main():
     # 📌 PART 7: HOME PAGE & GENERAL DASHBOARD
     # ==============================================================================
     if page == "Home Page":
+        # Enlarged Home Page button placed at the top of the main view
+        col_home_btn, _ = st.columns([2, 5])
+        with col_home_btn:
+            if st.button("🏠 Home Page", key="btn_home_top"):
+                st.session_state['current_page'] = "Home Page"
+                st.rerun()
+
         st.title("🧬 PROTAC Research & Prediction Platform")
         st.markdown("Welcome to the professional platform for PROTAC design, physicochemical property calculation, and scientific collaboration.")
         st.markdown("---")
@@ -227,7 +234,6 @@ def main():
             if st.button("Open Consultations", key="btn_collab_card"):
                 st.session_state['current_page'] = "Consultations"
                 st.rerun()
-
 
     # ==============================================================================
     # 📌 PART 8: QR CODE & UTILITY PAGES (SUBSCRIPTIONS & CONSULTATIONS)
