@@ -150,7 +150,7 @@ def send_formatted_html_email(recipient_email, result_title, html_content, outpu
 
           
 
-  # ==============================================================================
+ # ==============================================================================
 # 📌 PART 6: SIDEBAR NAVIGATION & DEVELOPER AUTHENTICATION
 # ==============================================================================
 def main():
@@ -207,7 +207,7 @@ def main():
             padding: 12px;
             font-size: 13px;
             color: #555;
-            min-height: 70px;
+            min-height: 80px;
             margin-bottom: 10px;
             text-align: center;
         }
@@ -266,35 +266,46 @@ def main():
         st.markdown("Molecular docking, binding affinity, and ADME property evaluation.")
         st.markdown("---")
 
-        # Email Subscription Verification Gate for Prediction Tool
+        # Whitelist check for Dr. Aziza's email or registered subscribers
+        whitelist_emails = ["azizamnasri10@gmail.com"]
+
         if not st.session_state['user_subscribed']:
-            st.warning("🔒 Subscription Verification Required: Please enter your registered email to access the prediction modules.")
-            entered_email = st.text_input("Enter your registered email address:", key="sub_email_input")
+            entered_email = st.text_input("Enter your registered email address (Whitelisted users get instant access):", key="sub_email_input")
             
             if st.button("Verify & Access Tool", key="verify_email_btn"):
-                if "@" in entered_email and "." in entered_email:
+                if entered_email.strip().lower() in whitelist_emails or ("@" in entered_email and "." in entered_email):
                     st.session_state['user_subscribed'] = True
-                    st.session_state['user_email'] = entered_email
-                    st.success(f"Access granted for: {entered_email}")
+                    st.session_state['user_email'] = entered_email.strip()
+                    st.success(f"Access granted for whitelisted/verified email: {entered_email}")
                     st.rerun()
                 else:
-                    st.error("Please enter a valid email address.")
+                    st.error("Email not found in whitelist or invalid format.")
         else:
-            st.success(f"✅ Verified Subscriber: {st.session_state['user_email']}")
+            is_whitelisted = st.session_state['user_email'].lower() in whitelist_emails
+            role_badge = "👑 Whitelisted Lead Researcher" if is_whitelisted else "✅ Verified Subscriber"
+            
+            st.success(f"{role_badge}: {st.session_state['user_email']}")
             if st.button("Logout / Change Email", key="logout_email_btn"):
                 st.session_state['user_subscribed'] = False
                 st.session_state['user_email'] = ""
                 st.rerun()
             
             st.markdown("---")
-            st.subheader("⚙️ Prediction Modules & Workflows")
+            st.subheader("⚙️ Prediction Modules & Workflows (All 4 Core Modules)")
             
-            # Restored Columns and Dashboard tools
-            col_tool1, col_tool2 = st.columns(2)
-            with col_tool1:
-                st.info("🎯 **Molecular Docking (AutoDock Vina)**\n\nConfigure grid boxes, rotatable bonds, and binding energies for PROTAC complexes.")
-            with col_tool2:
-                st.info("📊 **ADME & Pharmacokinetics (pkCSM)**\n\nEvaluate Caco-2 permeability, solubility, and drug-likeness properties.")
+            # Row 1: Molecular Docking & ADME
+            col_t1, col_t2 = st.columns(2)
+            with col_t1:
+                st.info("🎯 **1. Molecular Docking (AutoDock Vina)**\n\nConfigure grid boxes, rotatable bonds, binding affinity, and $IC_{50}$ estimations for PROTAC complexes.")
+            with col_t2:
+                st.info("📊 **2. ADME & Pharmacokinetics (pkCSM)**\n\nEvaluate physicochemical properties, biological parameters, Caco-2 permeability, and solubility.")
+
+            # Row 2: Linker Optimization & Advanced Target Profiling
+            col_t3, col_t4 = st.columns(2)
+            with col_t3:
+                st.info("🔗 **3. Linker Optimization**\n\nAnalyze linker length, flexibility, and ternary complex stability for dual-target PROTACs.")
+            with col_t4:
+                st.info("🧪 **4. Target Binding & SAR Profiling**\n\nAssess warhead-E3 ligase cooperative binding and structure-activity relationships.")
 
     elif page == "Consultations":
         if st.button("⬅️ Back to Home Page", key="back_to_home_collab"):
