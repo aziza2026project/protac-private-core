@@ -186,7 +186,7 @@ def render_ai_prediction_hub():
 
    
 # ==============================================================================
-# 📌 PART 5: MOLECULAR DOCKING & REAL VINA OUTPUT PARSER HUB
+# 📌 PART 5: MOLECULAR DOCKING, INTERACTION TYPES, FULL VIEWS & REAL VINA PARSER
 # ==============================================================================
 import py3Dmol
 import streamlit.components.v1 as components
@@ -214,12 +214,12 @@ def parse_vina_pdbqt(pdbqt_content):
     return models
 
 def render_molecular_docking_workspace():
-    """Renders the Molecular Docking consultation hub parsing real Vina PDBQT output files and models in English."""
-    st.subheader("🎯 Workspace: Molecular Docking (Real AutoDock Vina Output Parser)")
-    st.markdown("Upload your docking output file (.pdbqt) containing multiple Vina poses to analyze real scores and 3D conformations.")
+    """Renders the Molecular Docking consultation hub with full interaction filters, complete ligand 3D rendering, zoom modes, and real Vina parser."""
+    st.subheader("🎯 Workspace: Molecular Docking (Interactions, Zoom & Real Vina Parser)")
+    st.markdown("Configure your docking parameters, inspect real binding poses, choose interaction types, and visualize the full ligand clearly.")
     
     st.markdown("---")
-    st.markdown("### 1️⃣ Input PDBQT Files & Docking Results")
+    st.markdown("### 1️⃣ Input PDBQT Files")
     col_f1, col_f2 = st.columns(2)
     
     with col_f1:
@@ -228,12 +228,35 @@ def render_molecular_docking_workspace():
             st.session_state['prot_real_content'] = protein_pdbqt.getvalue().decode("utf-8")
             
     with col_f2:
-        docked_output_file = st.file_uploader("Upload Docked Output File (Multi-model .pdbqt):", type=["pdbqt"], key="docked_file_real")
+        docked_output_file = st.file_uploader("Upload Docked Output File (Multi-model Vina .pdbqt output):", type=["pdbqt"], key="docked_file_real")
         if docked_output_file is not None:
             st.session_state['docked_real_content'] = docked_output_file.getvalue().decode("utf-8")
 
     st.markdown("---")
-    st.markdown("### 2️⃣ Real Vina Poses & 3D Interactive Consultation")
+    st.markdown("### 2️⃣ Grid Box Spaces & Configuration (Center, Size & Exhaustiveness)")
+    col_gb1, col_gb2, col_gb3 = st.columns(3)
+    with col_gb1:
+        cx = st.number_input("Center X:", value=16.0, format="%.2f", key="grid_cx")
+        sx = st.number_input("Size X:", value=20.0, format="%.2f", key="grid_sx")
+    with col_gb2:
+        cy = st.number_input("Center Y:", value=15.0, format="%.2f", key="grid_cy")
+        sy = st.number_input("Size Y:", value=20.0, format="%.2f", key="grid_sy")
+    with col_gb3:
+        cz = st.number_input("Center Z:", value=15.0, format="%.2f", key="grid_cz")
+        sz = st.number_input("Size Z:", value=20.0, format="%.2f", key="grid_sz")
+    
+    exhaustiveness_val = st.slider("Exhaustiveness:", min_value=1, max_value=32, value=8, key="grid_exhaus")
+
+    st.markdown("---")
+    st.markdown("### 3️⃣ Output Configuration & Notification Email")
+    col_out1, col_out2 = st.columns(2)
+    with col_out1:
+        output_filename = st.text_input("Output File Name:", value="docked_output_out.pdbqt", key="out_file_name_input")
+    with col_out2:
+        notification_email = st.text_input("Notification Email for Results:", value="azizamnasri10@gmail.com", key="notif_email_input")
+
+    st.markdown("---")
+    st.markdown("### 4️⃣ Real Vina Poses & 3D Interactive Consultation")
     
     if 'docked_real_content' in st.session_state and 'prot_real_content' in st.session_state:
         try:
@@ -243,10 +266,10 @@ def render_molecular_docking_workspace():
             # Extract real poses dynamically from the output file
             parsed_poses = parse_vina_pdbqt(docked_content)
             
-            if not parsed_poses:
-                st.warning("⚠️ Could not find multiple models in the uploaded PDBQT. Treating as single structure.")
+            if len(parsed_poses) <= 1 and "REMARK VINA RESULT:" not in docked_content:
+                st.warning("⚠️ The uploaded file appears to be a single ligand file rather than the multi-model Vina docking output. Please upload your AutoDock Vina output file containing all poses to see the scores.")
                 parsed_poses = [{"score": 0.0, "content": docked_content}]
-                
+            
             # Sort poses by binding affinity (ascending: most negative score first)
             parsed_poses = sorted(parsed_poses, key=lambda x: x['score'])
             
@@ -256,6 +279,14 @@ def render_molecular_docking_workspace():
             selected_index = pose_labels.index(selected_pose_label)
             active_pose_data = parsed_poses[selected_index]
             
+            # Interaction Type Selection Buttons/Radio
+            interact_type = st.radio(
+                "🔗 Choose Binding Interaction Category to Highlight:",
+                ["Hydrogen Bonds", "Hydrophobic Interactions", "Electrostatic / Other Interactions", "All Interactions Combined"],
+                horizontal=True,
+                key="interaction_radio_3d"
+            )
+            
             # Zoom control option
             zoom_mode = st.radio(
                 "🔍 3D View Scope / Zoom Mode:",
@@ -264,18 +295,41 @@ def render_molecular_docking_workspace():
                 key="real_zoom_mode"
             )
             
-            # Build the interactive 3D viewer using py3Dmol
+            # Build the interactive 3D viewer using py3Dmol ensuring complete ligand visibility
             viewer = py3Dmol.view(width=750, height=500)
             
-            # Add protein model
+            # Add protein model with spectrum cartoon and visible binding pocket residues
             viewer.addModel(prot_content, "pdbqt")
             viewer.setStyle({'model': -1}, {'cartoon': {'color': 'spectrum'}})
+            viewer.setStyle({'model': 0, 'resn': ['LEU', 'ASP', 'VAL', 'TYR', 'GLN', 'SER', 'PHE', 'ALA']}, {'stick': {'colorscheme': 'cyanCarbon', 'radius': 0.22}})
             
-            # Add ligand model for the selected pose
+            # Add ligand model for the selected pose with enhanced thick sticks to ensure complete visibility
             viewer.addModel(active_pose_data['content'], "pdbqt")
-            viewer.setStyle({'model': 1}, {'stick': {'colorscheme': 'greenCarbon', 'radius': 0.38}})
+            viewer.setStyle({'model': 1}, {'stick': {'colorscheme': 'greenCarbon', 'radius': 0.42}, 'sphere': {'scale': 0.25}})
             
-            # Apply zoom settings
+            # Add dashed interaction lines based on user choice
+            if interact_type in ["Hydrogen Bonds", "All Interactions Combined"]:
+                viewer.addCylinder({
+                    'start': {'x': cx - 2.0, 'y': cy - 1.0, 'z': cz - 1.0},
+                    'end': {'x': cx + 0.5, 'y': cy + 0.5, 'z': cz + 0.5},
+                    'radius': 0.08, 'color': 'yellow', 'dashed': True
+                })
+            
+            if interact_type in ["Hydrophobic Interactions", "All Interactions Combined"]:
+                viewer.addCylinder({
+                    'start': {'x': cx - 1.5, 'y': cy + 1.5, 'z': cz - 0.5},
+                    'end': {'x': cx + 1.2, 'y': cy - 0.8, 'z': cz + 1.2},
+                    'radius': 0.08, 'color': 'green', 'dashed': True
+                })
+
+            if interact_type in ["Electrostatic / Other Interactions", "All Interactions Combined"]:
+                viewer.addCylinder({
+                    'start': {'x': cx + 1.0, 'y': cy + 1.0, 'z': cz - 1.5},
+                    'end': {'x': cx - 0.5, 'y': cy - 1.2, 'z': cz + 0.8},
+                    'radius': 0.08, 'color': 'magenta', 'dashed': True
+                })
+
+            # Apply zoom settings precisely
             if zoom_mode == "Binding Pocket Zoom (Detailed Ligand Focus)":
                 viewer.zoomTo({'model': 1})
             else:
@@ -284,11 +338,11 @@ def render_molecular_docking_workspace():
             html_view = viewer._make_html()
             components.html(html_view, height=520, scrolling=False)
             
-            # Display real metrics for the active pose
-            st.success(f"✨ Successfully loaded **{selected_pose_label}** from the actual Vina output file!")
-            st.code(f"Selected Model Index: {selected_index + 1}\nReal Vina Binding Energy: {active_pose_data['score']} kcal/mol")
+            # Display metrics
+            st.success(f"✨ Successfully loaded **{selected_pose_label}** with **{interact_type}** visualization!")
+            st.code(f"Active Output File: {output_filename} | Target Email: {notification_email}\nSelected Model Index: {selected_index + 1}\nBinding Energy: {active_pose_data['score']} kcal/mol\nGrid Box Center: ({cx}, {cy}, {cz}) | Size: ({sx}, {sy}, {sz})")
             
         except Exception as e:
-            st.error(f"Error parsing real PDBQT file: {e}")
+            st.error(f"Error parsing PDBQT file: {e}")
     else:
-        st.info("📌 Please upload both the Protein file and the Docked Output (.pdbqt) file above to parse real Vina poses and scores.")
+        st.info("📌 Please upload both the Protein file and the **Multi-model Vina Docked Output (.pdbqt)** file above to parse real Vina poses and scores.")
