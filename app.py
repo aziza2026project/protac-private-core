@@ -161,7 +161,7 @@ def main():
 
     st.sidebar.markdown("### 🧬 Quick Navigation")
     
-    # Home Page button removed from sidebar and relocated to top of main page
+    # Home Page button removed from sidebar completely
     if st.sidebar.button("📱 View App QR Code", key="nav_qr"):
         st.session_state['current_page'] = "QR Code"
 
@@ -186,13 +186,14 @@ def main():
     # 📌 PART 7: HOME PAGE & GENERAL DASHBOARD
     # ==============================================================================
     if page == "Home Page":
-        # Enlarged Home Page button placed at the top of the main view
-        col_home_btn, _ = st.columns([2, 5])
+        # Large prominent Home Page button placed precisely at the top where the cursor points
+        col_home_btn, _ = st.columns([3, 4])
         with col_home_btn:
             if st.button("🏠 Home Page", key="btn_home_top"):
                 st.session_state['current_page'] = "Home Page"
                 st.rerun()
 
+        st.markdown("<br>", unsafe_allow_html=True)
         st.title("🧬 PROTAC Research & Prediction Platform")
         st.markdown("Welcome to the professional platform for PROTAC design, physicochemical property calculation, and scientific collaboration.")
         st.markdown("---")
@@ -200,40 +201,80 @@ def main():
         st.subheader("🌾 Welcome to PROTAC Research Hub")
         st.markdown("Choose a section below to get started with your research, design, and collaboration workflow:")
 
+        # Custom CSS injection for equal card heights and perfectly aligned centered buttons
+        st.markdown("""
+            <style>
+            .card-container {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                background-color: #f8f9fa;
+                border: 1px solid #e0e0e0;
+                padding: 20px;
+                border-radius: 8px;
+                height: 180px;
+                margin-bottom: 10px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            }
+            .card-title {
+                font-weight: bold;
+                font-size: 16px;
+                color: #1f4e78;
+                margin-bottom: 8px;
+            }
+            .card-desc {
+                font-size: 14px;
+                color: #555;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
         col1, col2, col3 = st.columns(3)
         
         with col1:
             st.markdown("""
-                <div class="card-box">
-                    <h4>💳 Subscription Plans</h4>
-                    <p>Explore access levels and research tiers.</p>
+                <div class="card-container">
+                    <div>
+                        <div class="card-title">💳 Subscription Plans</div>
+                        <div class="card-desc">Explore access levels and research tiers.</div>
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
-            if st.button("Open Subscriptions", key="btn_sub_card"):
-                st.session_state['current_page'] = "Subscriptions"
-                st.rerun()
+            col_b1, col_b2_pad, col_b3_pad = st.columns([1, 1, 1])
+            with col_b2_pad:
+                if st.button("Open", key="btn_sub_card"):
+                    st.session_state['current_page'] = "Subscriptions"
+                    st.rerun()
 
         with col2:
             st.markdown("""
-                <div class="card-box">
-                    <h4>🔬 Prediction Tool</h4>
-                    <p>Access molecular docking, IC50 predictions, and ADME modules.</p>
+                <div class="card-container">
+                    <div>
+                        <div class="card-title">🔬 Prediction Tool</div>
+                        <div class="card-desc">Access molecular docking, IC50 predictions, and ADME modules.</div>
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
-            if st.button("Open Prediction Tool", key="btn_pred_card"):
-                st.session_state['current_page'] = "Prediction Tool"
-                st.rerun()
+            col_b1_pad, col_b2, col_b3_pad = st.columns([1, 1, 1])
+            with col_b2:
+                if st.button("Open", key="btn_pred_card"):
+                    st.session_state['current_page'] = "Prediction Tool"
+                    st.rerun()
 
         with col3:
             st.markdown("""
-                <div class="card-box">
-                    <h4>💼 Consultations & Collaboration</h4>
-                    <p>Connect for advanced computational chemistry projects.</p>
+                <div class="card-container">
+                    <div>
+                        <div class="card-title">💼 Consultations & Collaboration</div>
+                        <div class="card-desc">Connect for advanced computational chemistry projects.</div>
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
-            if st.button("Open Consultations", key="btn_collab_card"):
-                st.session_state['current_page'] = "Consultations"
-                st.rerun()
+            col_b1_pad, col_b2_pad, col_b3 = st.columns([1, 1, 1])
+            with col_b3:
+                if st.button("Open", key="btn_collab_card"):
+                    st.session_state['current_page'] = "Consultations"
+                    st.rerun()
 
     # ==============================================================================
     # 📌 PART 8: QR CODE & UTILITY PAGES (SUBSCRIPTIONS & CONSULTATIONS)
