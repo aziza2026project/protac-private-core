@@ -332,7 +332,7 @@ def main():
                 st.markdown("---")
                 if active_mod == "Docking":
                     st.subheader("🎯 Workspace: Molecular Docking (AutoDock Vina)")
-                   render_molecular_docking_workspace()
+                    render_molecular_docking_workspace()
                     # Add your docking inputs/widgets here
                     
                 elif active_mod == "ADME":
