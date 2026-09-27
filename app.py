@@ -160,7 +160,6 @@ def main():
 
     st.sidebar.markdown("### 🧬 Quick Navigation")
     
-    # Home Page button removed from sidebar completely
     if st.sidebar.button("📱 View App QR Code", key="nav_qr"):
         st.session_state['current_page'] = "QR Code"
 
@@ -185,10 +184,39 @@ def main():
     # 📌 PART 7: HOME PAGE & GENERAL DASHBOARD
     # ==============================================================================
     if page == "Home Page":
-        # Enlarged and prominent Home Page button placed at the top
+        # Extra large, highly prominent Home Page button at the top
+        st.markdown("""
+            <style>
+            .stButton > button[kind="secondary"] {
+                font-size: 18px !important;
+                padding: 12px 24px !important;
+                font-weight: bold !important;
+                background-color: #1f4e78 !important;
+                color: white !important;
+                border-radius: 10px !important;
+            }
+            /* Styling Streamlit buttons to act as uniform cards */
+            .card-btn > button {
+                height: 160px !important;
+                width: 100% !important;
+                background-color: #f8f9fa !important;
+                border: 2px solid #e0e0e0 !important;
+                border-radius: 12px !important;
+                text-align: left !important;
+                padding: 20px !important;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
+                transition: 0.3s ease !important;
+            }
+            .card-btn > button:hover {
+                border-color: #1f4e78 !important;
+                background-color: #f1f5f9 !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
         col_home_btn, _ = st.columns([2, 5])
         with col_home_btn:
-            if st.button("🏠 Home Page", key="btn_home_top", use_container_width=True):
+            if st.button("🏠  Home Page", key="btn_home_top"):
                 st.session_state['current_page'] = "Home Page"
                 st.rerun()
 
@@ -200,36 +228,28 @@ def main():
         st.subheader("🌾 Welcome to PROTAC Research Hub")
         st.markdown("Choose a section below to get started with your research, design, and collaboration workflow:")
 
-        # Custom CSS for compact card height and modern styling
-        st.markdown("""
-            <style>
-            .stButton>button {
-                width: 100%;
-                border-radius: 8px;
-                font-weight: 600;
-            }
-            </style>
-        """, unsafe_allow_html=True)
-
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            st.info("💳 **Subscription Plans**\n\nExplore access levels and research tiers.")
-            if st.button("Access Subscriptions", key="btn_sub_card"):
+            st.markdown('<div class="card-btn">', unsafe_allow_html=True)
+            if st.button("💳 **Subscription Plans**\n\nExplore access levels and research tiers.", key="card_sub"):
                 st.session_state['current_page'] = "Subscriptions"
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
         with col2:
-            st.info("🔬 **Prediction Tool**\n\nAccess molecular docking, IC50 predictions, and ADME modules.")
-            if st.button("Access Prediction Tool", key="btn_pred_card"):
+            st.markdown('<div class="card-btn">', unsafe_allow_html=True)
+            if st.button("🔬 **Prediction Tool**\n\nAccess molecular docking, IC50 predictions, and ADME modules.", key="card_pred"):
                 st.session_state['current_page'] = "Prediction Tool"
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
         with col3:
-            st.info("💼 **Consultations & Collaboration**\n\nConnect for advanced computational chemistry projects.")
-            if st.button("Access Consultations", key="btn_collab_card"):
+            st.markdown('<div class="card-btn">', unsafe_allow_html=True)
+            if st.button("💼 **Consultations & Collaboration**\n\nConnect for advanced computational chemistry projects.", key="card_collab"):
                 st.session_state['current_page'] = "Consultations"
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
     # ==============================================================================
     # 📌 PART 8: QR CODE & UTILITY PAGES (SUBSCRIPTIONS & CONSULTATIONS)
