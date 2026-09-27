@@ -14,7 +14,7 @@ import streamlit.components.v1 as components
 from rdkit import Chem
 from rdkit.Chem import AllChem
 import py3Dmol
-from prediction import render_molecular_docking_workspace
+from prediction_hub import render_molecular_docking_workspace
 # Safe import of machine learning libraries
 try:
     from sklearn.ensemble import RandomForestRegressor
