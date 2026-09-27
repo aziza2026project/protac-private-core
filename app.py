@@ -150,7 +150,7 @@ def send_formatted_html_email(recipient_email, result_title, html_content, outpu
 
           
 
- # ==============================================================================
+# ==============================================================================
 # 📌 PART 6: SIDEBAR NAVIGATION & DEVELOPER AUTHENTICATION
 # ==============================================================================
 def main():
@@ -162,6 +162,8 @@ def main():
         st.session_state['user_subscribed'] = False
     if 'user_email' not in st.session_state:
         st.session_state['user_email'] = ""
+    if 'active_prediction_module' not in st.session_state:
+        st.session_state['active_prediction_module'] = None
 
     st.sidebar.markdown("### 🧬 Quick Navigation")
     
@@ -204,11 +206,11 @@ def main():
             background-color: #f8f9fa;
             border: 1px solid #e0e0e0;
             border-radius: 8px;
-            padding: 12px;
+            padding: 10px;
             font-size: 13px;
             color: #555;
-            min-height: 80px;
-            margin-bottom: 10px;
+            min-height: 60px;
+            margin-bottom: 15px;
             text-align: center;
         }
         </style>
@@ -218,6 +220,7 @@ def main():
         st.markdown('<div class="home-btn-large">', unsafe_allow_html=True)
         if st.button("🏠  Home Page", key="btn_home_top"):
             st.session_state['current_page'] = "Home Page"
+            st.session_state['active_prediction_module'] = None
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -240,6 +243,7 @@ def main():
         with col2:
             if st.button("🔬 Prediction Tool", key="btn_pred_card", use_container_width=True):
                 st.session_state['current_page'] = "Prediction Tool"
+                st.session_state['active_prediction_module'] = None
                 st.rerun()
             st.markdown('<div class="desc-box">Access molecular docking, IC50 predictions, and ADME modules.</div>', unsafe_allow_html=True)
 
@@ -260,13 +264,13 @@ def main():
     elif page == "Prediction Tool":
         if st.button("⬅️ Back to Home Page", key="back_to_home_pred"):
             st.session_state['current_page'] = "Home Page"
+            st.session_state['active_prediction_module'] = None
             st.rerun()
         
         st.title("🔬 PROTAC Prediction Tool")
         st.markdown("Molecular docking, binding affinity, and ADME property evaluation.")
         st.markdown("---")
 
-        # Whitelist check for Dr. Aziza's email or registered subscribers
         whitelist_emails = ["azizamnasri10@gmail.com"]
 
         if not st.session_state['user_subscribed']:
@@ -276,7 +280,7 @@ def main():
                 if entered_email.strip().lower() in whitelist_emails or ("@" in entered_email and "." in entered_email):
                     st.session_state['user_subscribed'] = True
                     st.session_state['user_email'] = entered_email.strip()
-                    st.success(f"Access granted for whitelisted/verified email: {entered_email}")
+                    st.success(f"Access granted for: {entered_email}")
                     st.rerun()
                 else:
                     st.error("Email not found in whitelist or invalid format.")
@@ -288,24 +292,58 @@ def main():
             if st.button("Logout / Change Email", key="logout_email_btn"):
                 st.session_state['user_subscribed'] = False
                 st.session_state['user_email'] = ""
+                st.session_state['active_prediction_module'] = None
                 st.rerun()
             
             st.markdown("---")
-            st.subheader("⚙️ Prediction Modules & Workflows (All 4 Core Modules)")
-            
-            # Row 1: Molecular Docking & ADME
-            col_t1, col_t2 = st.columns(2)
-            with col_t1:
-                st.info("🎯 **1. Molecular Docking (AutoDock Vina)**\n\nConfigure grid boxes, rotatable bonds, binding affinity, and $IC_{50}$ estimations for PROTAC complexes.")
-            with col_t2:
-                st.info("📊 **2. ADME & Pharmacokinetics (pkCSM)**\n\nEvaluate physicochemical properties, biological parameters, Caco-2 permeability, and solubility.")
 
-            # Row 2: Linker Optimization & Advanced Target Profiling
-            col_t3, col_t4 = st.columns(2)
-            with col_t3:
-                st.info("🔗 **3. Linker Optimization**\n\nAnalyze linker length, flexibility, and ternary complex stability for dual-target PROTACs.")
-            with col_t4:
-                st.info("🧪 **4. Target Binding & SAR Profiling**\n\nAssess warhead-E3 ligase cooperative binding and structure-activity relationships.")
+            # If no specific module is open, show the 3 core functional buttons
+            if st.session_state['active_prediction_module'] is None:
+                st.subheader("⚙️ Select a Prediction Module to Start Working")
+                
+                col_m1, col_m2, col_m3 = st.columns(3)
+                
+                with col_m1:
+                    if st.button("🎯 Molecular Docking\n(AutoDock Vina)", key="mod_docking", use_container_width=True):
+                        st.session_state['active_prediction_module'] = "Docking"
+                        st.rerun()
+                    st.markdown('<div class="desc-box">Configure grid boxes, rotatable bonds, binding affinity, and IC50 estimations.</div>', unsafe_allow_html=True)
+
+                with col_m2:
+                    if st.button("📊 ADME & Pharmacokinetics\n(pkCSM)", key="mod_adme", use_container_width=True):
+                        st.session_state['active_prediction_module'] = "ADME"
+                        st.rerun()
+                    st.markdown('<div class="desc-box">Evaluate chemical properties, biological parameters, and permeability.</div>', unsafe_allow_html=True)
+
+                with col_m3:
+                    if st.button("🔗 Linker Optimization\n& Design", key="mod_linker", use_container_width=True):
+                        st.session_state['active_prediction_module'] = "Linker"
+                        st.rerun()
+                    st.markdown('<div class="desc-box">Analyze linker length, flexibility, and ternary complex stability.</div>', unsafe_allow_html=True)
+
+            else:
+                # Inside the active working module workspace
+                active_mod = st.session_state['active_prediction_module']
+                
+                if st.button("⬅️ Back to Prediction Modules Menu", key="back_to_modules_menu"):
+                    st.session_state['active_prediction_module'] = None
+                    st.rerun()
+                
+                st.markdown("---")
+                if active_mod == "Docking":
+                    st.subheader("🎯 Workspace: Molecular Docking (AutoDock Vina)")
+                    st.write("Here you can configure your grid boxes, upload PDB files, run docking, and evaluate binding scores & IC50.")
+                    # Add your docking inputs/widgets here
+                    
+                elif active_mod == "ADME":
+                    st.subheader("📊 Workspace: ADME & Pharmacokinetics (pkCSM)")
+                    st.write("Here you can evaluate chemical and biological properties, Caco-2 permeability, and solubility.")
+                    # Add your ADME inputs/widgets here
+                    
+                elif active_mod == "Linker":
+                    st.subheader("🔗 Workspace: Linker Optimization")
+                    st.write("Here you can optimize linker length, flexibility, and spatial arrangement for PROTAC structures.")
+                    # Add your Linker inputs/widgets here
 
     elif page == "Consultations":
         if st.button("⬅️ Back to Home Page", key="back_to_home_collab"):
