@@ -148,11 +148,12 @@ def send_formatted_html_email(recipient_email, result_title, html_content, outpu
         st.error(f"Failed to send email dispatch: {e}")
         return False
 
-           # ==============================================================================
+          
+
+    # ==============================================================================
 # 📌 PART 6: SIDEBAR NAVIGATION & DEVELOPER AUTHENTICATION
 # ==============================================================================
 def main():
-    # Initialize session state variables for navigation and authentication
     if 'current_page' not in st.session_state:
         st.session_state['current_page'] = "Home Page"
     if 'dev_authenticated' not in st.session_state:
@@ -181,44 +182,39 @@ def main():
 
 
     # ==============================================================================
-    # 📌 PART 7: HOME PAGE & GENERAL DASHBOARD
+    # 📌 PART 7: HOME PAGE & GENERAL DASHBOARD & SUB-PAGES
     # ==============================================================================
-    if page == "Home Page":
-        # Extra large, highly prominent Home Page button at the top
-        st.markdown("""
-            <style>
-            .stButton > button[kind="secondary"] {
-                font-size: 18px !important;
-                padding: 12px 24px !important;
-                font-weight: bold !important;
-                background-color: #1f4e78 !important;
-                color: white !important;
-                border-radius: 10px !important;
-            }
-            /* Styling Streamlit buttons to act as uniform cards */
-            .card-btn > button {
-                height: 160px !important;
-                width: 100% !important;
-                background-color: #f8f9fa !important;
-                border: 2px solid #e0e0e0 !important;
-                border-radius: 12px !important;
-                text-align: left !important;
-                padding: 20px !important;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
-                transition: 0.3s ease !important;
-            }
-            .card-btn > button:hover {
-                border-color: #1f4e78 !important;
-                background-color: #f1f5f9 !important;
-            }
-            </style>
-        """, unsafe_allow_html=True)
+    
+    # Global CSS to make buttons wrap text fully without truncation and enlarge Home button
+    st.markdown("""
+        <style>
+        /* Allow text wrapping in card buttons so nothing gets cut off */
+        .stButton > button {
+            white-space: normal !important;
+            height: auto !important;
+            padding: 15px !important;
+            border-radius: 12px !important;
+            font-weight: bold !important;
+        }
+        /* Extra large Home Page button styling */
+        .home-btn-large > button {
+            font-size: 20px !important;
+            padding: 15px 30px !important;
+            background-color: #1f4e78 !important;
+            color: white !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
-        col_home_btn, _ = st.columns([2, 5])
-        with col_home_btn:
-            if st.button("🏠  Home Page", key="btn_home_top"):
-                st.session_state['current_page'] = "Home Page"
-                st.rerun()
+    if page == "Home Page":
+        # Extra large Home Page button at the top
+        st.markdown('<div class="home-btn-large">', unsafe_allow_html=True)
+        if st.button("🏠  Home Page", key="btn_home_top"):
+            st.session_state['current_page'] = "Home Page"
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.title("🧬 PROTAC Research & Prediction Platform")
@@ -231,25 +227,41 @@ def main():
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            st.markdown('<div class="card-btn">', unsafe_allow_html=True)
-            if st.button("💳 **Subscription Plans**\n\nExplore access levels and research tiers.", key="card_sub"):
+            if st.button("💳 Subscription Plans\n\nExplore access levels and research tiers.", key="card_sub"):
                 st.session_state['current_page'] = "Subscriptions"
                 st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
 
         with col2:
-            st.markdown('<div class="card-btn">', unsafe_allow_html=True)
-            if st.button("🔬 **Prediction Tool**\n\nAccess molecular docking, IC50 predictions, and ADME modules.", key="card_pred"):
+            if st.button("🔬 Prediction Tool\n\nAccess molecular docking, IC50 predictions, and ADME modules.", key="card_pred"):
                 st.session_state['current_page'] = "Prediction Tool"
                 st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
 
         with col3:
-            st.markdown('<div class="card-btn">', unsafe_allow_html=True)
-            if st.button("💼 **Consultations & Collaboration**\n\nConnect for advanced computational chemistry projects.", key="card_collab"):
+            if st.button("💼 Consultations & Collaboration\n\nConnect for advanced computational chemistry projects.", key="card_collab"):
                 st.session_state['current_page'] = "Consultations"
                 st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+
+    elif page == "Subscriptions":
+        if st.button("⬅️ Back to Home Page", key="back_to_home_sub"):
+            st.session_state['current_page'] = "Home Page"
+            st.rerun()
+        st.title("💳 Subscription Plans & Research Tiers")
+        st.markdown("Choose the appropriate computational tier for your target research.")
+        st.info("Current Status: Professional Researcher Access Active.")
+
+    elif page == "Prediction Tool":
+        if st.button("⬅️ Back to Home Page", key="back_to_home_pred"):
+            st.session_state['current_page'] = "Home Page"
+            st.rerun()
+        st.title("🔬 PROTAC Prediction Tool")
+        st.markdown("Molecular docking, binding affinity, and ADME property evaluation.")
+
+    elif page == "Consultations":
+        if st.button("⬅️ Back to Home Page", key="back_to_home_collab"):
+            st.session_state['current_page'] = "Home Page"
+            st.rerun()
+        st.title("💼 Consultations & Scientific Collaboration")
+        st.markdown("Connect with Dr. Aziza Mnasri for advanced computational chemistry projects.")
 
     # ==============================================================================
     # 📌 PART 8: QR CODE & UTILITY PAGES (SUBSCRIPTIONS & CONSULTATIONS)
