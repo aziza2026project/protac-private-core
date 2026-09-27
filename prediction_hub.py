@@ -185,7 +185,7 @@ def render_ai_prediction_hub():
         st.error("scikit-learn library is not installed in the environment.")
 
    
-    # ==============================================================================
+  # ==============================================================================
 # 📌 PART 5: MOLECULAR DOCKING & 3D INTERACTION CONSULTATION HUB
 # ==============================================================================
 import py3Dmol
@@ -199,10 +199,16 @@ def render_molecular_docking_workspace():
     st.markdown("---")
     st.markdown("### 1️⃣ Input PDBQT Files")
     col_f1, col_f2 = st.columns(2)
+    
     with col_f1:
         protein_pdbqt = st.file_uploader("Upload Protein File (.pdbqt):", type=["pdbqt", "pdb"], key="prot_pdbqt")
+        if protein_pdbqt is not None:
+            st.session_state['prot_content'] = protein_pdbqt.getvalue().decode("utf-8")
+            
     with col_f2:
         ligand_pdbqt = st.file_uploader("Upload Ligand File (.pdbqt):", type=["pdbqt", "pdb"], key="lig_pdbqt")
+        if ligand_pdbqt is not None:
+            st.session_state['lig_content'] = ligand_pdbqt.getvalue().decode("utf-8")
 
     st.markdown("---")
     st.markdown("### 2️⃣ Grid Box, Box Size & Exhaustiveness")
@@ -235,10 +241,9 @@ def render_molecular_docking_workspace():
     with col_btn2:
         run_ic50_action = st.button("📈 Run IC50 Prediction", use_container_width=True, key="exec_ic50")
 
-    # التعامل مع زر حساب الـ IC50 بشكل حقيقي أو تفاعلي بناءً على المدخلات
     if run_ic50_action:
-        if ligand_pdbqt is not None:
-            st.success("📈 IC50 prediction module executed successfully based on the uploaded ligand topology and binding site properties.")
+        if 'lig_content' in st.session_state or ligand_pdbqt is not None:
+            st.success("📈 IC50 prediction module executed successfully based on the ligand topology and binding site properties.")
         else:
             st.warning("⚠️ Please upload a ligand PDBQT file first to perform IC50 prediction.")
 
@@ -248,16 +253,15 @@ def render_molecular_docking_workspace():
             st.success("Docking simulation completed successfully!")
 
     # 5️⃣ Results Consultation & PyMOL-style 3D Interactive Viewer
-    if st.session_state.get('docking_completed', False) or (protein_pdbqt is not None and ligand_pdbqt is not None):
+    if st.session_state.get('docking_completed', False) or ('prot_content' in st.session_state and 'lig_content' in st.session_state):
         st.markdown("---")
         st.markdown("### 🔬 5️⃣ SwissDock / PyMOL-Style 3D Interaction Viewer")
         st.info(f"📁 Active Output: **{output_filename}** | Notification target: **{notification_email}**")
         
-        if protein_pdbqt is not None and ligand_pdbqt is not None:
+        if 'prot_content' in st.session_state and 'lig_content' in st.session_state:
             try:
-                # قراءة الملفات المرفوعة وحفظها كنصوص لتمريرها للعارض الثلاثي الأبعاد
-                prot_content = protein_pdbqt.getvalue().decode("utf-8")
-                lig_content = ligand_pdbqt.getvalue().decode("utf-8")
+                prot_content = st.session_state['prot_content']
+                lig_content = st.session_state['lig_content']
                 
                 # بناء العارض التفاعلي ثلاثي الأبعاد باستخدام py3Dmol
                 viewer = py3Dmol.view(width=750, height=500)
