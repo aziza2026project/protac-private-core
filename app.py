@@ -148,8 +148,7 @@ def send_formatted_html_email(recipient_email, result_title, html_content, outpu
         st.error(f"Failed to send email dispatch: {e}")
         return False
 
-
-# ==============================================================================
+           # ==============================================================================
 # 📌 PART 6: SIDEBAR NAVIGATION & DEVELOPER AUTHENTICATION
 # ==============================================================================
 def main():
@@ -186,10 +185,10 @@ def main():
     # 📌 PART 7: HOME PAGE & GENERAL DASHBOARD
     # ==============================================================================
     if page == "Home Page":
-        # Large prominent Home Page button placed precisely at the top where the cursor points
-        col_home_btn, _ = st.columns([3, 4])
+        # Enlarged and prominent Home Page button placed at the top
+        col_home_btn, _ = st.columns([2, 5])
         with col_home_btn:
-            if st.button("🏠 Home Page", key="btn_home_top"):
+            if st.button("🏠 Home Page", key="btn_home_top", use_container_width=True):
                 st.session_state['current_page'] = "Home Page"
                 st.rerun()
 
@@ -201,30 +200,13 @@ def main():
         st.subheader("🌾 Welcome to PROTAC Research Hub")
         st.markdown("Choose a section below to get started with your research, design, and collaboration workflow:")
 
-        # Custom CSS injection for equal card heights and perfectly aligned centered buttons
+        # Custom CSS for compact card height and modern styling
         st.markdown("""
             <style>
-            .card-container {
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                background-color: #f8f9fa;
-                border: 1px solid #e0e0e0;
-                padding: 20px;
+            .stButton>button {
+                width: 100%;
                 border-radius: 8px;
-                height: 180px;
-                margin-bottom: 10px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            }
-            .card-title {
-                font-weight: bold;
-                font-size: 16px;
-                color: #1f4e78;
-                margin-bottom: 8px;
-            }
-            .card-desc {
-                font-size: 14px;
-                color: #555;
+                font-weight: 600;
             }
             </style>
         """, unsafe_allow_html=True)
@@ -232,49 +214,22 @@ def main():
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            st.markdown("""
-                <div class="card-container">
-                    <div>
-                        <div class="card-title">💳 Subscription Plans</div>
-                        <div class="card-desc">Explore access levels and research tiers.</div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-            col_b1, col_b2_pad, col_b3_pad = st.columns([1, 1, 1])
-            with col_b2_pad:
-                if st.button("Open", key="btn_sub_card"):
-                    st.session_state['current_page'] = "Subscriptions"
-                    st.rerun()
+            st.info("💳 **Subscription Plans**\n\nExplore access levels and research tiers.")
+            if st.button("Access Subscriptions", key="btn_sub_card"):
+                st.session_state['current_page'] = "Subscriptions"
+                st.rerun()
 
         with col2:
-            st.markdown("""
-                <div class="card-container">
-                    <div>
-                        <div class="card-title">🔬 Prediction Tool</div>
-                        <div class="card-desc">Access molecular docking, IC50 predictions, and ADME modules.</div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-            col_b1_pad, col_b2, col_b3_pad = st.columns([1, 1, 1])
-            with col_b2:
-                if st.button("Open", key="btn_pred_card"):
-                    st.session_state['current_page'] = "Prediction Tool"
-                    st.rerun()
+            st.info("🔬 **Prediction Tool**\n\nAccess molecular docking, IC50 predictions, and ADME modules.")
+            if st.button("Access Prediction Tool", key="btn_pred_card"):
+                st.session_state['current_page'] = "Prediction Tool"
+                st.rerun()
 
         with col3:
-            st.markdown("""
-                <div class="card-container">
-                    <div>
-                        <div class="card-title">💼 Consultations & Collaboration</div>
-                        <div class="card-desc">Connect for advanced computational chemistry projects.</div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-            col_b1_pad, col_b2_pad, col_b3 = st.columns([1, 1, 1])
-            with col_b3:
-                if st.button("Open", key="btn_collab_card"):
-                    st.session_state['current_page'] = "Consultations"
-                    st.rerun()
+            st.info("💼 **Consultations & Collaboration**\n\nConnect for advanced computational chemistry projects.")
+            if st.button("Access Consultations", key="btn_collab_card"):
+                st.session_state['current_page'] = "Consultations"
+                st.rerun()
 
     # ==============================================================================
     # 📌 PART 8: QR CODE & UTILITY PAGES (SUBSCRIPTIONS & CONSULTATIONS)
