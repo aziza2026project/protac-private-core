@@ -185,7 +185,7 @@ def render_ai_prediction_hub():
         st.error("scikit-learn library is not installed in the environment.")
 
 # ==============================================================================
-# 📌 PART 5: COMPLETE MODULAR PREDICTION & DOCKING PLATFORM (FINAL CLEAN)
+# 📌 PART 5: COMPLETE MODULAR PREDICTION & DOCKING PLATFORM (CLEANED)
 # ==============================================================================
 import streamlit as st
 import py3Dmol
@@ -297,7 +297,7 @@ def render_molecular_docking_workspace():
             st.rerun()
             
         st.markdown("---")
-        # تم حذف عنوان "Workspace: Molecular Docking" نهائياً من هنا
+        # تم مسح العنوان الزائد تماماً، والبدء مباشرة بعنوان العمليات الحقيقية
         st.markdown("### 🚀 AutoDock Vina Simulation & 3D Interactive Viewer")
         
         col_d1, col_d2 = st.columns(2)
