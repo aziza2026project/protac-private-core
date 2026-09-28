@@ -9,5 +9,5 @@ requests
 joblib
 py3Dmol>=2.0.3
 qrcode
-rdkit-pypi
+rdkit>=2023.9.1
 weasyprint
