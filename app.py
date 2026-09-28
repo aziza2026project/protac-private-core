@@ -37,27 +37,44 @@ st.set_page_config(
 
 st.markdown("""
     <style>
-    .stButton>button {
-        background-color: #1f4e78;
-        color: white;
-        border-radius: 6px;
-        font-weight: 600;
-        border: none;
-        width: 100%;
-        padding: 0.6rem;
-    }
-    .stButton>button:hover {
-        background-color: #16385c;
-        color: white;
-    }
-    .card-box {
-        background-color: #f8f9fa;
-        border: 1px solid #e0e0e0;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        margin-bottom: 15px;
-    }
+        /* تقليص الفراغ الكبير العلوي في الصفحة وإلغاء المسافات الفارغة */
+        .block-container {
+            padding-top: 1rem !important;
+            padding-bottom: 2rem !important;
+        }
+        
+        /* تقليص المسافات والفراغات بين العناصر وبعضها */
+        div.element-container {
+            margin-bottom: -0.5rem !important;
+        }
+        
+        /* ضبط المسافات حول العناوين الرئيسية لتطلع لفوق */
+        h1, h2, h3 {
+            margin-top: 0px !important;
+            padding-top: 0px !important;
+        }
+
+        .stButton>button {
+            background-color: #1f4e78;
+            color: white;
+            border-radius: 6px;
+            font-weight: 600;
+            border: none;
+            width: 100%;
+            padding: 0.6rem;
+        }
+        .stButton>button:hover {
+            background-color: #16385c;
+            color: white;
+        }
+        .card-box {
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -224,7 +241,6 @@ def main():
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown("<br>", unsafe_allow_html=True)
         st.title("🧬 PROTAC Research & Prediction Platform")
         st.markdown("Welcome to the professional platform for PROTAC design, physicochemical property calculation, and scientific collaboration.")
         st.markdown("---")
