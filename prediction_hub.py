@@ -185,7 +185,7 @@ def render_ai_prediction_hub():
         st.error("scikit-learn library is not installed in the environment.")
 
 # ==============================================================================
-# 📌 PART 5: COMPLETE MODULAR PREDICTION & DOCKING PLATFORM (CLEANED)
+# 📌 PART 5: render_molecular_docking_workspace (CLEANED)
 # ==============================================================================
 import streamlit as st
 import py3Dmol
@@ -193,12 +193,11 @@ import streamlit.components.v1 as components
 import random
 
 def render_molecular_docking_workspace():
-    # Initialize navigation state in session if not present
     if 'active_workflow' not in st.session_state:
         st.session_state['active_workflow'] = 'hub'
 
     # -------------------------------------------------------------------------
-    # 🏠 1. MAIN LANDING HUB (Two Primary Options)
+    # 🏠 1. MAIN LANDING HUB
     # -------------------------------------------------------------------------
     if st.session_state['active_workflow'] == 'hub':
         st.markdown("<h2 style='text-align: center;'>Choose your desired computational workflow below:</h2>", unsafe_allow_html=True)
@@ -209,14 +208,14 @@ def render_molecular_docking_workspace():
         with col_h1:
             st.markdown("### 🧪 Global IC50 Prediction")
             st.markdown("Predict inhibitory concentration based on molecular features, generate a readable online report, download as PDF/Word, and receive results via email.")
-            if st.button("Go to IC50 Prediction Tool", type="primary", key="btn_goto_ic50"):
+            if st.button("Go to IC50 Prediction Tool", type="primary", key="p5_btn_ic50"):
                 st.session_state['active_workflow'] = 'ic50_workflow'
                 st.rerun()
                 
         with col_h2:
             st.markdown("### 🚀 Molecular Docking Simulation")
             st.markdown("Run AutoDock Vina simulations, configure grid box parameters, inspect 9 docking poses, view 3D interactive interactions, and download results.")
-            if st.button("Go to Docking Workspace", type="secondary", key="btn_goto_docking"):
+            if st.button("Go to Docking Workspace", type="secondary", key="p5_btn_dock"):
                 st.session_state['active_workflow'] = 'docking_workflow'
                 st.rerun()
 
@@ -224,7 +223,7 @@ def render_molecular_docking_workspace():
     # 🧪 2. GLOBAL IC50 PREDICTION WORKFLOW
     # -------------------------------------------------------------------------
     elif st.session_state['active_workflow'] == 'ic50_workflow':
-        if st.button("⬅️ Back to Prediction Modules Menu", key="back_from_ic50"):
+        if st.button("⬅️ Back to Prediction Modules Menu", key="p5_back_ic50"):
             st.session_state['active_workflow'] = 'hub'
             st.rerun()
             
@@ -233,18 +232,18 @@ def render_molecular_docking_workspace():
         
         col_ic1, col_ic2 = st.columns(2)
         with col_ic1:
-            ic50_prot = st.file_uploader("Upload Protein (.pdbqt):", type=["pdbqt"], key="ic50_prot_file")
+            ic50_prot = st.file_uploader("Upload Protein (.pdbqt):", type=["pdbqt"], key="p5_ic50_p")
             if ic50_prot is not None:
                 st.session_state['ic50_prot_content'] = ic50_prot.getvalue().decode("utf-8")
                 
-            ic50_ligand = st.file_uploader("Upload Ligand (.pdbqt):", type=["pdbqt"], key="ic50_lig_file")
+            ic50_ligand = st.file_uploader("Upload Ligand (.pdbqt):", type=["pdbqt"], key="p5_ic50_l")
             if ic50_ligand is not None:
                 st.session_state['ic50_lig_content'] = ic50_ligand.getvalue().decode("utf-8")
         with col_ic2:
-            output_filename_ic50 = st.text_input("Output File Name (.pdbqt / Report):", value="IC50_Prediction_Report", key="ic50_out_name")
-            user_email_ic50 = st.text_input("Notification Email:", value="researcher@example.com", key="ic50_email")
+            output_filename_ic50 = st.text_input("Output File Name (.pdbqt / Report):", value="IC50_Prediction_Report", key="p5_ic50_out")
+            user_email_ic50 = st.text_input("Notification Email:", value="researcher@example.com", key="p5_ic50_mail")
 
-        if st.button("✨ Predict IC50 & Generate Report", type="primary", key="run_ic50_action"):
+        if st.button("✨ Predict IC50 & Generate Report", type="primary", key="p5_run_ic50"):
             if 'ic50_lig_content' in st.session_state:
                 with st.spinner("Analyzing molecular descriptors and generating comprehensive report..."):
                     predicted_val = round(random.uniform(15.0, 65.0), 2)
@@ -276,66 +275,66 @@ def render_molecular_docking_workspace():
                     label="📥 Download Report as Word (.docx)",
                     data=st.session_state['ic50_generated_report'],
                     file_name=f"{output_filename_ic50}.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    key="p5_dl_docx"
                 )
             with col_dl2:
                 st.download_button(
                     label="📥 Download Report as Text (.txt)",
                     data=st.session_state['ic50_generated_report'],
                     file_name=f"{output_filename_ic50}.txt",
-                    mime="text/plain"
+                    mime="text/plain",
+                    key="p5_dl_txt"
                 )
 
     # -------------------------------------------------------------------------
     # 🚀 3. MOLECULAR DOCKING WORKFLOW
     # -------------------------------------------------------------------------
     elif st.session_state['active_workflow'] == 'docking_workflow':
-        if st.button("⬅️ Back to Prediction Modules Menu", key="back_from_docking"):
+        if st.button("⬅️ Back to Prediction Modules Menu", key="p5_back_dock"):
             st.session_state['active_workflow'] = 'hub'
             if 'docking_results' in st.session_state:
                 del st.session_state['docking_results']
             st.rerun()
             
         st.markdown("---")
-        # تم مسح العنوان الزائد تماماً، والبدء مباشرة بعنوان العمليات الحقيقية
         st.markdown("### 🚀 AutoDock Vina Simulation & 3D Interactive Viewer")
         
         col_d1, col_d2 = st.columns(2)
         with col_d1:
-            dock_prot = st.file_uploader("Upload Protein (.pdbqt):", type=["pdbqt"], key="dock_prot_file")
+            dock_prot = st.file_uploader("Upload Protein (.pdbqt):", type=["pdbqt"], key="p5_dock_p")
             if dock_prot is not None:
                 st.session_state['dock_prot_content'] = dock_prot.getvalue().decode("utf-8")
         with col_d2:
-            dock_lig = st.file_uploader("Upload Ligand (.pdbqt):", type=["pdbqt"], key="dock_lig_file")
+            dock_lig = st.file_uploader("Upload Ligand (.pdbqt):", type=["pdbqt"], key="p5_dock_l")
             if dock_lig is not None:
                 st.session_state['dock_lig_content'] = dock_lig.getvalue().decode("utf-8")
 
         st.markdown("#### ⚙️ Grid Box & Simulation Parameters")
         col_gb1, col_gb2, col_gb3 = st.columns(3)
         with col_gb1:
-            cx = st.number_input("Center X:", value=16.0, format="%.2f", key="dock_cx")
-            sx = st.number_input("Size X:", value=20.0, format="%.2f", key="dock_sx")
+            cx = st.number_input("Center X:", value=16.0, format="%.2f", key="p5_cx")
+            sx = st.number_input("Size X:", value=20.0, format="%.2f", key="p5_sx")
         with col_gb2:
-            cy = st.number_input("Center Y:", value=15.0, format="%.2f", key="dock_cy")
-            sy = st.number_input("Size Y:", value=20.0, format="%.2f", key="dock_sy")
+            cy = st.number_input("Center Y:", value=15.0, format="%.2f", key="p5_cy")
+            sy = st.number_input("Size Y:", value=20.0, format="%.2f", key="p5_sy")
         with col_gb3:
-            cz = st.number_input("Center Z:", value=15.0, format="%.2f", key="dock_cz")
-            sz = st.number_input("Size Z:", value=20.0, format="%.2f", key="dock_sz")
+            cz = st.number_input("Center Z:", value=15.0, format="%.2f", key="p5_cz")
+            sz = st.number_input("Size Z:", value=20.0, format="%.2f", key="p5_sz")
 
         col_ex1, col_ex2 = st.columns(2)
         with col_ex1:
-            exhaustiveness_val = st.slider("Exhaustiveness:", min_value=1, max_value=32, value=8, key="dock_exhaus")
+            exhaustiveness_val = st.slider("Exhaustiveness:", min_value=1, max_value=32, value=8, key="p5_exhaus")
         with col_ex2:
-            num_modes = st.slider("Number of Output Poses:", min_value=1, max_value=20, value=9, key="dock_modes")
+            num_modes = st.slider("Number of Output Poses:", min_value=1, max_value=20, value=9, key="p5_modes")
 
         col_out1, col_out2 = st.columns(2)
         with col_out1:
-            output_filename_dock = st.text_input("Output Results File Name (.pdbqt):", value="docking_poses_output", key="dock_out_name")
+            output_filename_dock = st.text_input("Output Results File Name (.pdbqt):", value="docking_poses_output", key="p5_out_dock")
         with col_out2:
-            user_email_dock = st.text_input("Results Notification Email (.pdbqt result):", value="researcher@example.com", key="dock_email")
+            user_email_dock = st.text_input("Results Notification Email (.pdbqt result):", value="researcher@example.com", key="p5_mail_dock")
 
-        # Action button to run simulation
-        if st.button("🚀 Run AutoDock Vina Simulation", type="primary", key="run_vina_action"):
+        if st.button("🚀 Run AutoDock Vina Simulation", type="primary", key="p5_run_vina"):
             if 'dock_prot_content' in st.session_state and 'dock_lig_content' in st.session_state:
                 with st.spinner("Executing AutoDock Vina simulation across conformational poses..."):
                     simulated_poses = []
@@ -350,14 +349,13 @@ def render_molecular_docking_workspace():
             else:
                 st.error("⚠️ Please upload both Protein and Ligand .pdbqt structure files before running the simulation.")
 
-        # STRICTLY CONDITIONAL: Display Docking Results & 3D Viewer ONLY IF simulation has been executed
         if 'docking_results' in st.session_state and 'dock_prot_content' in st.session_state:
             st.markdown("---")
             st.markdown("### 🔍 Docking Poses & 3D Interactive Interaction Viewer")
             
             poses = st.session_state['docking_results']
             pose_labels = [f"Pose {i+1} (Binding Affinity: {p['score']} kcal/mol)" for i, p in enumerate(poses)]
-            selected_pose_label = st.selectbox("Select Binding Pose to Inspect:", pose_labels, key="dock_pose_select")
+            selected_pose_label = st.selectbox("Select Binding Pose to Inspect:", pose_labels, key="p5_pose_sel")
             selected_index = pose_labels.index(selected_pose_label)
             active_pose = poses[selected_index]
             
@@ -365,24 +363,24 @@ def render_molecular_docking_workspace():
                 label=f"📥 Download Output File ({output_filename_dock}.pdbqt)",
                 data=active_pose['content'],
                 file_name=f"{output_filename_dock}.pdbqt",
-                mime="chemical/x-pdb"
+                mime="chemical/x-pdb",
+                key="p5_dl_dock"
             )
 
             interact_type = st.radio(
                 "🔗 Highlight Interaction Types & Residues:",
                 ["Hydrogen Bonds", "Hydrophobic Interactions", "Electrostatic / Other Interactions", "All Interactions Combined"],
                 horizontal=True,
-                key="dock_interact_radio"
+                key="p5_interact"
             )
             
             zoom_mode = st.radio(
                 "🔍 View Scope / Zoom Mode:",
                 ["Binding Pocket Zoom (Detailed Ligand Focus)", "Full Protein View"],
                 horizontal=True,
-                key="dock_zoom_mode"
+                key="p5_zoom"
             )
             
-            # Py3Dmol Visualization
             viewer = py3Dmol.view(width=750, height=500)
             viewer.addModel(st.session_state['dock_prot_content'], "pdbqt")
             viewer.setStyle({'model': 0}, {'cartoon': {'color': 'spectrum'}})
