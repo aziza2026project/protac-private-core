@@ -416,19 +416,19 @@ def render_adme_workspace():
         st.session_state['active_prediction_module'] = None
         st.rerun()
     
-    # Clean, concise title for both ADME and Physicochemical properties
+    # عنوان صغير ومنظم يعبر على ADME والفيزيكوكيميكال
     st.markdown("### 📊 ADME & Physicochemical Properties Workspace")
     st.markdown("<p style='color: #666; font-size: 14px; margin-top: -10px;'>Evaluate pharmacokinetic parameters and physicochemical properties.</p>", unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Small label right above the SMILES input field
+    # كابس صغير فوق خانة إدخال الساميلز
     st.markdown("**✏️ Type or Paste Your SMILES:**")
     smiles_input = st.text_input("", placeholder="e.g., CC(=O)OC1=CC=CC=C1C(=O)O", key="adme_smiles_input", label_visibility="collapsed")
     
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Two side-by-side action buttons for property evaluation
+    # زوج أزرار تحت بعضها أو جنب بعض
     col_btn1, col_btn2 = st.columns(2)
     
     with col_btn1:
@@ -439,13 +439,13 @@ def render_adme_workspace():
     if pk_button:
         if smiles_input:
             st.info(f"Calculating Pharmacokinetic properties for SMILES: {smiles_input}")
-            # Insert your pharmacokinetic calculation/display code here
+            # هنا الكود الخاص بعرض نتائج الفارماكوكينيتيكس
         else:
             st.warning("Please enter a valid SMILES string first.")
             
     if phys_button:
         if smiles_input:
             st.info(f"Calculating Physicochemical properties for SMILES: {smiles_input}")
-            # Insert your physicochemical calculation/display code here
+            # هنا الكود الخاص بعرض نتائج الفيزيكوكيميكال
         else:
             st.warning("Please enter a valid SMILES string first.")
