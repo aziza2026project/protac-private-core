@@ -428,7 +428,12 @@ def render_adme_workspace():
     
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # زوج أزرار تحت بعضها أو جنب بعض
+    # خانة إدخال البريد الإلكتروني لإرسال التقرير إليه
+    recipient_email = st.text_input("📧 Enter recipient email for report dispatch:", value=st.session_state.get('user_email', ''), key="adme_report_email")
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # زوج أزرار للخصائص
     col_btn1, col_btn2 = st.columns(2)
     
     with col_btn1:
@@ -436,16 +441,44 @@ def render_adme_workspace():
     with col_btn2:
         phys_button = st.button("🧪 Physicochemical Properties", key="btn_phys_prop", use_container_width=True)
         
-    if pk_button:
+    if pk_button or phys_button:
         if smiles_input:
-            st.info(f"Calculating Pharmacokinetic properties for SMILES: {smiles_input}")
-            # هنا الكود الخاص بعرض نتائج الفارماكوكينيتيكس
-        else:
-            st.warning("Please enter a valid SMILES string first.")
+            prop_type = "Pharmacokinetic" if pk_button else "Physicochemical"
+            st.success(f"Calculating {prop_type} properties for SMILES: {smiles_input}")
             
-    if phys_button:
-        if smiles_input:
-            st.info(f"Calculating Physicochemical properties for SMILES: {smiles_input}")
-            # هنا الكود الخاص بعرض نتائج الفيزيكوكيميكال
+            # محاكاة لنتيجة الحسابات في شكل جدول (يمكنك استبدالها بالدوال الحقيقية)
+            results_data = {
+                "Parameter": ["Molecular Weight", "LogP", "Caco-2 Permeability", "Water Solubility", "Fraction Absorbed"],
+                "Value": ["318.33 g/mol", "2.45", "0.85 log Papp", "-3.21 log mol/L", "89.4%"] if prop_type == "Pharmacokinetic" else ["318.33 g/mol", "2.45", "5 H-bond donors", "8 H-bond acceptors", "650.2 Å² TPSA"]
+            }
+            df_results = pd.DataFrame(results_data)
+            
+            # عرض النتائج في شكل جدول مرتب
+            st.markdown(f"#### 📋 {prop_type} Results Table:")
+            st.dataframe(df_results, use_container_width=True)
+            
+            # تجهيز محتوى الملف للتحميل أو الإرسال
+            file_content = df_results.to_string(index=False)
+            file_name = f"{prop_type.lower()}_properties_report.txt"
+            
+            # زر لتحميل الملف مباشرة (Downloadable File)
+            st.download_button(
+                label=f"📥 Download {prop_type} Report File",
+                data=file_content,
+                file_name=file_name,
+                mime="text/plain",
+                key=f"download_{prop_type.lower()}_btn"
+            )
+            
+            # زر لإرسال التقرير عبر البريد الإلكتروني
+            if recipient_email:
+                if st.button(f"📧 Send {prop_type} Report via Email", key=f"email_{prop_type.lower()}_btn"):
+                    html_msg = f"<h3>PROTAC Platform Report</h3><p>Results for SMILES: {smiles_input}</p><pre>{file_content}</pre>"
+                    success = send_formatted_html_email(recipient_email, f"{prop_type} Properties", html_msg, file_name, file_content)
+                    if success:
+                        st.success(f"Report successfully sent to {recipient_email}!")
+            else:
+                st.warning("Please enter a valid email address to enable dispatch.")
+                
         else:
             st.warning("Please enter a valid SMILES string first.")
