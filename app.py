@@ -336,14 +336,15 @@ def main():
                 # Inside the active working module workspace (تم تفادي التكرار نهائياً)
                 active_mod = st.session_state['active_prediction_module']
                 
-                if active_mod == "Docking":
-                    # دالة الـ Docking تتولى زر الرجوع الخاص بها داخلياً لتجنب التكرار
-                    render_molecular_docking_workspace()
-                    
-                elif active_mod == "ADME":
-                   render_adme_workspace()
-    elif active_mod == "Linker":
+              active_mod = st.session_state.get('active_prediction_module')
+
+if active_mod == "Docking":
+    render_molecular_docking_workspace()
+elif active_mod == "ADME":
+    render_adme_workspace()
+elif active_mod == "Linker":
     render_linker_optimization_workspace()
+else:
     elif page == "Consultations":
         if st.button("⬅️ Back to Home Page", key="back_to_home_collab"):
             st.session_state['current_page'] = "Home Page"
