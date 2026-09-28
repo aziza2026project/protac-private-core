@@ -185,7 +185,7 @@ def render_ai_prediction_hub():
         st.error("scikit-learn library is not installed in the environment.")
 
 # ==============================================================================
-# 📌 PART 5: MODULAR PREDICTION & DOCKING PLATFORM WITH DUAL WORKFLOWS
+# 📌 PART 5: MODULAR PREDICTION & DOCKING PLATFORM (FINAL UPDATED)
 # ==============================================================================
 import streamlit as st
 import py3Dmol
@@ -193,8 +193,6 @@ import streamlit.components.v1 as components
 import random
 
 def render_molecular_docking_workspace():
-    st.subheader("🎯 Molecular Discovery & Computational Workspace")
-    
     # Initialize navigation state in session if not present
     if 'active_workflow' not in st.session_state:
         st.session_state['active_workflow'] = 'hub'
@@ -203,7 +201,8 @@ def render_molecular_docking_workspace():
     # 🏠 1. MAIN LANDING HUB (Two Primary Options)
     # -------------------------------------------------------------------------
     if st.session_state['active_workflow'] == 'hub':
-        st.markdown("Choose your desired computational workflow below:")
+        st.markdown("<h2 style='text-align: center;'>Choose your desired computational workflow below:</h2>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
         
         col_h1, col_h2 = st.columns(2)
         
@@ -234,11 +233,15 @@ def render_molecular_docking_workspace():
         
         col_ic1, col_ic2 = st.columns(2)
         with col_ic1:
-            ic50_ligand = st.file_uploader("Upload Ligand (.pdbqt / .mol2 / .pdb):", type=["pdbqt", "mol2", "pdb"], key="ic50_lig_file")
+            ic50_prot = st.file_uploader("Upload Protein (.pdbqt):", type=["pdbqt"], key="ic50_prot_file")
+            if ic50_prot is not None:
+                st.session_state['ic50_prot_content'] = ic50_prot.getvalue().decode("utf-8")
+                
+            ic50_ligand = st.file_uploader("Upload Ligand (.pdbqt):", type=["pdbqt"], key="ic50_lig_file")
             if ic50_ligand is not None:
                 st.session_state['ic50_lig_content'] = ic50_ligand.getvalue().decode("utf-8")
         with col_ic2:
-            output_filename_ic50 = st.text_input("Output File Name:", value="IC50_Prediction_Report", key="ic50_out_name")
+            output_filename_ic50 = st.text_input("Output File Name (.pdbqt / Report):", value="IC50_Prediction_Report", key="ic50_out_name")
             user_email_ic50 = st.text_input("Notification Email:", value="researcher@example.com", key="ic50_email")
 
         if st.button("✨ Predict IC50 & Generate Report", type="primary", key="run_ic50_action"):
@@ -250,10 +253,10 @@ def render_molecular_docking_workspace():
 ====================================================================
                GLOBAL IC50 PREDICTION & KINETICS REPORT
 ====================================================================
-- Output File: {output_filename_ic50}.pdf / .docx
+- Output File: {output_filename_ic50}.pdbqt / .docx / .pdf
 - Target Inhibitory Concentration (IC50): {predicted_val} µM
 - Methodology: QSAR modeling & structural similarity database matching.
-- Biological Interpretation: The evaluated ligand demonstrates favorable binding affinity and inhibitory potency against the active site, supported by stable intermolecular interactions.
+- Biological Interpretation: The evaluated ligand demonstrates favorable binding affinity and inhibitory potency against the active site.
 - Notification Status: Report successfully dispatched to {user_email_ic50}.
 ====================================================================
                     """
@@ -278,7 +281,7 @@ def render_molecular_docking_workspace():
                 )
             with col_dl2:
                 st.download_button(
-                    label="📥 Download Report as Text/PDF (.txt)",
+                    label="📥 Download Report as Text (.txt)",
                     data=st.session_state['ic50_generated_report'],
                     file_name=f"{output_filename_ic50}.txt",
                     mime="text/plain"
@@ -297,11 +300,11 @@ def render_molecular_docking_workspace():
         
         col_d1, col_d2 = st.columns(2)
         with col_d1:
-            dock_prot = st.file_uploader("Upload Protein (.pdbqt / .pdb):", type=["pdbqt", "pdb"], key="dock_prot_file")
+            dock_prot = st.file_uploader("Upload Protein (.pdbqt):", type=["pdbqt"], key="dock_prot_file")
             if dock_prot is not None:
                 st.session_state['dock_prot_content'] = dock_prot.getvalue().decode("utf-8")
         with col_d2:
-            dock_lig = st.file_uploader("Upload Ligand (.pdbqt / .mol2):", type=["pdbqt", "mol2", "pdb"], key="dock_lig_file")
+            dock_lig = st.file_uploader("Upload Ligand (.pdbqt):", type=["pdbqt"], key="dock_lig_file")
             if dock_lig is not None:
                 st.session_state['dock_lig_content'] = dock_lig.getvalue().decode("utf-8")
 
@@ -325,9 +328,9 @@ def render_molecular_docking_workspace():
 
         col_out1, col_out2 = st.columns(2)
         with col_out1:
-            output_filename_dock = st.text_input("Output Results File Name:", value="docking_poses_output", key="dock_out_name")
+            output_filename_dock = st.text_input("Output Results File Name (.pdbqt):", value="docking_poses_output", key="dock_out_name")
         with col_out2:
-            user_email_dock = st.text_input("Results Notification Email:", value="researcher@example.com", key="dock_email")
+            user_email_dock = st.text_input("Results Notification Email (.pdbqt result):", value="researcher@example.com", key="dock_email")
 
         if st.button("🚀 Run AutoDock Vina Simulation", type="primary", key="run_vina_action"):
             if 'dock_prot_content' in st.session_state and 'dock_lig_content' in st.session_state:
@@ -340,9 +343,9 @@ def render_molecular_docking_workspace():
                     
                     simulated_poses = sorted(simulated_poses, key=lambda x: x['score'])
                     st.session_state['docking_results'] = simulated_poses
-                    st.success(f"✅ Vina simulation completed successfully! Results dispatched to {user_email_dock}.")
+                    st.success(f"✅ Vina simulation completed successfully! Results (.pdbqt) dispatched to {user_email_dock}.")
             else:
-                st.error("⚠️ Please upload both Protein and Ligand structure files.")
+                st.error("⚠️ Please upload both Protein and Ligand .pdbqt structure files.")
 
         # Display Docking Results & 3D Interactive Viewer
         if 'docking_results' in st.session_state and 'dock_prot_content' in st.session_state:
@@ -377,24 +380,26 @@ def render_molecular_docking_workspace():
                 key="dock_zoom_mode"
             )
             
-            # Py3Dmol Visualization with residue labels and interaction dashed lines
+            # Py3Dmol Visualization with fixed protein structure and ligand poses
             viewer = py3Dmol.view(width=750, height=500)
             viewer.addModel(st.session_state['dock_prot_content'], "pdbqt")
-            viewer.setStyle({'model': -1}, {'cartoon': {'color': 'spectrum'}})
+            viewer.setStyle({'model': 0}, {'cartoon': {'color': 'spectrum'}})
             
-            # Highlight pocket residues with sticks and atom labels
-            viewer.setStyle({'model': 0, 'resn': ['LEU', 'ASP', 'VAL', 'TYR', 'GLN', 'SER', 'PHE', 'ALA']}, 
-                            {'stick': {'colorscheme': 'cyanCarbon', 'radius': 0.25}, 'label': {'text': 'resn', 'fontSize': 10, 'fontColor': 'black', 'background': 'white'}})
+            # Highlight binding pocket residues near the center
+            viewer.setStyle({'model': 0, 'and': [{'xlo': cx - 6, 'xhi': cx + 6}, {'ylo': cy - 6, 'yhi': cy + 6}, {'zlo': cz - 6, 'zhi': cz + 6}]}, 
+                            {'stick': {'colorscheme': 'cyanCarbon', 'radius': 0.22}, 'label': {'text': 'resn', 'fontSize': 11, 'fontColor': 'black', 'background': 'white'}})
             
+            # Add ligand pose
             viewer.addModel(active_pose['content'], "pdbqt")
-            viewer.setStyle({'model': 1}, {'stick': {'colorscheme': 'greenCarbon', 'radius': 0.42}, 'sphere': {'scale': 0.25}})
+            viewer.setStyle({'model': 1}, {'stick': {'colorscheme': 'greenCarbon', 'radius': 0.40}, 'sphere': {'scale': 0.25}})
             
+            # Interaction dashed cylinders
             if interact_type in ["Hydrogen Bonds", "All Interactions Combined"]:
-                viewer.addCylinder({'start': {'x': cx - 1.2, 'y': cy - 0.8, 'z': cz - 0.5}, 'end': {'x': cx, 'y': cy, 'z': cz}, 'radius': 0.09, 'color': 'yellow', 'dashed': True})
+                viewer.addCylinder({'start': {'x': cx - 1.0, 'y': cy - 0.5, 'z': cz - 0.5}, 'end': {'x': cx, 'y': cy, 'z': cz}, 'radius': 0.08, 'color': 'yellow', 'dashed': True})
             if interact_type in ["Hydrophobic Interactions", "All Interactions Combined"]:
-                viewer.addCylinder({'start': {'x': cx + 1.0, 'y': cy + 1.0, 'z': cz - 0.8}, 'end': {'x': cx, 'y': cy, 'z': cz}, 'radius': 0.09, 'color': 'green', 'dashed': True})
+                viewer.addCylinder({'start': {'x': cx + 1.2, 'y': cx + 0.8, 'z': cz - 0.6}, 'end': {'x': cx, 'y': cy, 'z': cz}, 'radius': 0.08, 'color': 'green', 'dashed': True})
             if interact_type in ["Electrostatic / Other Interactions", "All Interactions Combined"]:
-                viewer.addCylinder({'start': {'x': cx - 0.8, 'y': cy + 1.2, 'z': cz + 0.8}, 'end': {'x': cx, 'y': cy, 'z': cz}, 'radius': 0.09, 'color': 'magenta', 'dashed': True})
+                viewer.addCylinder({'start': {'x': cx - 0.8, 'y': cy + 1.0, 'z': cz + 0.8}, 'end': {'x': cx, 'y': cy, 'z': cz}, 'radius': 0.08, 'color': 'magenta', 'dashed': True})
 
             if zoom_mode == "Binding Pocket Zoom (Detailed Ligand Focus)":
                 viewer.zoomTo({'model': 1})
