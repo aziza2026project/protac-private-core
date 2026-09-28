@@ -303,7 +303,11 @@ def main():
                 
                 col_m1, col_m2, col_m3 = st.columns(3)
                 
-        
+        with col_m1:
+    if st.button("🎯 )", key="mod_docking", use_container_width=True):
+        st.session_state['active_prediction_module'] = "Docking"
+        st.rerun()
+    st.markdown('<div class="desc-box">Configure grid boxes, rotatable bonds, binding affinity, and IC...', unsafe_allow_html=True)
                 with col_m2:
                     if st.button("📊 ADME & Pharmacokinetics\n(pkCSM)", key="mod_adme", use_container_width=True):
                         st.session_state['active_prediction_module'] = "ADME"
