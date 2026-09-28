@@ -325,9 +325,7 @@ def main():
                 # Inside the active working module workspace
                 active_mod = st.session_state['active_prediction_module']
                 
-                if st.button("⬅️ Back to Prediction Modules Menu", key="back_to_modules_menu"):
-                    st.session_state['active_prediction_module'] = None
-                    st.rerun()
+                
                 
                 st.markdown("---")
                 if active_mod == "Docking":
