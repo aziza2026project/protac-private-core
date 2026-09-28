@@ -185,7 +185,7 @@ def render_ai_prediction_hub():
         st.error("scikit-learn library is not installed in the environment.")
 
 # ==============================================================================
-# 📌 PART 5: COMPLETE MODULAR PREDICTION & DOCKING PLATFORM (RESTORED & FIXED)
+# 📌 PART 5: COMPLETE MODULAR PREDICTION & DOCKING PLATFORM (CLEANED)
 # ==============================================================================
 import streamlit as st
 import py3Dmol
@@ -221,7 +221,7 @@ def render_molecular_docking_workspace():
                 st.rerun()
 
     # -------------------------------------------------------------------------
-    # 🧪 2. GLOBAL IC50 PREDICTION WORKFLOW (RESTORED)
+    # 🧪 2. GLOBAL IC50 PREDICTION WORKFLOW
     # -------------------------------------------------------------------------
     elif st.session_state['active_workflow'] == 'ic50_workflow':
         if st.button("⬅️ Back to Hub", key="back_from_ic50"):
@@ -265,7 +265,6 @@ def render_molecular_docking_workspace():
             else:
                 st.warning("⚠️ Please upload a ligand file first.")
 
-        # Display report online inside the web app if generated
         if 'ic50_generated_report' in st.session_state:
             st.markdown("---")
             st.markdown("### 📄 Online Report Viewer")
@@ -293,9 +292,12 @@ def render_molecular_docking_workspace():
     elif st.session_state['active_workflow'] == 'docking_workflow':
         if st.button("⬅️ Back to Hub", key="back_from_docking"):
             st.session_state['active_workflow'] = 'hub'
+            if 'docking_results' in st.session_state:
+                del st.session_state['docking_results']
             st.rerun()
             
         st.markdown("---")
+        # العنوان القديم المزعج تم حذفه بالكامل، وبقينا هنا في العمل مباشرة
         st.markdown("### 🚀 AutoDock Vina Simulation & 3D Interactive Viewer")
         
         col_d1, col_d2 = st.columns(2)
@@ -332,6 +334,7 @@ def render_molecular_docking_workspace():
         with col_out2:
             user_email_dock = st.text_input("Results Notification Email (.pdbqt result):", value="researcher@example.com", key="dock_email")
 
+        # Action button to run simulation
         if st.button("🚀 Run AutoDock Vina Simulation", type="primary", key="run_vina_action"):
             if 'dock_prot_content' in st.session_state and 'dock_lig_content' in st.session_state:
                 with st.spinner("Executing AutoDock Vina simulation across conformational poses..."):
@@ -345,9 +348,9 @@ def render_molecular_docking_workspace():
                     st.session_state['docking_results'] = simulated_poses
                     st.success(f"✅ Vina simulation completed successfully! Results (.pdbqt) dispatched to {user_email_dock}.")
             else:
-                st.error("⚠️ Please upload both Protein and Ligand .pdbqt structure files.")
+                st.error("⚠️ Please upload both Protein and Ligand .pdbqt structure files before running the simulation.")
 
-        # Display Docking Results & 3D Interactive Viewer
+        # STRICTLY CONDITIONAL: Display Docking Results & 3D Viewer ONLY IF simulation has been executed
         if 'docking_results' in st.session_state and 'dock_prot_content' in st.session_state:
             st.markdown("---")
             st.markdown("### 🔍 Docking Poses & 3D Interactive Interaction Viewer")
@@ -358,7 +361,6 @@ def render_molecular_docking_workspace():
             selected_index = pose_labels.index(selected_pose_label)
             active_pose = poses[selected_index]
             
-            # Download button for docking output file (.pdbqt)
             st.download_button(
                 label=f"📥 Download Output File ({output_filename_dock}.pdbqt)",
                 data=active_pose['content'],
@@ -380,20 +382,17 @@ def render_molecular_docking_workspace():
                 key="dock_zoom_mode"
             )
             
-            # Py3Dmol Visualization with fixed protein structure and ligand poses
+            # Py3Dmol Visualization
             viewer = py3Dmol.view(width=750, height=500)
             viewer.addModel(st.session_state['dock_prot_content'], "pdbqt")
             viewer.setStyle({'model': 0}, {'cartoon': {'color': 'spectrum'}})
             
-            # Highlight binding pocket residues near the center
             viewer.setStyle({'model': 0, 'and': [{'xlo': cx - 6, 'xhi': cx + 6}, {'ylo': cy - 6, 'yhi': cy + 6}, {'zlo': cz - 6, 'zhi': cz + 6}]}, 
                             {'stick': {'colorscheme': 'cyanCarbon', 'radius': 0.22}, 'label': {'text': 'resn', 'fontSize': 11, 'fontColor': 'black', 'background': 'white'}})
             
-            # Add ligand pose
             viewer.addModel(active_pose['content'], "pdbqt")
             viewer.setStyle({'model': 1}, {'stick': {'colorscheme': 'greenCarbon', 'radius': 0.40}, 'sphere': {'scale': 0.25}})
             
-            # Interaction dashed cylinders
             if interact_type in ["Hydrogen Bonds", "All Interactions Combined"]:
                 viewer.addCylinder({'start': {'x': cx - 1.0, 'y': cy - 0.5, 'z': cz - 0.5}, 'end': {'x': cx, 'y': cy, 'z': cz}, 'radius': 0.08, 'color': 'yellow', 'dashed': True})
             if interact_type in ["Hydrophobic Interactions", "All Interactions Combined"]:
