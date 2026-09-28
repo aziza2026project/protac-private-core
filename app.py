@@ -307,7 +307,7 @@ def main():
                     if st.button("🎯 Molecular Docking", key="mod_docking", use_container_width=True):
                         st.session_state['active_prediction_module'] = "Docking"
                         st.rerun()
-                    st.markdown('<div class="desc-box">Configure grid boxes, rotatable bonds, binding affinity, and IC50 evaluations.</div>', unsafe_allow_html=True)      
+                    st.markdown('<div class="desc-box">Configure grid boxes, rotatable bonds, binding affinity, and IC50 evaluations.</div>', unsafe_allow_html=True)    
                 
                 with col_m2:
                     if st.button("📊 ADME & Pharmacokinetics\n(pkCSM)", key="mod_adme", use_container_width=True):
