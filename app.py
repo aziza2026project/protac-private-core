@@ -38,18 +38,17 @@ st.set_page_config(
 
 st.markdown("""
     <style>
-        /* تقليص الفراغ الكبير العلوي في الصفحة وإلغاء المسافات الفارغة */
+        /* تعديل المسافة الفوقية باش العناصر ما تدخلش تحت شريط المتصفح وتكون ظاهرة بوضوح */
         .block-container {
-            padding-top: 0.8rem !important;
-            padding-bottom: 1.5rem !important;
+            padding-top: 2.5rem !important;
+            padding-bottom: 2rem !important;
         }
         
-        /* تقليص المسافات والفراغات بين العناصر وبعضها */
+        /* ضبط المسافات الفاصلة بين العناصر */
         div.element-container {
-            margin-bottom: -0.3rem !important;
+            margin-bottom: 0.2rem !important;
         }
         
-        /* ضبط المسافات حول العناوين الرئيسية لتطلع لفوق */
         h1, h2, h3 {
             margin-top: 0px !important;
             padding-top: 0px !important;
@@ -309,8 +308,9 @@ def main():
                 st.session_state['active_prediction_module'] = None
                 st.rerun()
             
+            # تم إصلاح التكرار هنا: زر واحد فقط للرجوع للقائمة الرئيسية للـ modules مع تنظيم العرض
             if st.session_state['active_prediction_module'] is not None:
-                if st.button("⬅️ Back to Prediction Modules Menu", key="back_to_modules_menu"):
+                if st.button("⬅️ Back to Prediction Modules Menu", key="back_to_modules_menu_single"):
                     st.session_state['active_prediction_module'] = None
                     st.rerun()
 
