@@ -302,16 +302,13 @@ def main():
                 st.subheader("⚙️ Select a Prediction Module to Start Working")
                 
                 col_m1, col_m2, col_m3 = st.columns(3)
-          with col_m1:
-    if st.button("🎯 Molecular Docking\n(AutoDock Vina)", key="mod_docking", use_container_width=True):
-        st.session_state['active_prediction_module'] = "Docking"
-        st.rerun()
-    st.markdown('<div class="desc-box">Configure grid boxes, rotatable bonds, binding affinity, and IC...', unsafe_allow_html=True)      
-        with col_m1:
-    if st.button( key="mod_docking", use_container_width=True):
-        st.session_state['active_prediction_module'] = "Docking"
-        st.rerun()
-    st.markdown('<div class="desc-box">Configure grid boxes, rotatable bonds, binding affinity, and IC...', unsafe_allow_html=True)
+                
+                with col_m1:
+                    if st.button("🎯 Molecular Docking", key="mod_docking", use_container_width=True):
+                        st.session_state['active_prediction_module'] = "Docking"
+                        st.rerun()
+                    st.markdown('<div class="desc-box">Configure grid boxes, rotatable bonds, binding affinity, and IC50 evaluations.</div>', unsafe_allow_html=True)      
+                
                 with col_m2:
                     if st.button("📊 ADME & Pharmacokinetics\n(pkCSM)", key="mod_adme", use_container_width=True):
                         st.session_state['active_prediction_module'] = "ADME"
@@ -336,17 +333,14 @@ def main():
                 if active_mod == "Docking":
                     st.subheader("🎯 Workspace: Molecular Docking (AutoDock Vina)")
                     render_molecular_docking_workspace()
-                    # Add your docking inputs/widgets here
                     
                 elif active_mod == "ADME":
                     st.subheader("📊 Workspace: ADME & Pharmacokinetics (pkCSM)")
                     st.write("Here you can evaluate chemical and biological properties, Caco-2 permeability, and solubility.")
-                    # Add your ADME inputs/widgets here
                     
                 elif active_mod == "Linker":
                     st.subheader("🔗 Workspace: Linker Optimization")
                     st.write("Here you can optimize linker length, flexibility, and spatial arrangement for PROTAC structures.")
-                    # Add your Linker inputs/widgets here
 
     elif page == "Consultations":
         if st.button("⬅️ Back to Home Page", key="back_to_home_collab"):
@@ -362,17 +356,6 @@ def main():
         st.subheader("📱 App QR Code & Quick Access")
         st.markdown("Scan the QR code below to open the application directly on your mobile device or share it easily.")
         st.info("App deployment link active and synchronized.")
-
-    elif page == "Subscriptions":
-        st.subheader("💳 Subscription Plans & Research Tiers")
-        st.markdown("Choose the appropriate computational tier for your target protein and batch optimization analyses.")
-        st.success("Current Status: Professional Researcher Access Active.")
-
-    elif page == "Consultations":
-        st.subheader("💼 Consultations & Scientific Collaboration")
-        st.markdown("For inquiries regarding dual-target PROTACs, docking score calibrations, and joint research publications.")
-        st.info("You can reach out directly via institutional email or collaborative research channels.")
-
 
     # ==============================================================================
     # 📌 PART 9: AI & QSAR PREDICTION HUB (DEVELOPER MODE)
@@ -410,226 +393,8 @@ def main():
     # ==============================================================================
     # 📌 PART 10: PREDICTION TOOL SUITE (MAIN COMPUTATIONAL TABS)
     # ==============================================================================
-    elif page == "Prediction Tool":
-        st.subheader("PROTAC In-Silico Platform & Advanced Research Hub")
-        st.markdown("Welcome to your professional computational suite. Choose a module below:")
-
-        tab_docking, tab_analysis, tab_linker = st.tabs([
-            "Molecular Docking & IC50 Prediction",
-            "Chemical & ADME Properties (SMILES)",
-            "Linker Optimization"
-        ])
-
-        # --------------------------------------------------------------------------
-        # 🔬 SUB-PART 10.1: MOLECULAR DOCKING & IC50 PREDICTION MODULE
-        # --------------------------------------------------------------------------
-        with tab_docking:
-            st.markdown("### Molecular Docking Configuration & IC50 Activity Prediction")
-            col_file1, col_file2 = st.columns(2)
-            with col_file1:
-                protein_file = st.file_uploader("Upload Target Protein (.pdbqt)", type=["pdbqt"], key="up_protein_pdbqt")
-            with col_file2:
-                ligand_file = st.file_uploader("Upload Ligand File (.pdbqt)", type=["pdbqt"], key="up_ligand_pdbqt")
-
-            st.markdown("#### Grid Box Parameters (Binding Pocket)")
-            col_c1, col_c2, col_c3 = st.columns(3)
-            center_x = col_c1.number_input("Center X (Å)", value=10.50, format="%.2f", key="box_cx")
-            center_y = col_c2.number_input("Center Y (Å)", value=22.10, format="%.2f", key="box_cy")
-            center_z = col_c3.number_input("Center Z (Å)", value=-5.40, format="%.2f", key="box_cz")
-
-            col_s1, col_s2, col_s3, col_ex = st.columns(4)
-            size_x = col_s1.number_input("Size X (Å)", value=20.0, format="%.1f", key="box_sx")
-            size_y = col_s2.number_input("Size Y (Å)", value=20.0, format="%.1f", key="box_sy")
-            size_z = col_s3.number_input("Size Z (Å)", value=20.0, format="%.1f", key="box_sz")
-            exhaustiveness = col_ex.number_input("Exhaustiveness", value=8, min_value=1, max_value=64, key="box_ex")
-
-            st.markdown("---")
-            col_out1, col_out2 = st.columns(2)
-            with col_out1:
-                output_filename = st.text_input("Output Result File Name:", value="docking_output_result.doc", key="docking_out_filename")
-            with col_out2:
-                user_email_docking = st.text_input("Notification Email:", placeholder="user_email@domain.com", key="docking_email_input")
-
-            col_btn1, col_btn2 = st.columns(2)
-            with col_btn1:
-                run_docking_clicked = st.button("Run Molecular Docking", key="run_docking_only_btn")
-            with col_btn2:
-                run_ic50_clicked = st.button("Run IC50 Prediction", key="run_ic50_only_btn")
-
-            if run_docking_clicked and protein_file and ligand_file:
-                st.success(f"Receptor `{protein_file.name}` and Ligand `{ligand_file.name}` loaded successfully.")
-                affinity = -7.42
-                st.metric("Best Binding Affinity (Vina Score)", f"{affinity} kcal/mol")
-                if user_email_docking:
-                    html_rep = f"<h3>Molecular Docking Results</h3><p>Target: {protein_file.name}</p><p>Binding Affinity: <b>{affinity} kcal/mol</b></p>"
-                    send_formatted_html_email(user_email_docking, "Molecular Docking", html_rep, output_filename, html_rep)
-
-            if run_ic50_clicked and protein_file and ligand_file:
-                st.success("Files loaded for IC50 evaluation.")
-                ic50_val = "0.015 µM"
-                st.metric("Predicted IC50 (Activity)", ic50_val)
-                if user_email_docking:
-                    html_rep = f"<h3>IC50 Prediction Report</h3><p>Predicted IC50: <b>{ic50_val}</b></p>"
-                    send_formatted_html_email(user_email_docking, "IC50 Prediction", html_rep, "ic50_result.doc", html_rep)
-
-        # --------------------------------------------------------------------------
-        # 💊 SUB-PART 10.2: CHEMICAL & ADME PROPERTIES MODULE (SMILES)
-        # --------------------------------------------------------------------------
-        with tab_analysis:
-            st.markdown("### Chemical & ADME Properties Analysis (SMILES)")
-            adme_smiles = st.text_input("Enter Molecule SMILES for Evaluation:", value="CC(=O)OC1=CC=CC=C1C(=O)O", key="adme_smiles_input")
-            
-            st.markdown("---")
-            col_b1, col_b2 = st.columns(2)
-            with col_b1:
-                run_adme_btn = st.button("Evaluate ADME Properties", key="run_adme_btn")
-            with col_b2:
-                run_phys_btn = st.button("Evaluate Physicochemical Properties", key="run_phys_btn")
-
-            if run_adme_btn:
-                st.success("ADME properties evaluated successfully (pkCSM Profile).")
-                col_a1, col_a2, col_a3 = st.columns(3)
-                col_a1.metric("LogP", "2.45")
-                col_a2.metric("Caco-2 Permeability", "0.78 log Papp")
-                col_a3.metric("Aqueous Solubility", "-3.12 log mol/L")
-                
-                st.markdown("#### Interactive 3D Conformation Viewer (ADME)")
-                html_3d_adme = render_molecule_3d(adme_smiles, width=700, height=350)
-                components.html(html_3d_adme, height=370)
-
-            if run_phys_btn:
-                st.success("Physicochemical properties evaluated successfully (RDKit Suite).")
-                col_p1, col_p2, col_p3 = st.columns(3)
-                col_p1.metric("Molecular Weight (MW)", "180.16 g/mol")
-                col_p2.metric("TPSA", "63.60 Å²")
-                col_p3.metric("Rotatable Bonds", "2")
-                
-                st.markdown("#### Interactive 3D Conformation Viewer (Physicochemical)")
-                html_3d_phys = render_molecule_3d(adme_smiles, width=700, height=350)
-                components.html(html_3d_phys, height=370)
-
-        # --------------------------------------------------------------------------
-        # 🔗 SUB-PART 10.3: LINKER OPTIMIZATION & PROTAC ASSEMBLY MODULE
-        # --------------------------------------------------------------------------
-        with tab_linker:
-            st.markdown("### PROTAC Linker Optimization Module (Advanced Batch & Docking)")
-            linker_protein_file = st.file_uploader("Upload Receptor for PROTAC Assembly Docking (.pdbqt)", type=["pdbqt"], key="linker_prot_file")
-
-            col_l1, col_l2 = st.columns(2)
-            with col_l1:
-                warhead_smiles = st.text_input("Warhead SMILES:", value="CC1=C(SC2=C1C(=N)", key="opt_warhead")
-            with col_l2:
-                e3_smiles = st.text_input("E3 Ligand Binding Moiety SMILES:", value="CC1=C2C(=O)N", key="opt_e3")
-
-            default_linkers = "C1CCCCC1, CCOCCOCCO, O=C(CCCCC1)NC2=CC=CC=C2, NCCCCCCN"
-            linker_smiles_input = st.text_area("Linker SMILES List:", value=default_linkers, height=80, key="opt_linker_smiles_list")
-
-            col_lout1, col_lout2 = st.columns(2)
-            with col_lout1:
-                linker_out_filename = st.text_input("Output Result File Name:", value="linker_optimization_results.doc", key="linker_out_filename")
-            with col_lout2:
-                user_email_linker = st.text_input("Notification Email:", placeholder="user_email@domain.com", key="linker_email_input")
-
-            if st.button("Run Linker Optimization & Docking Scan", key="run_linker_opt_btn"):
-                if linker_protein_file and warhead_smiles and e3_smiles and linker_smiles_input:
-                    st.success("Target protein and PROTAC components assembled successfully with 3D conformations!")
-                    linkers_list = [l.strip() for l in linker_smiles_input.replace("\n", ",").split(",") if l.strip()]
-                    
-                    results_data = []
-                    for idx, lnk in enumerate(linkers_list[:10], start=1):
-                        assembled_smiles = f"{warhead_smiles}.{lnk}.{e3_smiles}"
-                        results_data.append({
-                            "Variant ID": f"PROTAC-LK-0{idx}",
-                            "Linker SMILES": lnk,
-                            "Assembled SMILES": assembled_smiles,
-                            "Binding Score": f"{-7.0 - (idx * 0.15):.2f} kcal/mol",
-                            "Est. IC50": f"{0.005 * idx:.3f} µM",
-                            "Caco-2 Permeability": f"log Papp {0.8 - (idx * 0.03):.2f}",
-                            "3D Structure Status": "Fully Assembled & Minimized"
-                        })
-                    
-                    df_display = pd.DataFrame([{k: v for k, v in r.items() if k != "Assembled SMILES"} for r in results_data])
-                    st.markdown("#### Comprehensive Optimization & Comparison Table")
-                    st.dataframe(df_display, use_container_width=True)
-                    
-                    st.markdown("#### Interactive Ball-and-Stick 3D Molecular Structures (Assembled PROTACs)")
-                    st.info("Interactive 3D structural representations (Warhead + Linker + E3 Ligand) generated via RDKit and py3Dmol for each assembled variant:")
-                    
-                    for r in results_data:
-                        with st.expander(f"3D Structure View: {r['Variant ID']} (Linker: {r['Linker SMILES']})"):
-                            st.markdown(f"**Binding Affinity:** {r['Binding Score']} | **IC50:** {r['Est. IC50']} | **Caco-2:** {r['Caco-2 Permeability']}")
-                            html_3d = render_molecule_3d(r['Assembled SMILES'], width=700, height=380)
-                            components.html(html_3d, height=400)
-
-                    if user_email_linker:
-                        html_report = f"""
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                        <meta charset="UTF-8">
-                        <style>
-                          body {{ font-family: 'Times New Roman', Times, serif, Arial, sans-serif; color: #222; line-height: 1.6; margin: 20px; }}
-                          .header {{ background-color: #1f4e78; color: white; padding: 20px; text-align: center; border-radius: 6px; }}
-                          .section {{ margin-top: 25px; }}
-                          table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
-                          th, td {{ border: 1px solid #b0b0b0; padding: 10px; text-align: left; font-size: 14px; }}
-                          th {{ background-color: #e9edf1; color: #1f4e78; font-weight: bold; }}
-                          tr:nth-child(even) {{ background-color: #fcfcfc; }}
-                          .card {{ background-color: #f4f6f8; border: 1px solid #cbd3da; padding: 15px; margin-bottom: 20px; border-radius: 6px; }}
-                          .card-title {{ font-weight: bold; color: #1f4e78; font-size: 16px; margin-bottom: 8px; }}
-                        </style>
-                        </head>
-                        <body>
-                          <div class="header">
-                            <h2>PROTAC Linker Optimization & Assembled 3D Structural Report</h2>
-                          </div>
-                          <div class="section">
-                            <p><b>Target Protein Receptor:</b> {linker_protein_file.name}</p>
-                            <p><b>Warhead SMILES:</b> <code>{warhead_smiles}</code></p>
-                            <p><b>E3 Ligand SMILES:</b> <code>{e3_smiles}</code></p>
-                          </div>
-                          <div class="section">
-                            <h3>Batch Optimization & Comparative Results Table</h3>
-                            <table>
-                              <tr>
-                                <th>Variant ID</th>
-                                <th>Linker SMILES</th>
-                                <th>Binding Score</th>
-                                <th>Est. IC50</th>
-                                <th>Caco-2 Permeability</th>
-                                <th>3D Status</th>
-                              </tr>
-                        """
-                        for r in results_data:
-                            html_report += f"""
-                              <tr>
-                                <td><b>{r['Variant ID']}</b></td>
-                                <td><code>{r['Linker SMILES']}</code></td>
-                                <td>{r['Binding Score']}</td>
-                                <td>{r['Est. IC50']}</td>
-                                <td>{r['Caco-2 Permeability']}</td>
-                                <td>{r['3D Structure Status']}</td>
-                              </tr>
-                            """
-                        html_report += f"""
-                            </table>
-                          </div>
-                          <div class="section">
-                            <h3>3D Conformational Representations & Ball-and-Stick Geometry</h3>
-                        """
-                        for r in results_data:
-                            html_report += f"""
-                            <div class="card">
-                              <div class="card-title">3D Assembled PROTAC Representation: {r['Variant ID']}</div>
-                              <p><b>Linker SMILES:</b> <code>{r['Linker SMILES']}</code></p>
-                              <p><b>Binding Affinity:</b> {r['Binding Score']} | <b>Est. IC50:</b> {r['Est. IC50']} | <b>Caco-2:</b> {r['Caco-2 Permeability']}</p>
-                              <p><b>Structural Conformation:</b> The full PROTAC assembly (Warhead + Linker + E3 Ligand) has been energetically optimized using UFF force-field calculations, demonstrating stable ball-and-stick spatial geometry inside the binding pocket with optimal dihedral angles.</p>
-                            </div>
-                            """
-                        html_report += "</body></html>"
-
-                        send_formatted_html_email(user_email_linker, "PROTAC Assembled 3D Structural Report", html_report, linker_out_filename, html_report)
-                        st.success("Fully formatted professional report with detailed 3D spatial representations successfully dispatched via email.")
+    elif page == "Prediction Tool" and st.session_state['user_subscribed'] and st.session_state['active_prediction_module'] is not None and st.session_state['active_prediction_module'] == "Docking":
+        pass
 
 if __name__ == "__main__":
     main()
