@@ -16,7 +16,7 @@ from rdkit.Chem import AllChem
 import py3Dmol
 from prediction_hub import (
     render_adme_workspace,
-    render_linker_optimization_workspace
+    render_linker_optimization_workspace)
 # Safe import of machine learning libraries
 try:
     from sklearn.ensemble import RandomForestRegressor
