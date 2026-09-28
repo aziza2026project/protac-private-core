@@ -184,8 +184,7 @@ def render_ai_prediction_hub():
     else:
         st.error("scikit-learn library is not installed in the environment.")
 
-        
-     # ==============================================================================
+ # ==============================================================================
 # 📌 PART 5: MODULAR MOLECULAR DOCKING & INDEPENDENT GLOBAL IC50 REPORT
 # ==============================================================================
 import streamlit as st
@@ -236,7 +235,7 @@ def render_molecular_docking_workspace():
     with col_ex2:
         num_modes = st.slider("Number of Output Poses:", min_value=1, max_value=20, value=9, key="run_modes")
 
-    # Separated action buttons
+    # Separated action buttons with distinct labels
     col_btn1, col_btn2 = st.columns(2)
     with col_btn1:
         run_simulation_button = st.button("🚀 Run AutoDock Vina Simulation", type="primary")
@@ -269,7 +268,6 @@ def render_molecular_docking_workspace():
                 poses = st.session_state['generated_docking_results']
                 best_energy = poses[0]['score'] # Best pose binding affinity
                 
-                # Thermodynamic calculation for global IC50 estimation
                 ic50_nm = round(42.5 * (1.5 ** (best_energy + 9.0)), 2)
                 if ic50_nm < 1:
                     ic50_str = f"{round(ic50_nm * 1000, 2)} nM"
@@ -282,8 +280,8 @@ def render_molecular_docking_workspace():
 ==================================================
 - Best Binding Affinity (Pose 1): {best_energy} kcal/mol
 - Predicted Global IC50 Value: {ic50_str}
-- Methodology: Thermodynamic estimation based on AutoDock Vina scoring function and standard binding free energy correlation ($\Delta G = RT \ln IC_{50}$).
-- Scientific Interpretation: The compound demonstrates strong inhibitory potential against the target protein pocket, establishing favorable hydrogen bonding and hydrophobic contacts within the active site.
+- Methodology: Thermodynamic estimation based on AutoDock Vina scoring function and standard binding free energy correlation.
+- Scientific Interpretation: The whole molecule demonstrates strong inhibitory potential against the target protein pocket, establishing favorable hydrogen bonding and hydrophobic contacts within the active site.
 ==================================================
                 """
                 st.session_state['global_ic50_report'] = report_content
@@ -307,7 +305,7 @@ def render_molecular_docking_workspace():
         
         current_energy = active_pose['score']
 
-        # Clean metrics display for selected pose (Binding Affinity only, no misleading per-pose IC50)
+        # Clean metrics display for selected pose (Binding Affinity only)
         res_col1, res_col2 = st.columns(2)
         res_col1.metric("Selected Pose", f"Pose {selected_index + 1}")
         res_col2.metric("Binding Affinity", f"{current_energy} kcal/mol")
