@@ -185,7 +185,7 @@ def render_ai_prediction_hub():
         st.error("scikit-learn library is not installed in the environment.")
 
 # ==============================================================================
-# 📌 PART 5: MODULAR PREDICTION & DOCKING PLATFORM (FINAL UPDATED)
+# 📌 PART 5: COMPLETE MODULAR PREDICTION & DOCKING PLATFORM (RESTORED & FIXED)
 # ==============================================================================
 import streamlit as st
 import py3Dmol
@@ -221,7 +221,7 @@ def render_molecular_docking_workspace():
                 st.rerun()
 
     # -------------------------------------------------------------------------
-    # 🧪 2. GLOBAL IC50 PREDICTION WORKFLOW
+    # 🧪 2. GLOBAL IC50 PREDICTION WORKFLOW (RESTORED)
     # -------------------------------------------------------------------------
     elif st.session_state['active_workflow'] == 'ic50_workflow':
         if st.button("⬅️ Back to Hub", key="back_from_ic50"):
