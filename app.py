@@ -332,16 +332,16 @@ def main():
                         st.rerun()
                     st.markdown('<div class="desc-box">Analyze linker length, flexibility, and ternary complex stability.</div>', unsafe_allow_html=True)
 
-            else:
+           
         # Inside the active working module workspace
         active_mod = st.session_state.get('active_prediction_module')
 
-        if active_mod == "Docking":
-            render_molecular_docking_workspace()
-        elif active_mod == "ADME":
-            render_adme_workspace()
-        elif active_mod == "Linker":
-            render_linker_optimization_workspace()
+    if active_mod == "Docking":
+        render_molecular_docking_workspace()
+    elif active_mod == "ADME":
+        render_adme_workspace()
+    elif active_mod == "Linker":
+        render_linker_optimization_workspace()
         else:
             # القائمة الرئيسية لاختيار الموديلات
         st.title("💼 Consultations & Scientific Collaboration")
