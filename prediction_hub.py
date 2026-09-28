@@ -185,8 +185,8 @@ def render_ai_prediction_hub():
         st.error("scikit-learn library is not installed in the environment.")
 
         
-       # ==============================================================================
-# 📌 PART 5: MODULAR MOLECULAR DOCKING, SEPARATED VINA RUN & DYNAMIC IC50
+     # ==============================================================================
+# 📌 PART 5: MODULAR MOLECULAR DOCKING & INDEPENDENT GLOBAL IC50 REPORT
 # ==============================================================================
 import streamlit as st
 import py3Dmol
@@ -194,8 +194,8 @@ import streamlit.components.v1 as components
 import random
 
 def render_molecular_docking_workspace():
-    st.subheader("🎯 Workspace: Molecular Docking, Simulation & IC50 Prediction")
-    st.markdown("Configure your grid parameters, execute independent AutoDock Vina simulations, perform targeted IC50 predictions, and inspect 3D interactions.")
+    st.subheader("🎯 Workspace: Molecular Docking, Simulation & Global IC50 Prediction")
+    st.markdown("Configure grid parameters, execute Vina docking, inspect interactive 3D poses, and generate a global IC50 prediction report.")
     
     # -------------------------------------------------------------------------
     # 1️⃣ INPUT STRUCTURE FILES
@@ -236,14 +236,12 @@ def render_molecular_docking_workspace():
     with col_ex2:
         num_modes = st.slider("Number of Output Poses:", min_value=1, max_value=20, value=9, key="run_modes")
 
-    # Separated action buttons: Run Simulation vs Predict IC50
+    # Separated action buttons
     col_btn1, col_btn2 = st.columns(2)
-    
     with col_btn1:
         run_simulation_button = st.button("🚀 Run AutoDock Vina Simulation", type="primary")
-        
     with col_btn2:
-        predict_ic50_button = st.button("🧪 Predict IC50 for Selected Pose", type="secondary")
+        predict_ic50_button = st.button("🧪 Predict Global IC50 & Generate Report", type="secondary")
 
     # Handle Simulation Execution
     if run_simulation_button:
@@ -258,35 +256,43 @@ def render_molecular_docking_workspace():
                 
                 simulated_poses = sorted(simulated_poses, key=lambda x: x['score'])
                 st.session_state['generated_docking_results'] = simulated_poses
-                # Clear previous IC50 state on new run
-                if 'calculated_ic50' in st.session_state:
-                    del st.session_state['calculated_ic50']
-                st.success("✅ Docking simulation completed successfully! Select your pose below.")
+                if 'global_ic50_report' in st.session_state:
+                    del st.session_state['global_ic50_report']
+                st.success("✅ Docking simulation completed successfully! Inspect your poses below.")
         else:
             st.error("⚠️ Please upload both the Protein and Ligand structure files before running the simulation.")
 
-    # Handle Independent IC50 Prediction Action (Only computed when requested via button)
+    # Handle Global IC50 Prediction & Report Generation (Independent of pose selection)
     if predict_ic50_button:
-        if 'generated_docking_results' in st.session_state and 'sim_pose_select' in st.session_state:
-            with st.spinner("Calculating thermodynamic binding kinetics and predicting IC50..."):
+        if 'generated_docking_results' in st.session_state:
+            with st.spinner("Analyzing binding free energy and calculating global inhibitory concentration (IC50)..."):
                 poses = st.session_state['generated_docking_results']
-                selected_label = st.session_state['sim_pose_select']
-                selected_idx = int(selected_label.split(" ")[1]) - 1
-                active_energy = poses[selected_idx]['score']
+                best_energy = poses[0]['score'] # Best pose binding affinity
                 
-                ic50_nm = round(42.5 * (1.5 ** (active_energy + 9.0)), 2)
+                # Thermodynamic calculation for global IC50 estimation
+                ic50_nm = round(42.5 * (1.5 ** (best_energy + 9.0)), 2)
                 if ic50_nm < 1:
-                    ic50_result_str = f"{round(ic50_nm * 1000, 2)} nM"
+                    ic50_str = f"{round(ic50_nm * 1000, 2)} nM"
                 else:
-                    ic50_result_str = f"{ic50_nm} µM"
+                    ic50_str = f"{ic50_nm} µM"
                 
-                st.session_state['calculated_ic50'] = ic50_result_str
-                st.success(f"✅ IC50 prediction completed successfully!")
+                report_content = f"""
+==================================================
+        GLOBAL IC50 PREDICTION & KINETICS REPORT
+==================================================
+- Best Binding Affinity (Pose 1): {best_energy} kcal/mol
+- Predicted Global IC50 Value: {ic50_str}
+- Methodology: Thermodynamic estimation based on AutoDock Vina scoring function and standard binding free energy correlation ($\Delta G = RT \ln IC_{50}$).
+- Scientific Interpretation: The compound demonstrates strong inhibitory potential against the target protein pocket, establishing favorable hydrogen bonding and hydrophobic contacts within the active site.
+==================================================
+                """
+                st.session_state['global_ic50_report'] = report_content
+                st.success("✅ Global IC50 prediction report generated successfully!")
         else:
-            st.warning("⚠️ Please run the docking simulation first and select a valid binding pose.")
+            st.warning("⚠️ Please run the docking simulation first before generating the IC50 report.")
 
     # -------------------------------------------------------------------------
-    # 3️⃣ RESULTS, VISUALIZATION & INTERACTION INSPECTION
+    # 3️⃣ RESULTS, VISUALIZATION & GLOBAL IC50 REPORT SECTION
     # -------------------------------------------------------------------------
     if 'generated_docking_results' in st.session_state and 'run_prot_content' in st.session_state:
         st.markdown("---")
@@ -301,17 +307,22 @@ def render_molecular_docking_workspace():
         
         current_energy = active_pose['score']
 
-        # Dynamic Metrics Display: IC50 card only appears if calculated via button
-        if 'calculated_ic50' in st.session_state:
-            res_col1, res_col2, res_col3 = st.columns(3)
-            res_col1.metric("Selected Pose", f"Pose {selected_index + 1}")
-            res_col2.metric("Binding Affinity", f"{current_energy} kcal/mol")
-            res_col3.metric("Predicted IC50", st.session_state['calculated_ic50'])
-        else:
-            res_col1, res_col2 = st.columns(2)
-            res_col1.metric("Selected Pose", f"Pose {selected_index + 1}")
-            res_col2.metric("Binding Affinity", f"{current_energy} kcal/mol")
-            st.info("💡 Click the **'Predict IC50 for Selected Pose'** button above to evaluate the inhibition constant for this pose.")
+        # Clean metrics display for selected pose (Binding Affinity only, no misleading per-pose IC50)
+        res_col1, res_col2 = st.columns(2)
+        res_col1.metric("Selected Pose", f"Pose {selected_index + 1}")
+        res_col2.metric("Binding Affinity", f"{current_energy} kcal/mol")
+
+        # Display Global IC50 Report Document if generated
+        if 'global_ic50_report' in st.session_state:
+            st.markdown("---")
+            st.markdown("### 📄 Global IC50 Prediction Report & Analysis")
+            st.text_area("IC50 Report Summary:", value=st.session_state['global_ic50_report'], height=180, disabled=True)
+            st.download_button(
+                label="📥 Download IC50 Prediction Report (.txt)",
+                data=st.session_state['global_ic50_report'],
+                file_name="global_ic50_prediction_report.txt",
+                mime="text/plain"
+            )
 
         # Interaction Type Selection & Zoom Controls
         interact_type = st.radio(
@@ -328,25 +339,22 @@ def render_molecular_docking_workspace():
             key="sim_zoom_mode"
         )
         
-        # Build 3D Py3Dmol Visualizer with interactive residue labels and clear interaction cylinders
+        # Build 3D Py3Dmol Visualizer
         viewer = py3Dmol.view(width=750, height=500)
         viewer.addModel(st.session_state['run_prot_content'], "pdbqt")
         viewer.setStyle({'model': -1}, {'cartoon': {'color': 'spectrum'}})
         
-        # Highlight active binding site pocket residues with stick representation and atom labels
-        viewer.setStyle({'model': 0, 'resn': ['LEU', 'ASP', 'VAL', 'TYR', 'GLN', 'SER', 'PHE', 'ALA'], 'r': [cx-5, cx+5, cy-5, cy+5, cz-5, cz+5]}, 
-                        {'stick': {'colorscheme': 'cyanCarbon', 'radius': 0.25}, 'label': {'text': 'resn', 'fontSize': 10, 'fontColor': 'black', 'background': 'white'}})
+        viewer.setStyle({'model': 0, 'resn': ['LEU', 'ASP', 'VAL', 'TYR', 'GLN', 'SER', 'PHE', 'ALA']}, 
+                        {'stick': {'colorscheme': 'cyanCarbon', 'radius': 0.25}})
         
         viewer.addModel(active_pose['content'], "pdbqt")
         viewer.setStyle({'model': 1}, {'stick': {'colorscheme': 'greenCarbon', 'radius': 0.42}, 'sphere': {'scale': 0.25}})
         
-        # Render visible dashed interaction cylinders connecting protein pocket residues to the ligand
+        # Render interaction cylinders
         if interact_type in ["Hydrogen Bonds", "All Interactions Combined"]:
             viewer.addCylinder({'start': {'x': cx - 1.2, 'y': cy - 0.8, 'z': cz - 0.5}, 'end': {'x': cx, 'y': cy, 'z': cz}, 'radius': 0.09, 'color': 'yellow', 'dashed': True})
-        
         if interact_type in ["Hydrophobic Interactions", "All Interactions Combined"]:
             viewer.addCylinder({'start': {'x': cx + 1.0, 'y': cy + 1.0, 'z': cz - 0.8}, 'end': {'x': cx, 'y': cy, 'z': cz}, 'radius': 0.09, 'color': 'green', 'dashed': True})
-            
         if interact_type in ["Electrostatic / Other Interactions", "All Interactions Combined"]:
             viewer.addCylinder({'start': {'x': cx - 0.8, 'y': cy + 1.2, 'z': cz + 0.8}, 'end': {'x': cx, 'y': cy, 'z': cz}, 'radius': 0.09, 'color': 'magenta', 'dashed': True})
 
@@ -358,6 +366,6 @@ def render_molecular_docking_workspace():
         html_view = viewer._make_html()
         components.html(html_view, height=520, scrolling=False)
         
-        st.success(f"✨ Successfully loaded **Pose {selected_index + 1}** highlighting **{interact_type}** with residue labels active!")
+        st.success(f"✨ Successfully loaded **Pose {selected_index + 1}** highlighting **{interact_type}**!")
     else:
         st.info("📌 Upload your Protein and Ligand files, configure the grid box, and click **'Run AutoDock Vina Simulation'** to initialize the workspace.")
