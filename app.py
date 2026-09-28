@@ -15,6 +15,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 import py3Dmol
 from prediction_hub import render_molecular_docking_workspace
+
 # Safe import of machine learning libraries
 try:
     from sklearn.ensemble import RandomForestRegressor
@@ -39,13 +40,13 @@ st.markdown("""
     <style>
         /* تقليص الفراغ الكبير العلوي في الصفحة وإلغاء المسافات الفارغة */
         .block-container {
-            padding-top: 1rem !important;
-            padding-bottom: 2rem !important;
+            padding-top: 0.8rem !important;
+            padding-bottom: 1.5rem !important;
         }
         
         /* تقليص المسافات والفراغات بين العناصر وبعضها */
         div.element-container {
-            margin-bottom: -0.5rem !important;
+            margin-bottom: -0.3rem !important;
         }
         
         /* ضبط المسافات حول العناوين الرئيسية لتطلع لفوق */
@@ -70,10 +71,10 @@ st.markdown("""
         .card-box {
             background-color: #f8f9fa;
             border: 1px solid #e0e0e0;
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -165,7 +166,6 @@ def send_formatted_html_email(recipient_email, result_title, html_content, outpu
         st.error(f"Failed to send email dispatch: {e}")
         return False
 
-          
 
 # ==============================================================================
 # 📌 PART 6: SIDEBAR NAVIGATION & DEVELOPER AUTHENTICATION
@@ -204,20 +204,20 @@ def main():
     page = st.session_state['current_page']
 
 
-   # ==============================================================================
+    # ==============================================================================
     # 📌 PART 7: HOME PAGE & GENERAL DASHBOARD & SUB-PAGES
     # ==============================================================================
     
     st.markdown("""
         <style>
         .home-btn-large > button {
-            font-size: 22px !important;
-            padding: 15px 35px !important;
+            font-size: 20px !important;
+            padding: 12px 30px !important;
             background-color: #1f4e78 !important;
             color: white !important;
-            border-radius: 12px !important;
+            border-radius: 10px !important;
             font-weight: bold !important;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1) !important;
         }
         .desc-box {
             background-color: #f8f9fa;
@@ -226,8 +226,8 @@ def main():
             padding: 10px;
             font-size: 13px;
             color: #555;
-            min-height: 60px;
-            margin-bottom: 15px;
+            min-height: 55px;
+            margin-bottom: 10px;
             text-align: center;
         }
         </style>
@@ -235,7 +235,7 @@ def main():
 
     if page == "Home Page":
         st.markdown('<div class="home-btn-large">', unsafe_allow_html=True)
-        if st.button("🏠  Home Page", key="btn_home_top"):
+        if st.button("🏠 Home Page", key="btn_home_top"):
             st.session_state['current_page'] = "Home Page"
             st.session_state['active_prediction_module'] = None
             st.rerun()
@@ -243,7 +243,6 @@ def main():
 
         st.title("🧬 PROTAC Research & Prediction Platform")
         st.markdown("Welcome to the professional platform for PROTAC design, physicochemical property calculation, and scientific collaboration.")
-        st.markdown("---")
         
         st.subheader("🌾 Welcome to PROTAC Research Hub")
         st.markdown("Choose a section below to get started with your research, design, and collaboration workflow:")
@@ -285,7 +284,6 @@ def main():
         
         st.title("🔬 PROTAC Prediction Tool")
         st.markdown("Molecular docking, binding affinity, and ADME property evaluation.")
-        st.markdown("---")
 
         whitelist_emails = ["azizamnasri10@gmail.com"]
 
@@ -311,7 +309,10 @@ def main():
                 st.session_state['active_prediction_module'] = None
                 st.rerun()
             
-            st.markdown("---")
+            if st.session_state['active_prediction_module'] is not None:
+                if st.button("⬅️ Back to Prediction Modules Menu", key="back_to_modules_menu"):
+                    st.session_state['active_prediction_module'] = None
+                    st.rerun()
 
             # If no specific module is open, show the 3 core functional buttons
             if st.session_state['active_prediction_module'] is None:
@@ -341,9 +342,7 @@ def main():
                 # Inside the active working module workspace
                 active_mod = st.session_state['active_prediction_module']
                 
-                st.markdown("---")
                 if active_mod == "Docking":
-                    
                     render_molecular_docking_workspace()
                     
                 elif active_mod == "ADME":
@@ -362,7 +361,7 @@ def main():
         st.markdown("Connect with Dr. Aziza Mnasri for advanced computational chemistry projects.")
 
     # ==============================================================================
-    # 📌 PART 8: QR CODE & UTILITY PAGES (SUBSCRIPTIONS & CONSULTATIONS)
+    # 📌 PART 8: QR CODE & UTILITY PAGES
     # ==============================================================================
     elif page == "QR Code":
         st.subheader("📱 App QR Code & Quick Access")
@@ -400,13 +399,6 @@ def main():
                             st.metric("Model Accuracy (R2 Score)", f"{r2_score(y_test, y_pred):.2f}")
         else:
             st.error("scikit-learn not available.")
-
-
-    # ==============================================================================
-    # 📌 PART 10: PREDICTION TOOL SUITE (MAIN COMPUTATIONAL TABS)
-    # ==============================================================================
-    elif page == "Prediction Tool" and st.session_state['user_subscribed'] and st.session_state['active_prediction_module'] is not None and st.session_state['active_prediction_module'] == "Docking":
-        pass
 
 if __name__ == "__main__":
     main()
