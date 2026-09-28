@@ -185,7 +185,7 @@ def render_ai_prediction_hub():
         st.error("scikit-learn library is not installed in the environment.")
 
 # ==============================================================================
-# 📌 PART 5: COMPLETE MODULAR PREDICTION & DOCKING PLATFORM (CLEANED)
+# 📌 PART 5: COMPLETE MODULAR PREDICTION & DOCKING PLATFORM (FINAL CLEAN)
 # ==============================================================================
 import streamlit as st
 import py3Dmol
@@ -224,7 +224,7 @@ def render_molecular_docking_workspace():
     # 🧪 2. GLOBAL IC50 PREDICTION WORKFLOW
     # -------------------------------------------------------------------------
     elif st.session_state['active_workflow'] == 'ic50_workflow':
-        if st.button("⬅️ Back to Hub", key="back_from_ic50"):
+        if st.button("⬅️ Back to Prediction Modules Menu", key="back_from_ic50"):
             st.session_state['active_workflow'] = 'hub'
             st.rerun()
             
@@ -290,14 +290,14 @@ def render_molecular_docking_workspace():
     # 🚀 3. MOLECULAR DOCKING WORKFLOW
     # -------------------------------------------------------------------------
     elif st.session_state['active_workflow'] == 'docking_workflow':
-        if st.button("⬅️ Back to Hub", key="back_from_docking"):
+        if st.button("⬅️ Back to Prediction Modules Menu", key="back_from_docking"):
             st.session_state['active_workflow'] = 'hub'
             if 'docking_results' in st.session_state:
                 del st.session_state['docking_results']
             st.rerun()
             
         st.markdown("---")
-        # العنوان القديم المزعج تم حذفه بالكامل، وبقينا هنا في العمل مباشرة
+        # تم حذف عنوان "Workspace: Molecular Docking" نهائياً من هنا
         st.markdown("### 🚀 AutoDock Vina Simulation & 3D Interactive Viewer")
         
         col_d1, col_d2 = st.columns(2)
