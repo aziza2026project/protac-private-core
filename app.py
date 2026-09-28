@@ -38,13 +38,12 @@ st.set_page_config(
 
 st.markdown("""
     <style>
-        /* تعديل المسافة الفوقية باش العناصر ما تدخلش تحت شريط المتصفح وتكون ظاهرة بوضوح */
+        /* ضبط المسافة الفوقية باش الأزرار العلوية تظهر بوضوح وتحت شريط المتصفح */
         .block-container {
             padding-top: 2.5rem !important;
             padding-bottom: 2rem !important;
         }
         
-        /* ضبط المسافات الفاصلة بين العناصر */
         div.element-container {
             margin-bottom: 0.2rem !important;
         }
@@ -308,12 +307,6 @@ def main():
                 st.session_state['active_prediction_module'] = None
                 st.rerun()
             
-            # تم إصلاح التكرار هنا: زر واحد فقط للرجوع للقائمة الرئيسية للـ modules مع تنظيم العرض
-            if st.session_state['active_prediction_module'] is not None:
-                if st.button("⬅️ Back to Prediction Modules Menu", key="back_to_modules_menu_single"):
-                    st.session_state['active_prediction_module'] = None
-                    st.rerun()
-
             # If no specific module is open, show the 3 core functional buttons
             if st.session_state['active_prediction_module'] is None:
                 st.subheader("⚙️ Select a Prediction Module to Start Working")
@@ -339,17 +332,24 @@ def main():
                     st.markdown('<div class="desc-box">Analyze linker length, flexibility, and ternary complex stability.</div>', unsafe_allow_html=True)
 
             else:
-                # Inside the active working module workspace
+                # Inside the active working module workspace (تم تفادي التكرار نهائياً)
                 active_mod = st.session_state['active_prediction_module']
                 
                 if active_mod == "Docking":
+                    # دالة الـ Docking تتولى زر الرجوع الخاص بها داخلياً لتجنب التكرار
                     render_molecular_docking_workspace()
                     
                 elif active_mod == "ADME":
+                    if st.button("⬅️ Back to Prediction Modules Menu", key="back_to_modules_adme"):
+                        st.session_state['active_prediction_module'] = None
+                        st.rerun()
                     st.subheader("📊 Workspace: ADME & Pharmacokinetics (pkCSM)")
                     st.write("Here you can evaluate chemical and biological properties, Caco-2 permeability, and solubility.")
                     
                 elif active_mod == "Linker":
+                    if st.button("⬅️ Back to Prediction Modules Menu", key="back_to_modules_linker"):
+                        st.session_state['active_prediction_module'] = None
+                        st.rerun()
                     st.subheader("🔗 Workspace: Linker Optimization")
                     st.write("Here you can optimize linker length, flexibility, and spatial arrangement for PROTAC structures.")
 
