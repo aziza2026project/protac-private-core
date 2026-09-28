@@ -583,7 +583,6 @@ def render_linker_optimization_workspace():
     
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # 1. قسم المدخلات (Inputs)
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**1️⃣ Warhead SMILES (Target Binder):**")
@@ -607,7 +606,6 @@ def render_linker_optimization_workspace():
         
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # خيارات التقرير: اسم ملف الـ Output وإيميل الإرسال
     col_out1, col_out2 = st.columns(2)
     with col_out1:
         output_filename = st.text_input("📁 Output Comparison File Name:", value="protac_linker_comparison_report", key="linker_output_filename")
@@ -616,15 +614,12 @@ def render_linker_optimization_workspace():
         
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # زر تشغيل التحليل والمقارنة
     if st.button("🚀 Run Multi-Linker Assembly & Docking Comparison", key="run_linker_optimization_btn", use_container_width=True):
         if warhead_smiles and e3_smiles and linkers_input:
-            # قراءة اللينكرات المختلفة المدخلة (كل سطر لينكر)
             linker_list = [l.strip() for l in linkers_input.split('\n') if l.strip()]
             
             st.success(f"Successfully processed {len(linker_list)} different Linker variants! Assembling PROTACs and evaluating binding affinities...")
             
-            # توليد نتائج مقارنة حقيقية حسب عدد وطبيعة اللينكرات المدخلة
             protac_ids = []
             linker_descs = []
             affinities = []
@@ -634,7 +629,6 @@ def render_linker_optimization_workspace():
             for idx, l_smiles in enumerate(linker_list, start=1):
                 protac_ids.append(f"PT-Variant-{idx:02d}")
                 linker_descs.append(f"Custom Linker #{idx} ({l_smiles[:15]}...)")
-                # حساب تقريبي لطاقة الارتباط بناءً على طول وطبيعة الـ SMILES
                 score = -7.5 - (len(l_smiles) * 0.15)
                 affinities.append(f"{score:.2f} kcal/mol")
                 stability_list.append("Optimal / Stable" if len(l_smiles) > 10 else "Rigid / Short")
@@ -654,7 +648,6 @@ def render_linker_optimization_workspace():
             st.markdown("#### 📊 Multi-Linker Docking Affinity Comparison Table:")
             st.dataframe(df_comparison, use_container_width=True)
             
-            # تجهيز ملف التقرير للتحميل
             file_content = df_comparison.to_string(index=False)
             final_filename = f"{output_filename.strip()}.txt" if output_filename else "protac_comparison_report.txt"
             
@@ -666,7 +659,6 @@ def render_linker_optimization_workspace():
                 key="download_linker_report_btn"
             )
             
-            # إرسال التقرير عبر البريد الإلكتروني
             if recipient_email:
                 if st.button("📧 Send Linker Optimization Report via Email", key="email_linker_report_btn"):
                     html_msg = f"<h3>PROTAC Linker Optimization Report</h3><p>Warhead: {warhead_smiles}</p><p>E3 Ligand: {e3_smiles}</p><pre>{file_content}</pre>"
