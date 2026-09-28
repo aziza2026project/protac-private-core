@@ -329,7 +329,10 @@ def main():
                     st.session_state['active_prediction_module'] = None
                     st.rerun()
                 
-                
+                st.markdown("---")
+                if active_mod == "Docking":
+                    st.subheader("🎯 Workspace: Molecular Docking (AutoDock Vina)")
+                    render_molecular_docking_workspace()
                     
                 elif active_mod == "ADME":
                     st.subheader("📊 Workspace: ADME & Pharmacokinetics (pkCSM)")
