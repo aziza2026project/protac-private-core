@@ -401,45 +401,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # ==============================================================================
-# 📌 FUNCTION 6: ADME & PHYSICOCHEMICAL PROPERTIES WORKSPACE
-# ==============================================================================
-def render_adme_workspace():
-    if st.button("⬅️ Back to Prediction Modules Menu", key="back_to_modules_adme"):
-        st.session_state['active_prediction_module'] = None
-        st.rerun()
-    
-    # Clean, concise title for both ADME and Physicochemical properties
-    st.markdown("### 📊 ADME & Physicochemical Properties Workspace")
-    st.markdown("<p style='color: #666; font-size: 14px; margin-top: -10px;'>Evaluate pharmacokinetic parameters and physicochemical properties.</p>", unsafe_allow_html=True)
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Small label right above the SMILES input field
-    st.markdown("**✏️ Type or Paste Your SMILES:**")
-    smiles_input = st.text_input("", placeholder="e.g., CC(=O)OC1=CC=CC=C1C(=O)O", key="adme_smiles_input", label_visibility="collapsed")
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Two side-by-side action buttons for property evaluation
-    col_btn1, col_btn2 = st.columns(2)
-    
-    with col_btn1:
-        pk_button = st.button("💊 Pharmacokinetic Properties", key="btn_pk_prop", use_container_width=True)
-    with col_btn2:
-        phys_button = st.button("🧪 Physicochemical Properties", key="btn_phys_prop", use_container_width=True)
-        
-    if pk_button:
-        if smiles_input:
-            st.info(f"Calculating Pharmacokinetic properties for SMILES: {smiles_input}")
-            # Insert your pharmacokinetic calculation/display code here
-        else:
-            st.warning("Please enter a valid SMILES string first.")
-            
-    if phys_button:
-        if smiles_input:
-            st.info(f"Calculating Physicochemical properties for SMILES: {smiles_input}")
-            # Insert your physicochemical calculation/display code here
-        else:
-            st.warning("Please enter a valid SMILES string first.")
-    
+   
