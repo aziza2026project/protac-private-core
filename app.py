@@ -325,8 +325,6 @@ def main():
                 # Inside the active working module workspace
                 active_mod = st.session_state['active_prediction_module']
                 
-                
-                
                 st.markdown("---")
                 if active_mod == "Docking":
                     
