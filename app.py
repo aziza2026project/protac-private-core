@@ -339,12 +339,8 @@ def main():
                     render_molecular_docking_workspace()
                     
                 elif active_mod == "ADME":
-                    if st.button("⬅️ Back to Prediction Modules Menu", key="back_to_modules_adme"):
-                        st.session_state['active_prediction_module'] = None
-                        st.rerun()
-                    st.subheader("📊 Workspace: ADME & Pharmacokinetics (pkCSM)")
-                    st.write("Here you can evaluate chemical and biological properties, Caco-2 permeability, and solubility.")
-                    
+                   render_adme_workspace()
+    
                 elif active_mod == "Linker":
                     if st.button("⬅️ Back to Prediction Modules Menu", key="back_to_modules_linker"):
                         st.session_state['active_prediction_module'] = None
