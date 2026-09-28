@@ -333,22 +333,17 @@ def main():
                     st.markdown('<div class="desc-box">Analyze linker length, flexibility, and ternary complex stability.</div>', unsafe_allow_html=True)
 
             else:
-                # Inside the active working module workspace (تم تفادي التكرار نهائياً)
-                active_mod = st.session_state['active_prediction_module']
-                
-active_mod = st.session_state.get('active_prediction_module')
+        # Inside the active working module workspace
+        active_mod = st.session_state.get('active_prediction_module')
 
-if active_mod == "Docking":
-    render_molecular_docking_workspace()
-elif active_mod == "ADME":
-    render_adme_workspace()
-elif active_mod == "Linker":
-    render_linker_optimization_workspace()
-else:
-    elif page == "Consultations":
-        if st.button("⬅️ Back to Home Page", key="back_to_home_collab"):
-            st.session_state['current_page'] = "Home Page"
-            st.rerun()
+        if active_mod == "Docking":
+            render_molecular_docking_workspace()
+        elif active_mod == "ADME":
+            render_adme_workspace()
+        elif active_mod == "Linker":
+            render_linker_optimization_workspace()
+        else:
+            # القائمة الرئيسية لاختيار الموديلات
         st.title("💼 Consultations & Scientific Collaboration")
         st.markdown("Connect with Dr. Aziza Mnasri for advanced computational chemistry projects.")
 
