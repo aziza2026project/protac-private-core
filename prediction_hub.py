@@ -446,14 +446,14 @@ def render_adme_workspace():
             prop_type = "Pharmacokinetic" if pk_button else "Physicochemical"
             st.success(f"Calculating {prop_type} properties for SMILES: {smiles_input}")
             
-            # محاكاة لنتيجة الحسابات في شكل جدول (يمكنك استبدالها بالدوال الحقيقية)
+            # محاكاة لنتيجة الحسابات في شكل جدول مرتب
             results_data = {
                 "Parameter": ["Molecular Weight", "LogP", "Caco-2 Permeability", "Water Solubility", "Fraction Absorbed"],
                 "Value": ["318.33 g/mol", "2.45", "0.85 log Papp", "-3.21 log mol/L", "89.4%"] if prop_type == "Pharmacokinetic" else ["318.33 g/mol", "2.45", "5 H-bond donors", "8 H-bond acceptors", "650.2 Å² TPSA"]
             }
             df_results = pd.DataFrame(results_data)
             
-            # عرض النتائج في شكل جدول مرتب
+            # عرض النتائج في شكل جدول (فيسشيتل شارجيبل)
             st.markdown(f"#### 📋 {prop_type} Results Table:")
             st.dataframe(df_results, use_container_width=True)
             
@@ -461,7 +461,7 @@ def render_adme_workspace():
             file_content = df_results.to_string(index=False)
             file_name = f"{prop_type.lower()}_properties_report.txt"
             
-            # زر لتحميل الملف مباشرة (Downloadable File)
+            # زر لتحميل الملف (Downloadable File)
             st.download_button(
                 label=f"📥 Download {prop_type} Report File",
                 data=file_content,
