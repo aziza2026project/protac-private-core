@@ -342,14 +342,8 @@ def main():
                     
                 elif active_mod == "ADME":
                    render_adme_workspace()
-    
-                elif active_mod == "Linker":
-                    if st.button("⬅️ Back to Prediction Modules Menu", key="back_to_modules_linker"):
-                        st.session_state['active_prediction_module'] = None
-                        st.rerun()
-                    st.subheader("🔗 Workspace: Linker Optimization")
-                    st.write("Here you can optimize linker length, flexibility, and spatial arrangement for PROTAC structures.")
-
+    elif active_mod == "Linker":
+    render_linker_optimization_workspace()
     elif page == "Consultations":
         if st.button("⬅️ Back to Home Page", key="back_to_home_collab"):
             st.session_state['current_page'] = "Home Page"
