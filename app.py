@@ -352,37 +352,37 @@ elif page == "QR Code":
     st.markdown("Scan the QR code below to open the application directly on your mobile device or share it easily.")
     st.info("App deployment link active and synchronized.")
 
-    # ==============================================================================
-    # 📌 PART 9: AI & QSAR PREDICTION HUB (DEVELOPER MODE)
-    # ==============================================================================
-    elif page == "AI Hub" and st.session_state['dev_authenticated']:
-        st.subheader("🤖 Advanced Machine Learning & QSAR Prediction Hub (Developer Mode)")
-        if SKLEARN_AVAILABLE:
-            merged_data = load_database_for_prediction()
-            if merged_data is not None and not merged_data.empty:
-                st.success(f"Successfully loaded datasets! Total rows: {merged_data.shape[0]}")
-                numeric_cols = [col for col in merged_data.select_dtypes(include=[np.number]).columns.tolist() if merged_data[col].nunique() > 2]
-                if len(numeric_cols) >= 2:
-                    target_col = st.selectbox("Select Target Variable (Numeric):", numeric_cols, key="ml_target")
-                    feature_candidates = [c for c in numeric_cols if c != target_col]
-                    feature_cols = st.multiselect("Select Feature Columns:", feature_candidates, default=feature_candidates[:min(4, len(feature_candidates))])
-                    
-                    if feature_cols and target_col:
-                        df_clean = merged_data.dropna(subset=feature_cols + [target_col])
-                        if len(df_clean) > 5:
-                            X = df_clean[feature_cols]
-                            y = df_clean[target_col]
-                            scaler = StandardScaler()
-                            X_scaled = scaler.fit_transform(X)
-                            X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
-                            
-                            ml_model = RandomForestRegressor(n_estimators=150, random_state=42)
-                            ml_model.fit(X_train, y_train)
-                            y_pred = ml_model.predict(X_test)
-                            
-                            st.metric("Model Accuracy (R2 Score)", f"{r2_score(y_test, y_pred):.2f}")
-        else:
-            st.error("scikit-learn not available.")
+   # ==============================================================================
+# 📌 PART 9: AI & QSAR PREDICTION HUB (DEVELOPER MODE)
+# ==============================================================================
+elif page == "AI Hub" and st.session_state['dev_authenticated']:
+    st.subheader("🤖 Advanced Machine Learning & QSAR Prediction Hub (Developer Mode)")
+    if SKLEARN_AVAILABLE:
+        merged_data = load_database_for_prediction()
+        if merged_data is not None and not merged_data.empty:
+            st.success(f"Successfully loaded datasets! Total rows: {merged_data.shape[0]}")
+            numeric_cols = [col for col in merged_data.select_dtypes(include=[np.number]).columns.tolist() if merged_data[col].nunique() > 2]
+            if len(numeric_cols) >= 2:
+                target_col = st.selectbox("Select Target Variable (Numeric):", numeric_cols, key="ml_target")
+                feature_candidates = [c for c in numeric_cols if c != target_col]
+                feature_cols = st.multiselect("Select Feature Columns:", feature_candidates, default=feature_candidates[:min(4, len(feature_candidates))])
+                
+                if feature_cols and target_col:
+                    df_clean = merged_data.dropna(subset=feature_cols + [target_col])
+                    if len(df_clean) > 5:
+                        X = df_clean[feature_cols]
+                        y = df_clean[target_col]
+                        scaler = StandardScaler()
+                        X_scaled = scaler.fit_transform(X)
+                        X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+                        
+                        ml_model = RandomForestRegressor(n_estimators=150, random_state=42)
+                        ml_model.fit(X_train, y_train)
+                        y_pred = ml_model.predict(X_test)
+                        
+                        st.metric("Model Accuracy (R2 Score)", f"{r2_score(y_test, y_pred):.2f}")
+    else:
+        st.error("scikit-learn not available.")
 
 if __name__ == "__main__":
     main()
