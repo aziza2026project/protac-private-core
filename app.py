@@ -273,8 +273,8 @@ def main():
                 st.rerun()
             st.markdown('<div class="desc-box">Connect for advanced computational chemistry projects.</div>', unsafe_allow_html=True)
 
-    elif page == "Subscriptions":
-    render_subscriptions_page()
+     elif page == "Subscriptions":
+     render_subscriptions_page()
 
 
     elif page == "Prediction Tool":
