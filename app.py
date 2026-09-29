@@ -348,7 +348,7 @@ elif page == "QR Code":
     st.info("App deployment link active and synchronized.")
 
 # ==============================================================================
-# 📌 PART 9: AI & QSAR PREDICTION HUB (DEVELOPER MODE - FIXED & READY)
+# 📌 PART 9: AI & QSAR PREDICTION HUB (DEVELOPER MODE - DETAILED REASON INSPECTOR)
 # ==============================================================================
 elif page == "AI Hub" and st.session_state['dev_authenticated']:
     if st.button("⬅️ Back to Home Page", key="back_to_home_ai"):
@@ -364,7 +364,6 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
             total_rows_original = merged_data.shape[0]
             st.success(f"Successfully loaded datasets! Total rows in database: {total_rows_original}")
             
-            # التصحيح هنا: التأكد من تطبيق nunique على العامود col بالذات
             numeric_cols = [col for col in merged_data.select_dtypes(include=[np.number]).columns.tolist() if merged_data[col].nunique() > 2]
             
             if len(numeric_cols) >= 2:
@@ -377,18 +376,30 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                     df_clean = merged_data.dropna(subset=cols_to_check)
                     dropped_rows_count = total_rows_original - len(df_clean)
                     
-                    st.info(f"📊 **Data Filtering Summary:** Total records: {total_rows_original} | Clean records used: **{len(df_clean)}** | Dropped records due to missing values: **{dropped_rows_count}**")
+                    st.info(f"📊 **Data Filtering Summary:** Total records: {total_rows_original} | Clean records used: **{len(df_clean)}** | Dropped records: **{dropped_rows_count}**")
                     
                     if dropped_rows_count > 0:
-                        with st.expander("🔍 Inspect Dropped / Incomplete Records (Why they were removed)"):
-                            st.write("The following records contain missing values in your selected features or target variable:")
-                            st.dataframe(merged_data[merged_data[cols_to_check].isnull().any(axis=1)])
+                        with st.expander("🔍 Inspect Dropped Records & Exact Missing Reasons"):
+                            st.write("The table below shows the incomplete records and **precisely which columns are missing (NaN)** for each of them:")
                             
-                            csv_dropped = merged_data[merged_data[cols_to_check].isnull().any(axis=1)].to_csv(index=False).encode('utf-8')
+                            # استخراج الجزيئات المحذوفة مع دالة تفسر شنوا الغلط بالظبط
+                            dropped_df = merged_data[merged_data[cols_to_check].isnull().any(axis=1)].copy()
+                            
+                            # إضافة عمود يوضح الأسباب بوضوح
+                            def get_missing_reasons(row):
+                                missing = [col for col in cols_to_check if pd.isnull(row[col])]
+                                return ", ".join(missing)
+                            
+                            dropped_df['Missing_Columns_Reason'] = dropped_df.apply(get_missing_reasons, axis=1)
+                            
+                            st.dataframe(dropped_df[['Missing_Columns_Reason'] + cols_to_check])
+                            
+                            # زر تحميل التقرير مع الأسباب
+                            csv_dropped = dropped_df.to_csv(index=False).encode('utf-8')
                             st.download_button(
-                                label="📥 Download Dropped Records (CSV)",
+                                label="📥 Download Dropped Records with Reasons (CSV)",
                                 data=csv_dropped,
-                                file_name="dropped_incomplete_records.csv",
+                                file_name="dropped_records_with_reasons.csv",
                                 mime="text/csv",
                             )
 
