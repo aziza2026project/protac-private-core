@@ -348,7 +348,7 @@ elif page == "QR Code":
     st.info("App deployment link active and synchronized.")
 
 # ==============================================================================
-# 📌 PART 9: AI & QSAR PREDICTION HUB (WITH AUTOMATIC FEATURE OPTIMIZER)
+# 📌 PART 9: AI & QSAR PREDICTION HUB (CLEAN & OPTIMIZED SELECTOR)
 # ==============================================================================
 elif page == "AI Hub" and st.session_state['dev_authenticated']:
     if st.button("⬅️ Back to Home Page", key="back_to_home_ai"):
@@ -370,51 +370,25 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                 target_col = st.selectbox("Select Target Variable (Numeric):", numeric_cols, key="ml_target")
                 feature_candidates = [c for c in numeric_cols if c != target_col]
                 
-                # خيار الأداة التلقائية أو الاختيار اليدوي
-                optimizer_mode = st.radio("Choose Feature Selection Method:", ["Manual Selection", "🚀 Auto-Find Best Features (Optimizer)"])
+                # اختيار طريقة تحديد الخصائص (يدوي أو اختيار تلقائي لأفضل N خصائص)
+                selection_mode = st.radio("Feature Selection Approach:", ["Manual Selection", "⚡ Select Top N Important Features Automatically"])
                 
-                if optimizer_mode == "🚀 Auto-Find Best Features (Optimizer)":
-                    max_features_to_test = st.slider("Max features to combine:", min_value=2, max_value=min(10, len(feature_candidates)), value=min(5, len(feature_candidates)))
-                    random_seed_opt = st.number_input("Optimizer Random State:", min_value=1, max_value=1000, value=42, step=1)
+                if selection_mode == "⚡ Select Top N Important Features Automatically":
+                    top_n = st.slider("Select number of top features to use:", min_value=1, max_value=min(10, len(feature_candidates)), value=min(4, len(feature_candidates)))
                     
-                    if st.button("🔍 Run Feature Optimization"):
-                        best_r2 = -999.0
-                        best_features = []
-                        best_rmse = 999.0
-                        
-                        # تجربة أهم الـ Features بناء على تقييم سريع (Correlation أو Importance مبدئي)
-                        from itertools import combinations
-                        
-                        # لربح الوقت، نجرب مجموعات طولها من 2 إلى max_features_to_test
-                        with st.spinner("Optimizing features for best R2 and RMSE... Please wait."):
-                            for k in range(2, max_features_to_test + 1):
-                                for combo in combinations(feature_candidates, k):
-                                    cols_test = list(combo) + [target_col]
-                                    df_t = merged_data.dropna(subset=cols_test)
-                                    if len(df_t) > 10:
-                                        Xt = df_t[list(combo)]
-                                        yt = df_t[target_col]
-                                        st_scaler = StandardScaler()
-                                        Xt_sc = st_scaler.fit_transform(Xt)
-                                        X_tr, X_te, y_tr, y_te = train_test_split(Xt_sc, yt, test_size=0.2, random_state=random_seed_opt)
-                                        
-                                        rf_temp = RandomForestRegressor(n_estimators=100, random_state=random_seed_opt)
-                                        rf_temp.fit(X_tr, y_tr)
-                                        y_p = rf_temp.predict(X_te)
-                                        r2_t = r2_score(y_te, y_p)
-                                        rmse_t = np.sqrt(np.mean((y_te - y_p) ** 2))
-                                        
-                                        # نبحث عن أعلى R2 (أو أقل RMSE)
-                                        if r2_t > best_r2:
-                                            best_r2 = r2_t
-                                            best_features = list(combo)
-                                            best_rmse = rmse_t
-                            
-                            st.session_state['optimal_features'] = best_features
-                            st.success(f"🎉 Optimization Complete! Best R²: **{best_r2:.2f}** | Best RMSE: **{best_rmse:.2f}**")
+                    # تدريب أولي سريع بترتيب الأهمية لمعرفة أفضل Features
+                    X_init = merged_data[feature_candidates].dropna()
+                    y_init = merged_data.loc[X_init.index, target_col]
+                    rf_init = RandomForestRegressor(n_estimators=100, random_state=42)
+                    rf_init.fit(X_init, y_init)
                     
-                    # استرجاع الـ Features التي تم إيجادها
-                    feature_cols = st.multiselect("Select Feature Columns:", feature_candidates, default=st.session_state.get('optimal_features', feature_candidates[:min(4, len(feature_candidates))]))
+                    importances_sorted = pd.DataFrame({
+                        'Feature': feature_candidates,
+                        'Importance': rf_init.feature_importances_
+                    }).sort_values(by='Importance', ascending=False)
+                    
+                    feature_cols = importances_sorted['Feature'].head(top_n).tolist()
+                    st.info(f"✨ **Auto-Selected Top {top_n} Features:** {', '.join(feature_cols)}")
                 else:
                     feature_cols = st.multiselect("Select Feature Columns:", feature_candidates, default=feature_candidates[:min(4, len(feature_candidates))])
                 
