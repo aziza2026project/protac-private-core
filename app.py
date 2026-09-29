@@ -231,7 +231,7 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-
+page = st.session_state.get('current_page', 'Home Page')
 if page == "Home Page":
     st.markdown('<div class="home-btn-large">', unsafe_allow_html=True)
     if st.button("🏠 Home Page", key="btn_home_top"):
