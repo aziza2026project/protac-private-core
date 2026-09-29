@@ -270,7 +270,7 @@ def main():
                 st.rerun()
             st.markdown('<div class="desc-box">Connect for advanced computational chemistry projects.</div>', unsafe_allow_html=True)
 
-   elif page == "Subscriptions":
+  elif page == "Subscriptions":
     if st.button("⬅️ Back to Home Page", key="back_to_home_sub"):
         st.session_state['current_page'] = "Home Page"
         st.rerun()
