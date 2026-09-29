@@ -1,6 +1,3 @@
-# ==============================================================================
-# 📌 PART 1: IMPORTS & ENVIRONMENT CONFIGURATION
-# ==============================================================================
 import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -20,11 +17,9 @@ from prediction_hub import (
     render_linker_optimization_workspace,
     render_molecular_docking_workspace
 )
-
 from subscription import render_subscriptions_page
 from services import render_consultations_workspace
 
-# Safe import of machine learning libraries
 try:
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.model_selection import train_test_split
