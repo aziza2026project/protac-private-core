@@ -342,7 +342,7 @@ def main():
         elif active_mod == "Linker":
             render_linker_optimization_workspace()
 
-    elif page == "Consultations and Scientific Sollaboration":
+    elif page == "Consultations":
         if st.button("⬅️ Back to Home Page", key="back_to_home_sub"):
             st.session_state['current_page'] = "Home Page"
             st.rerun()
