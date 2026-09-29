@@ -333,10 +333,8 @@ def main():
                     st.markdown('<div class="desc-box">Analyze linker length, flexibility, and ternary complex stability.</div>', unsafe_allow_html=True)
 
            
-        # Inside the active working module workspace
-        active_mod = st.session_state.get('active_prediction_module')
-
-active_mod = st.session_state.get('active_prediction_module')
+# Inside the active working module workspace
+    active_mod = st.session_state.get('active_prediction_module')
 
     if active_mod == "Docking":
         render_molecular_docking_workspace()
@@ -344,9 +342,9 @@ active_mod = st.session_state.get('active_prediction_module')
         render_adme_workspace()
     elif active_mod == "Linker":
         render_linker_optimization_workspace()
+    else:
         st.title("💼 Consultations & Scientific Collaboration")
         st.markdown("Connect with Dr. Aziza Mnasri for advanced computational chemistry projects.")
-
     # ==============================================================================
     # 📌 PART 8: QR CODE & UTILITY PAGES
     # ==============================================================================
