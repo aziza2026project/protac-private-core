@@ -345,12 +345,12 @@ elif page == "Consultations":
     render_consultations_workspace()
         
     # ==============================================================================
-    # 📌 PART 8: QR CODE & UTILITY PAGES
-    # ==============================================================================
-    elif page == "QR Code":
-        st.subheader("📱 App QR Code & Quick Access")
-        st.markdown("Scan the QR code below to open the application directly on your mobile device or share it easily.")
-        st.info("App deployment link active and synchronized.")
+# 📌 PART 8: QR CODE & UTILITY PAGES
+# ==============================================================================
+elif page == "QR Code":
+    st.subheader("📱 App QR Code & Quick Access")
+    st.markdown("Scan the QR code below to open the application directly on your mobile device or share it easily.")
+    st.info("App deployment link active and synchronized.")
 
     # ==============================================================================
     # 📌 PART 9: AI & QSAR PREDICTION HUB (DEVELOPER MODE)
