@@ -264,6 +264,8 @@ def main():
         with col3:
             if st.button("💼 Consultations & Collaboration", key="btn_collab_card", use_container_width=True):
                 st.session_state['current_page'] = "Consultations"
+                # إعادة تعيين التاب باش في البداية ما يظهر حتى فورم كان الزوز أزرار
+                st.session_state['collab_sub_tab'] = None
                 st.rerun()
             st.markdown('<div class="desc-box">Connect for advanced computational chemistry projects.</div>', unsafe_allow_html=True)
 
@@ -345,30 +347,33 @@ def main():
     elif page == "Consultations":
         if st.button("⬅️ Back to Home Page", key="back_to_home_sub"):
             st.session_state['current_page'] = "Home Page"
+            st.session_state['collab_sub_tab'] = None
             st.rerun()
         
         st.title("💼 Consultations & Scientific Collaboration")
         st.markdown("Choose between booking a professional consultation/service or proposing a major collaborative research project.")
 
-        # Zoz أزرار رئيسية في الصفحة
+        # التأكد من حالة التاب الافتراضية إذا لم يتم اختيار شيء بعد
+        if 'collab_sub_tab' not in st.session_state:
+            st.session_state['collab_sub_tab'] = None
+
+        # Zoz أزرار رئيسية في الواجهة فقط
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
             if st.button("🛠️ Consultations & Services", use_container_width=True, key="tab_cons"):
                 st.session_state['collab_sub_tab'] = "Consultations"
+                st.rerun()
         with col_btn2:
             if st.button("🤝 Scientific Collaborations", use_container_width=True, key="tab_collab"):
                 st.session_state['collab_sub_tab'] = "Collaborations"
-
-        # تعيين الافتراضي
-        if 'collab_sub_tab' not in st.session_state:
-            st.session_state['collab_sub_tab'] = "Consultations"
+                st.rerun()
 
         st.divider()
 
-        # قسم الاستشارات والخدمات (Consultations)
+        # قسم الاستشارات والخدمات (Consultations) - يظهر فقط عند الضغط على الزر الأول
         if st.session_state['collab_sub_tab'] == "Consultations":
             st.subheader("📋 Request a Professional Consultation")
-            st.markdown("Submit your project details, upload any files of any type/size, and proceed with payment before service execution. Results will be sent directly to your email.")
+            st.markdown("Submit your project details, upload any files of any type/size, complete your payment, and get results sent directly to your email.")
 
             with st.form("consultation_form"):
                 col_i1, col_i2 = st.columns(2)
@@ -381,11 +386,16 @@ def main():
 
                 project_description = st.text_area("Project Description & Requirements *", placeholder="Describe what you need precisely (e.g., molecular docking, ADME evaluation, PROTAC linker design)...")
                 
-                # رفع الملفات بدون قيود على الأنواع أو الأحجام
                 uploaded_files = st.file_uploader("Upload Project Files (All formats accepted)", accept_multiple_files=True)
 
                 st.info("💡 Note: Payment is required before starting the service. All requests and files are securely sent to: azizamnasri01@gmail.com")
                 
+                # زر الدفع المباشر ورابطه أو تأكيده
+                st.markdown("💳 **Secure Payment Gateway:** Please complete your consultation payment using your preferred secure method before submitting.")
+                payment_btn_clicked = st.form_submit_button("💳 Proceed to Payment Securely")
+                if payment_btn_clicked:
+                    st.info("Redirecting or opening payment gateway... (You can link your payment URL here)")
+
                 payment_confirmed = st.checkbox("I confirm that I have completed the consultation payment.")
                 submit_consultation = st.form_submit_button("Submit Consultation Request & Files")
 
@@ -398,10 +408,9 @@ def main():
             # لوحة التحكم الخاصة بالأدمن (محمية بكلمة مرور)
             with st.expander("🔐 Admin Dashboard (Dr. Aziza Mnasri Only)"):
                 admin_pass = st.text_input("Enter Admin Password", type="password", key="consult_admin_pass")
-                if admin_pass == "aziza2026":  # كلمة المرور الخاصة بك
+                if admin_pass == "aziza2026":
                     st.success("Access Granted to Admin Dashboard")
                     
-                    # تبويبات فرعية للطلبات
                     dash_tab1, dash_tab2, dash_tab3, dash_tab4 = st.tabs(["📥 All Requests", "🔴 Unread", "⏳ In Progress", "✅ Answered"])
                     
                     with dash_tab1:
@@ -415,30 +424,35 @@ def main():
                 elif admin_pass:
                     st.error("Incorrect password.")
 
-        # قسم التعاون العلمي والمشاريع الكبرى (Scientific Collaborations)
+        # قسم التعاون العلمي والمشاريع الكبرى (Scientific Collaborations) - يظهر فقط عند الضغط على الزر الثاني
         elif st.session_state['collab_sub_tab'] == "Collaborations":
-            st.subheader("🤝 Scientific Collaborations & Research Projects")
-            st.markdown("Welcome to long-term academic partnerships, large-scale computational drug discovery projects, and joint scientific publications.")
+            st.subheader("🤝 Scientific Collaborations & Major Research Projects")
+            st.markdown("Partner with Dr. Aziza Mnasri for high-impact joint research, strategic Big Pharma collaborations, and world-class academic publications.")
 
             with st.form("collaboration_form"):
                 col_c1, col_c2 = st.columns(2)
                 with col_c1:
-                    collab_name = st.text_input("Researcher / Institution Name *")
+                    collab_name = st.text_input("Researcher / Institution / Big Pharma Name *")
                     collab_email = st.text_input("Contact Email *")
                 with col_c2:
-                    collab_type = st.selectbox("Collaboration Type", ["Joint Research & Publications", "Computational Drug Discovery Project", "Advanced PROTAC Design Partnership", "Custom Academic Protocol"])
+                    collab_type = st.selectbox("Strategic Collaboration Type", [
+                        "Big Pharma & Biotech R&D Partnership",
+                        "Global Academic Research Consortium",
+                        "Joint High-Impact Scientific Publications",
+                        "Strategic Computational Drug Discovery Project"
+                    ])
                 
-                collab_details = st.text_area("Project Proposal & Objectives *", placeholder="Describe the scope of the research project, objectives, and how we can collaborate...")
+                collab_details = st.text_area("Project Proposal & Strategic Objectives *", placeholder="Describe the scope of the major research project, partnership goals, and expected outcomes...")
 
                 st.info("📨 Proposals will be sent directly to: azizamnasri01@gmail.com")
                 
-                submit_collab = st.form_submit_button("Send Collaboration Proposal")
+                submit_collab = st.form_submit_button("Send Strategic Collaboration Proposal")
 
                 if submit_collab:
                     if not collab_name or not collab_email or not collab_details:
                         st.error("Please fill in all required fields.")
                     else:
-                        st.success("Collaboration proposal successfully sent to azizamnasri01@gmail.com!")
+                        st.success("Strategic collaboration proposal successfully sent to azizamnasri01@gmail.com!")
     # ==============================================================================
     # 📌 PART 8: QR CODE & UTILITY PAGES
     # ==============================================================================
