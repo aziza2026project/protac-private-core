@@ -28,7 +28,6 @@ try:
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
-
 # ==============================================================================
 # 📌 PART 2: PAGE CONFIGURATION & CUSTOM CSS STYLING
 # ==============================================================================
