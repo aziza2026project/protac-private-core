@@ -348,7 +348,7 @@ elif page == "QR Code":
     st.info("App deployment link active and synchronized.")
 
 # ==============================================================================
-# 📌 PART 9: AI & QSAR PREDICTION HUB (DEVELOPER MODE)
+# 📌 PART 9: AI & QSAR PREDICTION HUB (DEVELOPER MODE - COMPLETE VERSION)
 # ==============================================================================
 elif page == "AI Hub" and st.session_state['dev_authenticated']:
     if st.button("⬅️ Back to Home Page", key="back_to_home_ai"):
@@ -379,14 +379,17 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                         X_scaled = scaler.fit_transform(X)
                         X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
                         
+                        # تدريب نموذج Random Forest دقيق
                         ml_model = RandomForestRegressor(n_estimators=200, random_state=42)
                         ml_model.fit(X_train, y_train)
                         y_pred = ml_model.predict(X_test)
                         
+                        # حساب المقاييس العلمية (R2 و RMSE)
                         r2 = r2_score(y_test, y_pred)
                         mse = np.mean((y_test - y_pred) ** 2)
                         rmse = np.sqrt(mse)
                         
+                        # عرض المقاييس في الواجهة
                         col_m1, col_m2 = st.columns(2)
                         with col_m1:
                             st.metric("Model Accuracy ($R^2$ Score)", f"{r2:.2f}")
@@ -395,8 +398,9 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                         
                         st.markdown("---")
                         st.subheader("📊 Feature Importance Analysis & Export")
-                        st.markdown("Relative importance of physicochemical features in predicting the target variable:")
+                        st.markdown("Relative importance of physicochemical features and docking scores in predicting the target variable:")
                         
+                        # حساب أهمية الخصائص
                         importance_df = pd.DataFrame({
                             'Feature': feature_cols,
                             'Importance': ml_model.feature_importances_
@@ -404,19 +408,47 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                         
                         st.bar_chart(importance_df.set_index('Feature'))
                         
-                        # إضافة زر لتحميل بيانات الأهمية كملف CSV يستعمل للرسم في الأدوات الخارجية
-                        csv_data = importance_df.to_csv(index=False).encode('utf-8')
+                        # زر تحميل بيانات الأهمية
+                        csv_importance = importance_df.to_csv(index=False).encode('utf-8')
                         st.download_button(
-                            label="📥 Download Feature Importance Data (CSV)",
-                            data=csv_data,
-                            file_name="feature_importance_results.csv",
+                            label="📥 Download Feature Importance (CSV)",
+                            data=csv_importance,
+                            file_name="feature_importance.csv",
                             mime="text/csv",
                         )
+
+                        st.markdown("---")
+                        st.subheader("📁 Export Model Predictions & Cleaned Dataset")
+                        
+                        # تجهيز جدول نتائج التوقعات
+                        results_df = pd.DataFrame({
+                            'Actual_Value': y_test.values,
+                            'Predicted_Value': y_pred
+                        })
+                        
+                        # أزرار التحميل المباشر للبيانات والنتائج
+                        col_d1, col_d2 = st.columns(2)
+                        with col_d1:
+                            csv_results = results_df.to_csv(index=False).encode('utf-8')
+                            st.download_button(
+                                label="📥 Download Test Predictions (CSV)",
+                                data=csv_results,
+                                file_name="model_predictions_vs_actual.csv",
+                                mime="text/csv",
+                            )
+                        with col_d2:
+                            csv_full_clean = df_clean.to_csv(index=False).encode('utf-8')
+                            st.download_button(
+                                label="📥 Download Full Processed Dataset (CSV)",
+                                data=csv_full_clean,
+                                file_name="processed_dataset_ml.csv",
+                                mime="text/csv",
+                            )
                         
                     else:
-                        st.warning("Not enough clean data rows after removing missing values.")
+                        st.warning("Not enough clean data rows after removing missing values (minimum 6 rows required).")
             else:
-                st.warning("Please ensure your dataset contains at least 2 numeric columns.")
+                st.warning("Please ensure your dataset contains at least 2 numeric columns for QSAR modeling.")
     else:
         st.error("scikit-learn not available.")
 
