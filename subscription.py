@@ -1,80 +1,49 @@
 import pandas as pd
 import streamlit as st
+def render_subscriptions_page():
+    if st.button("⬅️ Back to Home Page", key="back_to_home_sub"):
+        st.session_state['current_page'] = "Home Page"
+        st.rerun()
+        
+    st.title("💳 Subscription Plans & Research Tiers")
+    st.markdown("Choose the appropriate computational tier for your target research, PROTAC design, and molecular docking workflows.")
+    st.info("Current Status: Professional Researcher Access Active.")
 
+    st.markdown("---")
+    
+    col_sub1, col_sub2, col_sub3 = st.columns(3)
 
-def render_subscription_section():
-  st.subheader("💳 Subscription & Pricing Plans")
-  st.markdown(
-      "Choose the appropriate plan for your research needs and unlock advanced"
-      " in-silico computational tools:"
-  )
+    with col_sub1:
+        st.subheader("🌱 Starter Tier")
+        st.markdown("**Free / Academic**")
+        st.markdown("""
+        - Basic ADME & Pharmacokinetics (pkCSM)
+        - Standard Molecular Docking Preview
+        - Community Support
+        - Ideal for students and academic exploration
+        """)
+        st.button("Current Tier", key="btn_tier_free", disabled=True, use_container_width=True)
 
-  # جدول الأسعار والخطط المتاحة
-  pricing_data = [
-      {
-          "Tier": "Academic Tier (Monthly)",
-          "Price": "$29 / month",
-          "Target Audience": "Students, Researchers, Academic Labs",
-          "Features": (
-              "Full Access to Docking, ADME (pkCSM), and RDKit Descriptors"
-          ),
-      },
-      {
-          "Tier": "Academic Tier (Annual)",
-          "Price": "$250 / year",
-          "Target Audience": "Long-term Research Projects",
-          "Features": "All Academic Features + Priority Queue + Save Reports",
-      },
-      {
-          "Tier": "Enterprise / Lab Tier",
-          "Price": "Custom Pricing",
-          "Target Audience": "Pharmaceutical Companies & Research Institutes",
-          "Features": "Dedicated Server, Custom Database Integration, API Access",
-      },
-  ]
+    with col_sub2:
+        st.subheader("⚡ Professional Tier")
+        st.markdown("**$49 / month**")
+        st.markdown("""
+        - Full AutoDock Vina Docking Workspaces
+        - Advanced Linker Optimization & Flexibility
+        - Priority Queue for Calculations
+        - Designed for active researchers & PROTAC developers
+        """)
+        if st.button("Upgrade to Professional", key="btn_tier_pro", use_container_width=True):
+            st.success("Redirecting to secure subscription checkout...")
 
-  pricing_df = pd.DataFrame(pricing_data)
-  st.table(pricing_df)
-
-  st.markdown("---")
-  st.markdown("### 🚀 Proceed to Checkout")
-
-  selected_tier = st.selectbox(
-      "Select Subscription Tier:",
-      [
-          "Academic Tier (Monthly) - $29",
-          "Academic Tier (Annual) - $250",
-          "Enterprise / Lab Tier - Custom",
-      ],
-      key="sub_tier_select",
-  )
-
-  user_email = st.text_input(
-      "Enter your institutional or personal email for subscription:",
-      placeholder="name@university.edu",
-      key="sub_email_input",
-  )
-
-  if st.button("🔒 Proceed to Secure Payment", key="checkout_btn"):
-    if user_email:
-      st.success(
-          f"✅ Registration initiated for `{user_email}` with package:"
-          f" **{selected_tier}**."
-      )
-
-      # إرشادات الدفع المؤقتة والمتوافقة مع الوضع في تونس (Payoneer / التحويل)
-      st.info(
-          "💡 **Payment Instructions:** \n"
-          "Since automated international gateway integration is currently being"
-          " configured for your region, please complete your payment via our"
-          " secure link (Payoneer / Direct Wire Transfer) or contact support"
-          " directly to activate your account instantly."
-      )
-
-      st.markdown(
-          "[🔗 Click here to complete secure payment via Payoneer / Direct"
-          " Transfer](https://payoneer.com)",
-          unsafe_allow_html=True,
-      )
-    else:
-      st.error("Please enter a valid email address to proceed.")
+    with col_sub3:
+        st.subheader("🚀 Enterprise & Lab Tier")
+        st.markdown("**Custom / Institutional**")
+        st.markdown("""
+        - Unlimited High-Performance Docking
+        - Custom Target Proteins & Dual-Target PROTACs
+        - Dedicated Scientific Consultation & Support
+        - Tailored for Biotech R&D Labs & Pharma
+        """)
+        if st.button("Contact for Enterprise", key="btn_tier_ent", use_container_width=True):
+            st.info("Please switch to the 'Consultations & Collaboration' page to connect directly.")
