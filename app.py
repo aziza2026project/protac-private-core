@@ -343,7 +343,6 @@ def main():
     elif active_mod == "Linker":
         render_linker_optimization_workspace()
         else:
-            # القائمة الرئيسية لاختيار الموديلات
         st.title("💼 Consultations & Scientific Collaboration")
         st.markdown("Connect with Dr. Aziza Mnasri for advanced computational chemistry projects.")
 
