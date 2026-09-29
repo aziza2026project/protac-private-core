@@ -14,6 +14,7 @@ import streamlit.components.v1 as components
 from rdkit import Chem
 from rdkit.Chem import AllChem
 import py3Dmol
+
 from prediction_hub import (
     render_adme_workspace,
     render_linker_optimization_workspace,
@@ -22,6 +23,7 @@ from prediction_hub import (
 
 from subscription import render_subscriptions_page
 from services import render_consultations_workspace
+
 # Safe import of machine learning libraries
 try:
     from sklearn.ensemble import RandomForestRegressor
@@ -31,7 +33,6 @@ try:
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
-
 
 # ==============================================================================
 # 📌 PART 2: PAGE CONFIGURATION & CUSTOM CSS STYLING
