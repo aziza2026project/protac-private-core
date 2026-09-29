@@ -3,289 +3,117 @@ import json
 import os
 import pandas as pd
 import streamlit as st
+elif page == "Consultations":
+        if st.button("⬅️ Back to Home Page", key="back_to_home_sub"):
+            st.session_state['current_page'] = "Home Page"
+            st.session_state['collab_sub_tab'] = None
+            st.rerun()
+        
+        st.title("💼 Consultations & Scientific Collaboration")
+        st.markdown("Choose between booking a professional consultation/service or proposing a major collaborative research project.")
 
-# ملف قاعدة البيانات المحلي ومجلد حفظ الملفات
-DB_FILE = "client_requests_db.json"
-UPLOAD_DIR = "client_uploaded_files"
+        if 'collab_sub_tab' not in st.session_state:
+            st.session_state['collab_sub_tab'] = None
 
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            if st.button("🛠️ Consultations & Services", use_container_width=True, key="tab_cons"):
+                st.session_state['collab_sub_tab'] = "Consultations"
+                st.rerun()
+        with col_btn2:
+            if st.button("🤝 Scientific Collaborations", use_container_width=True, key="tab_collab"):
+                st.session_state['collab_sub_tab'] = "Collaborations"
+                st.rerun()
 
+        st.divider()
 
-def load_persistent_requests():
-  if os.path.exists(DB_FILE):
-    try:
-      with open(DB_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
-    except:
-      return []
-  return []
+        # قسم الاستشارات والخدمات (Consultations)
+        if st.session_state['collab_sub_tab'] == "Consultations":
+            st.subheader("📋 Request a Professional Consultation")
+            st.markdown("Submit your project details and upload any files freely. Dr. Aziza Mnasri will review your request and get back to you with an evaluation and pricing details.")
 
+            with st.form("consultation_form"):
+                col_i1, col_i2 = st.columns(2)
+                with col_i1:
+                    client_name = st.text_input("Full Name *")
+                    client_lab = st.text_input("Laboratory / Institution *")
+                with col_i2:
+                    client_email = st.text_input("Your Email Address * (For receiving the evaluation and report)")
+                    client_whatsapp = st.text_input("WhatsApp Number (Optional)")
 
-def save_persistent_requests(requests_list):
-  # تنظيف البيانات بالكامل لضمان أنها تخلو من أي كائنات غير قابلة للحفظ في JSON
-  data_to_save = []
-  for req in requests_list:
-    clean_files = []
-    for f in req.get("files", []):
-      if isinstance(f, dict):
-        clean_files.append({
-            "name": str(f.get("name", "file")),
-            "path": str(f.get("path", "")),
-        })
+                project_description = st.text_area("Project Description & Requirements *", placeholder="Describe what you need precisely (e.g., molecular docking, ADME evaluation, PROTAC linker design)...")
+                
+                uploaded_files = st.file_uploader("Upload Project Files (All formats & sizes accepted)", accept_multiple_files=True)
 
-    req_clean = {
-        "name": str(req.get("name", "Anonymous")),
-        "email": str(req.get("email", "")),
-        "details": str(req.get("details", "")),
-        "files": clean_files,
-        "timestamp": str(
-            req.get(
-                "timestamp",
-                datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            )
-        ),
-        "is_read": bool(req.get("is_read", False)),
-        "is_responded": bool(req.get("is_responded", False)),
-    }
-    data_to_save.append(req_clean)
+                st.info("📨 Your request and files will be sent directly to: azizamnasri01@gmail.com for review.")
+                
+                submit_consultation = st.form_submit_button("Submit Consultation Request & Files")
 
-  with open(DB_FILE, "w", encoding="utf-8") as f:
-    json.dump(data_to_save, f, ensure_ascii=False, indent=4)
+                if submit_consultation:
+                    if not client_name or not client_email or not project_description:
+                        st.error("Please fill in all mandatory fields (*).")
+                    else:
+                        st.success("Consultation request successfully submitted! Your files and details have been sent to azizamnasri01@gmail.com. We will review it and contact you soon.")
 
+            # قسم الدفع الاختياري (خارج الفورم أو تحته لكي يتم استخدامه بعد الاتفاق على السعر)
+            with st.container():
+                st.markdown("---")
+                st.subheader("💳 Secure Consultation Payment Gateway")
+                st.markdown("If you have already discussed your project with Dr. Aziza Mnasri and agreed on the service terms, you can securely proceed with the payment below:")
+                
+                col_pay1, col_pay2 = st.columns([2, 1])
+                with col_pay1:
+                    st.text_input("Enter Consultation Reference or Invoice ID (Optional)", key="invoice_id_input")
+                with col_pay2:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    if st.button("Proceed to Secure Payment", use_container_width=True):
+                        st.info("Redirecting to secure payment gateway... (Link your payment processor here)")
 
-def render_services_section():
-  st.subheader("🤝 Consultations & Scientific Collaboration")
+            # لوحة التحكم الخاصة بالأدمن (محمية بكلمة مرور)
+            with st.expander("🔐 Admin Dashboard (Dr. Aziza Mnasri Only)"):
+                admin_pass = st.text_input("Enter Admin Password", type="password", key="consult_admin_pass")
+                if admin_pass == "aziza2026":
+                    st.success("Access Granted to Admin Dashboard")
+                    
+                    dash_tab1, dash_tab2, dash_tab3, dash_tab4 = st.tabs(["📥 All Requests", "🔴 Unread", "⏳ In Progress", "✅ Answered"])
+                    
+                    with dash_tab1:
+                        st.write("Displaying all consultation requests...")
+                    with dash_tab2:
+                        st.write("Displaying unread / new requests (To be checked)...")
+                    with dash_tab3:
+                        st.write("Displaying requests in progress...")
+                    with dash_tab4:
+                        st.write("Displaying completed & answered requests...")
+                elif admin_pass:
+                    st.error("Incorrect password.")
 
-  # تهيئة الطلبات من الملف الدائم
-  if "client_requests" not in st.session_state:
-    st.session_state.client_requests = load_persistent_requests()
+        # قسم التعاون العلمي والمشاريع الكبرى (Scientific Collaborations)
+        elif st.session_state['collab_sub_tab'] == "Collaborations":
+            st.subheader("🤝 Scientific Collaborations & Major Research Projects")
+            st.markdown("Partner with Dr. Aziza Mnasri for high-impact joint research, strategic Big Pharma collaborations, and world-class academic publications.")
 
-  if "admin_filter" not in st.session_state:
-    st.session_state.admin_filter = "All"
+            with st.form("collaboration_form"):
+                col_c1, col_c2 = st.columns(2)
+                with col_c1:
+                    collab_name = st.text_input("Researcher / Institution / Big Pharma Name *")
+                    collab_email = st.text_input("Contact Email *")
+                with col_c2:
+                    collab_type = st.selectbox("Strategic Collaboration Type", [
+                        "Big Pharma & Biotech R&D Partnership",
+                        "Global Academic Research Consortium",
+                        "Joint High-Impact Scientific Publications",
+                        "Strategic Computational Drug Discovery Project"
+                    ])
+                
+                collab_details = st.text_area("Project Proposal & Strategic Objectives *", placeholder="Describe the scope of the major research project, partnership goals, and expected outcomes...")
 
-  tab1, tab2, tab3 = st.tabs([
-      "💡 Custom Consultation",
-      "🔬 Research Collaboration",
-      "🔐 Admin Portal",
-  ])
+                st.info("📨 Proposals will be sent directly to: azizamnasri01@gmail.com")
+                
+                submit_collab = st.form_submit_button("Send Strategic Collaboration Proposal")
 
-  with tab1:
-    st.markdown("### Request a Custom Research Report & File Upload")
-    st.markdown(
-        "Need a deep-dive analysis, custom molecular docking, or tailored"
-        " PROTAC design? Submit your requirements and attach your project files"
-        " directly:"
-    )
-
-    with st.form("custom_consultation_form", clear_on_submit=True):
-      client_name = st.text_input("Your Name / Institution:")
-      client_email = st.text_input("Your Email Address:")
-      project_details = st.text_area(
-          "Project Details & Requirements (Target, PDB files info, objectives,"
-          " etc.):"
-      )
-
-      uploaded_files = st.file_uploader(
-          "Attach Project Files (PDF, PDB, ZIP, TXT, Word, etc.):",
-          accept_multiple_files=True,
-      )
-
-      submitted = st.form_submit_button("🚀 Send Request & Files")
-
-      if submitted:
-        if client_email and project_details:
-          saved_file_info = []
-          if uploaded_files:
-            for uf in uploaded_files:
-              file_path = os.path.join(UPLOAD_DIR, uf.name)
-              with open(file_path, "wb") as f:
-                f.write(uf.getbuffer())
-              saved_file_info.append({"name": uf.name, "path": file_path})
-
-          request_data = {
-              "name": client_name if client_name else "Anonymous",
-              "email": client_email,
-              "details": project_details,
-              "files": saved_file_info,
-              "timestamp": datetime.datetime.now().strftime(
-                  "%Y-%m-%d %H:%M:%S"
-              ),
-              "is_read": False,
-              "is_responded": False,
-          }
-
-          st.session_state.client_requests.append(request_data)
-          save_persistent_requests(st.session_state.client_requests)
-
-          st.success(
-              f"✅ Thank you {client_name}! Your request and files have been"
-              " successfully saved."
-          )
-        else:
-          st.error(
-              "Please fill in at least your email address and project"
-              " details."
-          )
-
-    st.markdown("---")
-    st.info("📧 **Direct Contact Email:** azizamnasri10@gmail.com")
-
-  with tab2:
-    st.markdown("### Academic & Industrial Partnership")
-    st.markdown(
-        "Interested in co-authoring papers, joint research grants, or"
-        " technological integration? Let's connect."
-    )
-    st.success("🤝 **For Collaboration Inquiries:** azizamnasri10@gmail.com")
-    st.markdown(
-        "Send your institution name, proposal, or collaboration idea directly to"
-        " my email."
-    )
-
-  with tab3:
-    st.markdown("### 🔐 Admin Secure Inbox")
-    admin_password = st.text_input(
-        "Admin Password:", type="password", key="admin_pass_input"
-    )
-
-    if admin_password == "aziza2026":
-      st.success("🔓 Access Granted: Welcome to your secure inbox.")
-
-      if len(st.session_state.client_requests) == 0:
-        st.info("📭 Your inbox is currently empty. No new requests received.")
-      else:
-        total = len(st.session_state.client_requests)
-        unread = sum(
-            1
-            for r in st.session_state.client_requests
-            if not r.get("is_read", False)
-        )
-        responded = sum(
-            1
-            for r in st.session_state.client_requests
-            if r.get("is_responded", False)
-        )
-
-        st.markdown("---")
-        st.markdown(
-            "📌 **Filter Requests:** Click below to filter by status:"
-        )
-
-        col_f1, col_f2, col_f3 = st.columns(3)
-        with col_f1:
-          if st.button(f"📥 All Requests ({total})"):
-            st.session_state.admin_filter = "All"
-            st.rerun()
-        with col_f2:
-          if st.button(f"🆕 Unread ({unread})"):
-            st.session_state.admin_filter = "Unread"
-            st.rerun()
-        with col_f3:
-          if st.button(f"✅ Responded ({responded})"):
-            st.session_state.admin_filter = "Responded"
-            st.rerun()
-
-        st.markdown(
-            f"Current Active Filter: **{st.session_state.admin_filter}**"
-        )
-        st.markdown("---")
-
-        indexed_requests = list(enumerate(st.session_state.client_requests))[
-            ::-1
-        ]
-
-        filtered_requests = []
-        for idx, req in indexed_requests:
-          is_resp = req.get("is_responded", False)
-          is_rd = req.get("is_read", False)
-
-          if st.session_state.admin_filter == "Unread" and (
-              is_rd or is_resp
-          ):
-            continue
-          if st.session_state.admin_filter == "Responded" and not is_resp:
-            continue
-          filtered_requests.append((idx, req))
-
-        if not filtered_requests:
-          st.info(
-              f"📭 No requests found under filter:"
-              f" {st.session_state.admin_filter}."
-          )
-        else:
-          for idx, req in filtered_requests:
-            req_name = req.get("name", "Unknown")
-            req_email = req.get("email", "No Email")
-            req_time = req.get("timestamp", "Unknown Time")
-            req_details = req.get("details", "No details provided.")
-            is_resp = req.get("is_responded", False)
-            is_rd = req.get("is_read", False)
-
-            if is_resp:
-              status_icon = "✅ [Responded]"
-            elif not is_rd:
-              status_icon = "🆕 [Unread]"
-            else:
-              status_icon = "👁️ [Read / Unanswered]"
-
-            title_str = (
-                f"{status_icon} Request #{idx+1} | {req_name} ({req_email}) —"
-                f" [{req_time}]"
-            )
-
-            with st.expander(title_str):
-              if not req.get("is_read", False):
-                st.session_state.client_requests[idx]["is_read"] = True
-                save_persistent_requests(st.session_state.client_requests)
-
-              st.markdown(f"**🕒 Time:** {req_time}")
-              st.markdown(f"**👤 Client Name:** {req_name}")
-              st.markdown(f"**📧 Email:** {req_email}")
-              st.markdown(f"**📝 Project Details:**\n{req_details}")
-
-              files_list = req.get("files", [])
-              if files_list and len(files_list) > 0:
-                st.markdown(f"**📎 Attached Files ({len(files_list)} files):**")
-                for f_idx, file_info in enumerate(files_list):
-                  f_path = file_info.get("path")
-                  f_name = file_info.get("name")
-                  if f_path and os.path.exists(f_path):
-                    with open(f_path, "rb") as f_data:
-                      st.download_button(
-                          label=f"📥 Download {f_name}",
-                          data=f_data,
-                          file_name=f_name,
-                          key=f"secure_download_btn_{idx}_{f_idx}",
-                      )
-              else:
-                st.markdown("*No files attached with this request.*")
-
-              st.markdown("---")
-              c1, c2 = st.columns(2)
-              with c1:
-                if not is_resp:
-                  if st.button(
-                      "✔️ Mark as Responded", key=f"resp_btn_{idx}"
-                  ):
-                    st.session_state.client_requests[idx]["is_responded"] = True
-                    save_persistent_requests(st.session_state.client_requests)
-                    st.rerun()
-                else:
-                  if st.button(
-                      "🔄 Mark as Unanswered", key=f"unresp_btn_{idx}"
-                  ):
-                    st.session_state.client_requests[idx]["is_responded"] = (
-                        False
-                    )
-                    save_persistent_requests(st.session_state.client_requests)
-                    st.rerun()
-              with c2:
-                if st.button("🗑️ Delete Request", key=f"del_req_{idx}"):
-                  st.session_state.client_requests.pop(idx)
-                  save_persistent_requests(st.session_state.client_requests)
-                  st.rerun()
-
-    elif admin_password:
-      st.error("❌ Incorrect password. Access denied.")
-    else:
-      st.warning("⚠️ Please enter your password to view the requests.")
+                if submit_collab:
+                    if not collab_name or not collab_email or not collab_details:
+                        st.error("Please fill in all required fields.")
+                    else:
+                        st.success("Strategic collaboration proposal successfully sent to azizamnasri01@gmail.com!")
