@@ -264,7 +264,6 @@ def main():
         with col3:
             if st.button("💼 Consultations & Collaboration", key="btn_collab_card", use_container_width=True):
                 st.session_state['current_page'] = "Consultations"
-                # إعادة تعيين التاب باش في البداية ما يظهر حتى فورم كان الزوز أزرار
                 st.session_state['collab_sub_tab'] = None
                 st.rerun()
             st.markdown('<div class="desc-box">Connect for advanced computational chemistry projects.</div>', unsafe_allow_html=True)
@@ -310,7 +309,6 @@ def main():
                 st.session_state['active_prediction_module'] = None
                 st.rerun()
             
-            # If no specific module is open, show the 3 core functional buttons
             if st.session_state['active_prediction_module'] is None:
                 st.subheader("⚙️ Select a Prediction Module to Start Working")
                 
@@ -334,7 +332,6 @@ def main():
                         st.rerun()
                     st.markdown('<div class="desc-box">Analyze linker length, flexibility, and ternary complex stability.</div>', unsafe_allow_html=True)
 
-        # Inside the active working module workspace
         active_mod = st.session_state.get('active_prediction_module')
 
         if active_mod == "Docking":
@@ -353,11 +350,9 @@ def main():
         st.title("💼 Consultations & Scientific Collaboration")
         st.markdown("Choose between booking a professional consultation/service or proposing a major collaborative research project.")
 
-        # التأكد من حالة التاب الافتراضية إذا لم يتم اختيار شيء بعد
         if 'collab_sub_tab' not in st.session_state:
             st.session_state['collab_sub_tab'] = None
 
-        # Zoz أزرار رئيسية في الواجهة فقط
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
             if st.button("🛠️ Consultations & Services", use_container_width=True, key="tab_cons"):
@@ -370,10 +365,10 @@ def main():
 
         st.divider()
 
-        # قسم الاستشارات والخدمات (Consultations) - يظهر فقط عند الضغط على الزر الأول
+        # قسم الاستشارات والخدمات (Consultations)
         if st.session_state['collab_sub_tab'] == "Consultations":
             st.subheader("📋 Request a Professional Consultation")
-            st.markdown("Submit your project details, upload any files of any type/size, complete your payment, and get results sent directly to your email.")
+            st.markdown("Submit your project details and upload any files freely. Dr. Aziza Mnasri will review your request and get back to you with an evaluation and pricing details.")
 
             with st.form("consultation_form"):
                 col_i1, col_i2 = st.columns(2)
@@ -381,29 +376,36 @@ def main():
                     client_name = st.text_input("Full Name *")
                     client_lab = st.text_input("Laboratory / Institution *")
                 with col_i2:
-                    client_email = st.text_input("Your Email Address * (For receiving the report)")
+                    client_email = st.text_input("Your Email Address * (For receiving the evaluation and report)")
                     client_whatsapp = st.text_input("WhatsApp Number (Optional)")
 
                 project_description = st.text_area("Project Description & Requirements *", placeholder="Describe what you need precisely (e.g., molecular docking, ADME evaluation, PROTAC linker design)...")
                 
-                uploaded_files = st.file_uploader("Upload Project Files (All formats accepted)", accept_multiple_files=True)
+                uploaded_files = st.file_uploader("Upload Project Files (All formats & sizes accepted)", accept_multiple_files=True)
 
-                st.info("💡 Note: Payment is required before starting the service. All requests and files are securely sent to: azizamnasri01@gmail.com")
+                st.info("📨 Your request and files will be sent directly to: azizamnasri01@gmail.com for review.")
                 
-                # زر الدفع المباشر ورابطه أو تأكيده
-                st.markdown("💳 **Secure Payment Gateway:** Please complete your consultation payment using your preferred secure method before submitting.")
-                payment_btn_clicked = st.form_submit_button("💳 Proceed to Payment Securely")
-                if payment_btn_clicked:
-                    st.info("Redirecting or opening payment gateway... (You can link your payment URL here)")
-
-                payment_confirmed = st.checkbox("I confirm that I have completed the consultation payment.")
                 submit_consultation = st.form_submit_button("Submit Consultation Request & Files")
 
                 if submit_consultation:
-                    if not client_name or not client_email or not project_description or not payment_confirmed:
-                        st.error("Please fill in all mandatory fields (*) and confirm the payment.")
+                    if not client_name or not client_email or not project_description:
+                        st.error("Please fill in all mandatory fields (*).")
                     else:
-                        st.success("Consultation request successfully submitted! Your files and details have been sent to azizamnasri01@gmail.com.")
+                        st.success("Consultation request successfully submitted! Your files and details have been sent to azizamnasri01@gmail.com. We will review it and contact you soon.")
+
+            # قسم الدفع الاختياري (خارج الفورم أو تحته لكي يتم استخدامه بعد الاتفاق على السعر)
+            with st.container():
+                st.markdown("---")
+                st.subheader("💳 Secure Consultation Payment Gateway")
+                st.markdown("If you have already discussed your project with Dr. Aziza Mnasri and agreed on the service terms, you can securely proceed with the payment below:")
+                
+                col_pay1, col_pay2 = st.columns([2, 1])
+                with col_pay1:
+                    st.text_input("Enter Consultation Reference or Invoice ID (Optional)", key="invoice_id_input")
+                with col_pay2:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    if st.button("Proceed to Secure Payment", use_container_width=True):
+                        st.info("Redirecting to secure payment gateway... (Link your payment processor here)")
 
             # لوحة التحكم الخاصة بالأدمن (محمية بكلمة مرور)
             with st.expander("🔐 Admin Dashboard (Dr. Aziza Mnasri Only)"):
@@ -424,7 +426,7 @@ def main():
                 elif admin_pass:
                     st.error("Incorrect password.")
 
-        # قسم التعاون العلمي والمشاريع الكبرى (Scientific Collaborations) - يظهر فقط عند الضغط على الزر الثاني
+        # قسم التعاون العلمي والمشاريع الكبرى (Scientific Collaborations)
         elif st.session_state['collab_sub_tab'] == "Collaborations":
             st.subheader("🤝 Scientific Collaborations & Major Research Projects")
             st.markdown("Partner with Dr. Aziza Mnasri for high-impact joint research, strategic Big Pharma collaborations, and world-class academic publications.")
