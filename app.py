@@ -348,7 +348,7 @@ elif page == "QR Code":
     st.info("App deployment link active and synchronized.")
 
 # ==============================================================================
-# 📌 PART 9: AI & QSAR PREDICTION HUB (CLEAN & OPTIMIZED SELECTOR)
+# 📌 PART 9: AI & QSAR PREDICTION HUB (FINAL PRODUCTION VERSION WITH 5-FOLD CV)
 # ==============================================================================
 elif page == "AI Hub" and st.session_state['dev_authenticated']:
     if st.button("⬅️ Back to Home Page", key="back_to_home_ai"):
@@ -370,27 +370,7 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                 target_col = st.selectbox("Select Target Variable (Numeric):", numeric_cols, key="ml_target")
                 feature_candidates = [c for c in numeric_cols if c != target_col]
                 
-                # اختيار طريقة تحديد الخصائص (يدوي أو اختيار تلقائي لأفضل N خصائص)
-                selection_mode = st.radio("Feature Selection Approach:", ["Manual Selection", "⚡ Select Top N Important Features Automatically"])
-                
-                if selection_mode == "⚡ Select Top N Important Features Automatically":
-                    top_n = st.slider("Select number of top features to use:", min_value=1, max_value=min(10, len(feature_candidates)), value=min(4, len(feature_candidates)))
-                    
-                    # تدريب أولي سريع بترتيب الأهمية لمعرفة أفضل Features
-                    X_init = merged_data[feature_candidates].dropna()
-                    y_init = merged_data.loc[X_init.index, target_col]
-                    rf_init = RandomForestRegressor(n_estimators=100, random_state=42)
-                    rf_init.fit(X_init, y_init)
-                    
-                    importances_sorted = pd.DataFrame({
-                        'Feature': feature_candidates,
-                        'Importance': rf_init.feature_importances_
-                    }).sort_values(by='Importance', ascending=False)
-                    
-                    feature_cols = importances_sorted['Feature'].head(top_n).tolist()
-                    st.info(f"✨ **Auto-Selected Top {top_n} Features:** {', '.join(feature_cols)}")
-                else:
-                    feature_cols = st.multiselect("Select Feature Columns:", feature_candidates, default=feature_candidates[:min(4, len(feature_candidates))])
+                feature_cols = st.multiselect("Select Feature Columns:", feature_candidates, default=feature_candidates[:min(4, len(feature_candidates))])
                 
                 col_opt1, col_opt2 = st.columns(2)
                 with col_opt1:
@@ -405,31 +385,57 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                     
                     st.info(f"📊 **Data Filtering Summary:** Total records: {total_rows_original} | Clean records used: **{len(df_clean)}** | Dropped records: {dropped_rows_count}")
                     
-                    if len(df_clean) > 5:
+                    if len(df_clean) >= 10:
                         X = df_clean[feature_cols]
                         y = df_clean[target_col]
                         
                         scaler = StandardScaler()
                         X_scaled = scaler.fit_transform(X)
-                        X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=random_seed)
                         
+                        # --- 5-FOLD CROSS VALIDATION FOR STABLE METRICS ---
+                        from sklearn.model_selection import cross_val_score, KFold
+                        
+                        cv_splitter = KFold(n_splits=5, shuffle=True, random_state=random_seed)
                         ml_model = RandomForestRegressor(n_estimators=n_estimators_val, random_state=random_seed)
+                        
+                        # حساب R2 عبر الـ 5-Folds لضمان الاستقرار العلمي للبيبر
+                        cv_r2_scores = cross_val_score(ml_model, X_scaled, y, cv=cv_splitter, scoring='r2')
+                        cv_rmse_scores = np.sqrt(-cross_val_score(ml_model, X_scaled, y, cv=cv_splitter, scoring='neg_mean_squared_error'))
+                        
+                        mean_r2 = cv_r2_scores.mean()
+                        mean_rmse = cv_rmse_scores.mean()
+                        
+                        # تدريب الموديل النهائي على البيانات كاملة أو تقسيم تقليدي للاختبار الفوري والتوقعات
+                        X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=random_seed)
                         ml_model.fit(X_train, y_train)
                         y_pred = ml_model.predict(X_test)
                         
-                        r2 = r2_score(y_test, y_pred)
-                        mse = np.mean((y_test - y_pred) ** 2)
-                        rmse = np.sqrt(mse)
-                        
+                        # عرض النتائج المستقرة للـ Cross-Validation
                         col_m1, col_m2 = st.columns(2)
                         with col_m1:
-                            st.metric("Model Accuracy ($R^2$ Score)", f"{r2:.2f}")
+                            st.metric("5-Fold CV $R^2$ Score (Stable)", f"{mean_r2:.2f}", help="Average R2 across 5 folds to ensure robust publication-ready results.")
                         with col_m2:
-                            st.metric("Root Mean Squared Error (RMSE)", f"{rmse:.2f}")
+                            st.metric("5-Fold CV RMSE (Stable)", f"{mean_rmse:.2f}", help="Average RMSE across 5 folds.")
                         
+                        # --- MODEL SERIALIZATION (PICKLE / JOBLIB) ---
+                        import pickle
+                        model_data = {
+                            'model': ml_model,
+                            'scaler': scaler,
+                            'features': feature_cols,
+                            'target': target_col
+                        }
+                        model_bytes = pickle.dumps(model_data)
+                        st.download_button(
+                            label="📥 Save Trained Model (.pkl / joblib)",
+                            data=model_bytes,
+                            file_name="protac_qsar_model.pkl",
+                            mime="application/octet-stream",
+                        )
+
                         import datetime
                         report_text = f"""==================================================
-PROTACs QSAR MODEL PERFORMANCE REPORT
+PROTACs QSAR MODEL PERFORMANCE REPORT (5-FOLD CV)
 Generated by AI Hub Web Application
 Timestamp: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 ==================================================
@@ -438,13 +444,12 @@ Total Clean Samples Used: {len(df_clean)}
 Target Variable: {target_col}
 Selected Features: {', '.join(feature_cols)}
 Random State: {random_seed} | n_estimators: {n_estimators_val}
-Training Split: 80% / Testing Split: 20%
+Validation Method: 5-Fold Cross-Validation
 Algorithm: Random Forest Regressor
 
---- PERFORMANCE METRICS ---
-R2 Score: {r2:.4f}
-Root Mean Squared Error (RMSE): {rmse:.4f}
-Mean Squared Error (MSE): {mse:.4f}
+--- STABLE PERFORMANCE METRICS ---
+Mean R2 Score (5-Fold CV): {mean_r2:.4f} (Std: {cv_r2_scores.std():.4f})
+Mean RMSE (5-Fold CV): {mean_rmse:.4f} (Std: {cv_rmse_scores.std():.4f})
 =================================================="""
 
                         st.download_button(
@@ -498,7 +503,7 @@ Mean Squared Error (MSE): {mse:.4f}
                             )
                         
                     else:
-                        st.warning("Not enough clean data rows after removing missing values (minimum 6 rows required).")
+                        st.warning("Not enough clean data rows for 5-Fold CV (minimum 10 rows required).")
             else:
                 st.warning("Please ensure your dataset contains at least 2 numeric columns for QSAR modeling.")
     else:
