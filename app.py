@@ -348,7 +348,7 @@ elif page == "QR Code":
     st.info("App deployment link active and synchronized.")
 
 # ==============================================================================
-# 📌 PART 9: AI & QSAR PREDICTION HUB (FINAL PRODUCTION VERSION WITH 5-FOLD CV)
+# 📌 PART 9: AI & QSAR PREDICTION HUB (MULTI-ALGORITHM COMPARISON & OUTLIER FILTER)
 # ==============================================================================
 elif page == "AI Hub" and st.session_state['dev_authenticated']:
     if st.button("⬅️ Back to Home Page", key="back_to_home_ai"):
@@ -372,17 +372,40 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                 
                 feature_cols = st.multiselect("Select Feature Columns:", feature_candidates, default=feature_candidates[:min(4, len(feature_candidates))])
                 
+                # خيار اختيار الموديل للمقارنة في البيبر
+                algo_choice = st.selectbox("Select ML Algorithm for QSAR / Docking:", [
+                    "Random Forest Regressor", 
+                    "Gradient Boosting Regressor", 
+                    "Ridge Regression", 
+                    "Support Vector Regressor (SVR)"
+                ])
+                
+                # خيار تنظيف الـ Outliers لو وجدت قيم خارج المألوف
+                remove_outliers = st.checkbox("🧹 Clean Outliers (Filter extreme target values)", value=False, help="Removes extreme values outside standard statistical distribution.")
+
                 col_opt1, col_opt2 = st.columns(2)
                 with col_opt1:
                     random_seed = st.number_input("Random State (Seed):", min_value=1, max_value=1000, value=42, step=1)
                 with col_opt2:
-                    n_estimators_val = st.slider("Number of Trees (n_estimators):", min_value=50, max_value=500, value=200, step=50)
+                    if algo_choice == "Random Forest Regressor":
+                        n_estimators_val = st.slider("Number of Trees (n_estimators):", min_value=50, max_value=500, value=200, step=50)
+                    else:
+                        n_estimators_val = None
 
                 if feature_cols and target_col:
                     cols_to_check = feature_cols + [target_col]
                     df_clean = merged_data.dropna(subset=cols_to_check)
-                    dropped_rows_count = total_rows_original - len(df_clean)
                     
+                    # فلترة الـ Outliers لو تم تفعيلها (تعتمد على الفاصل الربيعي IQR)
+                    if remove_outliers and target_col in df_clean.columns:
+                        Q1 = df_clean[target_col].quantile(0.25)
+                        Q3 = df_clean[target_col].quantile(0.75)
+                        IQR = Q3 - Q1
+                        lower_bound = Q1 - 1.5 * IQR
+                        upper_bound = Q3 + 1.5 * IQR
+                        df_clean = df_clean[(df_clean[target_col] >= lower_bound) & (df_clean[target_col] <= upper_bound)]
+
+                    dropped_rows_count = total_rows_original - len(df_clean)
                     st.info(f"📊 **Data Filtering Summary:** Total records: {total_rows_original} | Clean records used: **{len(df_clean)}** | Dropped records: {dropped_rows_count}")
                     
                     if len(df_clean) >= 10:
@@ -392,60 +415,70 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                         scaler = StandardScaler()
                         X_scaled = scaler.fit_transform(X)
                         
-                        # --- 5-FOLD CROSS VALIDATION FOR STABLE METRICS ---
+                        # استدعاء الموديل حسب اختيار الباحث
+                        from sklearn.ensemble import GradientBoostingRegressor
+                        from sklearn.linear_model import Ridge
+                        from sklearn.svm import SVR
                         from sklearn.model_selection import cross_val_score, KFold
                         
-                        cv_splitter = KFold(n_splits=5, shuffle=True, random_state=random_seed)
-                        ml_model = RandomForestRegressor(n_estimators=n_estimators_val, random_state=random_seed)
+                        if algo_choice == "Random Forest Regressor":
+                            ml_model = RandomForestRegressor(n_estimators=n_estimators_val, random_state=random_seed)
+                        elif algo_choice == "Gradient Boosting Regressor":
+                            ml_model = GradientBoostingRegressor(random_state=random_seed)
+                        elif algo_choice == "Ridge Regression":
+                            ml_model = Ridge(alpha=1.0)
+                        elif algo_choice == "Support Vector Regressor (SVR)":
+                            ml_model = SVR(kernel='r8' if 'r8' in 'rbf' else 'rbf', C=1.0)
                         
-                        # حساب R2 عبر الـ 5-Folds لضمان الاستقرار العلمي للبيبر
+                        cv_splitter = KFold(n_splits=5, shuffle=True, random_state=random_seed)
+                        
+                        # حساب النتائج عبر الـ 5-Folds
                         cv_r2_scores = cross_val_score(ml_model, X_scaled, y, cv=cv_splitter, scoring='r2')
                         cv_rmse_scores = np.sqrt(-cross_val_score(ml_model, X_scaled, y, cv=cv_splitter, scoring='neg_mean_squared_error'))
                         
                         mean_r2 = cv_r2_scores.mean()
                         mean_rmse = cv_rmse_scores.mean()
                         
-                        # تدريب الموديل النهائي على البيانات كاملة أو تقسيم تقليدي للاختبار الفوري والتوقعات
+                        # التدريب والتنبؤ للاختبار الفوري
                         X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=random_seed)
                         ml_model.fit(X_train, y_train)
                         y_pred = ml_model.predict(X_test)
                         
-                        # عرض النتائج المستقرة للـ Cross-Validation
                         col_m1, col_m2 = st.columns(2)
                         with col_m1:
-                            st.metric("5-Fold CV $R^2$ Score (Stable)", f"{mean_r2:.2f}", help="Average R2 across 5 folds to ensure robust publication-ready results.")
+                            st.metric(f"5-Fold CV $R^2$ ({algo_choice})", f"{mean_r2:.2f}")
                         with col_m2:
-                            st.metric("5-Fold CV RMSE (Stable)", f"{mean_rmse:.2f}", help="Average RMSE across 5 folds.")
+                            st.metric(f"5-Fold CV RMSE ({algo_choice})", f"{mean_rmse:.2f}")
                         
-                        # --- MODEL SERIALIZATION (PICKLE / JOBLIB) ---
+                        # حفظ الموديل
                         import pickle
                         model_data = {
                             'model': ml_model,
                             'scaler': scaler,
                             'features': feature_cols,
-                            'target': target_col
+                            'target': target_col,
+                            'algorithm': algo_choice
                         }
                         model_bytes = pickle.dumps(model_data)
                         st.download_button(
-                            label="📥 Save Trained Model (.pkl / joblib)",
+                            label=f"📥 Save {algo_choice} Model (.pkl)",
                             data=model_bytes,
-                            file_name="protac_qsar_model.pkl",
+                            file_name=f"protac_qsar_{algo_choice.lower().replace(' ', '_')}.pkl",
                             mime="application/octet-stream",
                         )
 
                         import datetime
                         report_text = f"""==================================================
 PROTACs QSAR MODEL PERFORMANCE REPORT (5-FOLD CV)
+Algorithm Used: {algo_choice}
 Generated by AI Hub Web Application
 Timestamp: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 ==================================================
 Total Raw Entries: {total_rows_original}
-Total Clean Samples Used: {len(df_clean)}
+Clean Samples Used (Outliers Filtered: {remove_outliers}): {len(df_clean)}
 Target Variable: {target_col}
 Selected Features: {', '.join(feature_cols)}
-Random State: {random_seed} | n_estimators: {n_estimators_val}
-Validation Method: 5-Fold Cross-Validation
-Algorithm: Random Forest Regressor
+Random State: {random_seed}
 
 --- STABLE PERFORMANCE METRICS ---
 Mean R2 Score (5-Fold CV): {mean_r2:.4f} (Std: {cv_r2_scores.std():.4f})
@@ -459,22 +492,24 @@ Mean RMSE (5-Fold CV): {mean_rmse:.4f} (Std: {cv_rmse_scores.std():.4f})
                             mime="text/plain",
                         )
                         
-                        st.markdown("---")
-                        st.subheader("📊 Feature Importance Analysis & Export")
-                        importance_df = pd.DataFrame({
-                            'Feature': feature_cols,
-                            'Importance': ml_model.feature_importances_
-                        }).sort_values(by='Importance', ascending=False)
-                        
-                        st.bar_chart(importance_df.set_index('Feature'))
-                        
-                        csv_importance = importance_df.to_csv(index=False).encode('utf-8')
-                        st.download_button(
-                            label="📥 Download Feature Importance (CSV)",
-                            data=csv_importance,
-                            file_name="feature_importance.csv",
-                            mime="text/csv",
-                        )
+                        # عرض Feature Importance لو كان الموديل يدعمها (Tree-based)
+                        if hasattr(ml_model, "feature_importances_"):
+                            st.markdown("---")
+                            st.subheader("📊 Feature Importance Analysis & Export")
+                            importance_df = pd.DataFrame({
+                                'Feature': feature_cols,
+                                'Importance': ml_model.feature_importances_
+                            }).sort_values(by='Importance', ascending=False)
+                            
+                            st.bar_chart(importance_df.set_index('Feature'))
+                            
+                            csv_importance = importance_df.to_csv(index=False).encode('utf-8')
+                            st.download_button(
+                                label="📥 Download Feature Importance (CSV)",
+                                data=csv_importance,
+                                file_name="feature_importance.csv",
+                                mime="text/csv",
+                            )
 
                         st.markdown("---")
                         st.subheader("📁 Export Model Predictions & Cleaned Dataset")
