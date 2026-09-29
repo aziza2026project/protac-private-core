@@ -341,7 +341,8 @@ def main():
         render_adme_workspace()
     elif active_mod == "Linker":
         render_linker_optimization_workspace()
-    else:
+
+    if not active_mod:
         st.title("💼 Consultations & Scientific Collaboration")
         st.markdown("Connect with Dr. Aziza Mnasri for advanced computational chemistry projects.")
     # ==============================================================================
