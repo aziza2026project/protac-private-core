@@ -342,7 +342,7 @@ def main():
     elif active_mod == "Linker":
         render_linker_optimization_workspace()
 
-    if not active_mod:
+    else active_mod:
         st.title("💼 Consultations & Scientific Collaboration")
         st.markdown("Connect with Dr. Aziza Mnasri for advanced computational chemistry projects.")
     # ==============================================================================
