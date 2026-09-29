@@ -348,7 +348,7 @@ elif page == "QR Code":
     st.info("App deployment link active and synchronized.")
 
 # ==============================================================================
-# 📌 PART 9: AI & QSAR PREDICTION HUB (DEVELOPER MODE - WITH DROPPED ROWS INSPECTOR)
+# 📌 PART 9: AI & QSAR PREDICTION HUB (DEVELOPER MODE - FIXED & READY)
 # ==============================================================================
 elif page == "AI Hub" and st.session_state['dev_authenticated']:
     if st.button("⬅️ Back to Home Page", key="back_to_home_ai"):
@@ -364,7 +364,8 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
             total_rows_original = merged_data.shape[0]
             st.success(f"Successfully loaded datasets! Total rows in database: {total_rows_original}")
             
-            numeric_cols = [col for col in merged_data.select_dtypes(include=[np.number]).columns.tolist() if merged_data.nunique() > 2]
+            # التصحيح هنا: التأكد من تطبيق nunique على العامود col بالذات
+            numeric_cols = [col for col in merged_data.select_dtypes(include=[np.number]).columns.tolist() if merged_data[col].nunique() > 2]
             
             if len(numeric_cols) >= 2:
                 target_col = st.selectbox("Select Target Variable (Numeric):", numeric_cols, key="ml_target")
@@ -372,23 +373,17 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                 feature_cols = st.multiselect("Select Feature Columns:", feature_candidates, default=feature_candidates[:min(4, len(feature_candidates))])
                 
                 if feature_cols and target_col:
-                    # تصفية البيانات ومعرفة الصفوف المحذوفة بدقة
                     cols_to_check = feature_cols + [target_col]
                     df_clean = merged_data.dropna(subset=cols_to_check)
-                    dropped_df = merged_data[merged_data.isnull().any(axis=1) | merged_data[cols_to_check].isnull().any(axis=1)]
-                    
                     dropped_rows_count = total_rows_original - len(df_clean)
                     
-                    # عرض إحصائيات التصفية
                     st.info(f"📊 **Data Filtering Summary:** Total records: {total_rows_original} | Clean records used: **{len(df_clean)}** | Dropped records due to missing values: **{dropped_rows_count}**")
                     
-                    # زر لمعاينة الجزيئات المحذوفة ومعرفة وين الغلط
                     if dropped_rows_count > 0:
                         with st.expander("🔍 Inspect Dropped / Incomplete Records (Why they were removed)"):
                             st.write("The following records contain missing values in your selected features or target variable:")
                             st.dataframe(merged_data[merged_data[cols_to_check].isnull().any(axis=1)])
                             
-                            # زر تحميل قائمة المحذوفين
                             csv_dropped = merged_data[merged_data[cols_to_check].isnull().any(axis=1)].to_csv(index=False).encode('utf-8')
                             st.download_button(
                                 label="📥 Download Dropped Records (CSV)",
@@ -405,24 +400,20 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                         X_scaled = scaler.fit_transform(X)
                         X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
                         
-                        # تدريب نموذج Random Forest
                         ml_model = RandomForestRegressor(n_estimators=200, random_state=42)
                         ml_model.fit(X_train, y_train)
                         y_pred = ml_model.predict(X_test)
                         
-                        # حساب المقاييس العلمية
                         r2 = r2_score(y_test, y_pred)
                         mse = np.mean((y_test - y_pred) ** 2)
                         rmse = np.sqrt(mse)
                         
-                        # عرض المقاييس
                         col_m1, col_m2 = st.columns(2)
                         with col_m1:
                             st.metric("Model Accuracy ($R^2$ Score)", f"{r2:.2f}")
                         with col_m2:
                             st.metric("Root Mean Squared Error (RMSE)", f"{rmse:.2f}")
                         
-                        # توليد تقرير نصي رسمي موثق للـ Paper
                         import datetime
                         report_text = f"""==================================================
 PROTACs QSAR MODEL PERFORMANCE REPORT
