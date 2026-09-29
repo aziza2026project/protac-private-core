@@ -203,7 +203,7 @@ def main():
     page = st.session_state['current_page']
 
 
-    # ==============================================================================
+   # ==============================================================================
     # 📌 PART 7: HOME PAGE & GENERAL DASHBOARD & SUB-PAGES
     # ==============================================================================
     
@@ -332,17 +332,17 @@ def main():
                         st.rerun()
                     st.markdown('<div class="desc-box">Analyze linker length, flexibility, and ternary complex stability.</div>', unsafe_allow_html=True)
 
-# Inside the active working module workspace
-    active_mod = st.session_state.get('active_prediction_module')
+        # Inside the active working module workspace
+        active_mod = st.session_state.get('active_prediction_module')
 
-    if active_mod == "Docking":
-        render_molecular_docking_workspace()
-    elif active_mod == "ADME":
-        render_adme_workspace()
-    elif active_mod == "Linker":
-        render_linker_optimization_workspace()
+        if active_mod == "Docking":
+            render_molecular_docking_workspace()
+        elif active_mod == "ADME":
+            render_adme_workspace()
+        elif active_mod == "Linker":
+            render_linker_optimization_workspace()
 
-  elif page == "Consultations and Scientific Sollaboration":
+    elif page == "Consultations and Scientific Sollaboration":
         if st.button("⬅️ Back to Home Page", key="back_to_home_sub"):
             st.session_state['current_page'] = "Home Page"
             st.rerun()
