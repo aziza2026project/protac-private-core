@@ -347,7 +347,7 @@ elif page == "QR Code":
     st.markdown("Scan the QR code below to open the application directly on your mobile device or share it easily.")
     st.info("App deployment link active and synchronized.")
 
- # ==============================================================================
+# ==============================================================================
 # 📌 PART 9: AI & QSAR PREDICTION HUB (DEVELOPER MODE)
 # ==============================================================================
 elif page == "AI Hub" and st.session_state['dev_authenticated']:
@@ -379,17 +379,14 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                         X_scaled = scaler.fit_transform(X)
                         X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
                         
-                        # تدريب نموذج عالي الدقة
                         ml_model = RandomForestRegressor(n_estimators=200, random_state=42)
                         ml_model.fit(X_train, y_train)
                         y_pred = ml_model.predict(X_test)
                         
-                        # حساب المقاييس العلمية الدقيقة
                         r2 = r2_score(y_test, y_pred)
                         mse = np.mean((y_test - y_pred) ** 2)
                         rmse = np.sqrt(mse)
                         
-                        # عرض المقاييس في الواجهة بشكل احترافي
                         col_m1, col_m2 = st.columns(2)
                         with col_m1:
                             st.metric("Model Accuracy ($R^2$ Score)", f"{r2:.2f}")
@@ -397,10 +394,9 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                             st.metric("Root Mean Squared Error (RMSE)", f"{rmse:.2f}")
                         
                         st.markdown("---")
-                        st.subheader("📊 Feature Importance Analysis")
-                        st.markdown("Relative importance of physicochemical features and docking scores in predicting the target variable:")
+                        st.subheader("📊 Feature Importance Analysis & Export")
+                        st.markdown("Relative importance of physicochemical features in predicting the target variable:")
                         
-                        # رسم بياني لأهمية الفيتشرز (Feature Importance)
                         importance_df = pd.DataFrame({
                             'Feature': feature_cols,
                             'Importance': ml_model.feature_importances_
@@ -408,10 +404,19 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                         
                         st.bar_chart(importance_df.set_index('Feature'))
                         
+                        # إضافة زر لتحميل بيانات الأهمية كملف CSV يستعمل للرسم في الأدوات الخارجية
+                        csv_data = importance_df.to_csv(index=False).encode('utf-8')
+                        st.download_button(
+                            label="📥 Download Feature Importance Data (CSV)",
+                            data=csv_data,
+                            file_name="feature_importance_results.csv",
+                            mime="text/csv",
+                        )
+                        
                     else:
-                        st.warning("Not enough clean data rows after removing missing values (minimum 6 rows required).")
+                        st.warning("Not enough clean data rows after removing missing values.")
             else:
-                st.warning("Please ensure your dataset contains at least 2 numeric columns for QSAR modeling.")
+                st.warning("Please ensure your dataset contains at least 2 numeric columns.")
     else:
         st.error("scikit-learn not available.")
 
