@@ -208,141 +208,140 @@ def main():
     page = st.session_state['current_page']
 
 
- # ==============================================================================
-    # 📌 PART 7: HOME PAGE & GENERAL DASHBOARD & SUB-PAGES
-    # ==============================================================================
+# ==============================================================================
+# 📌 PART 7: HOME PAGE & GENERAL DASHBOARD & SUB-PAGES
+# ==============================================================================
+
+st.markdown("""
+    <style>
+    .home-btn-large > button {
+        font-size: 20px !important;
+        padding: 12px 30px !important;
+        background-color: #1f4e78 !important;
+        color: white !important;
+        border-radius: 10px !important;
+        font-weight: bold !important;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.1) !important;
+    }
+    .desc-box {
+        background-color: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 13px;
+        color: #555;
+        min-height: 55px;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+if page == "Home Page":
+    st.markdown('<div class="home-btn-large">', unsafe_allow_html=True)
+    if st.button("🏠 Home Page", key="btn_home_top"):
+        st.session_state['current_page'] = "Home Page"
+        st.session_state['active_prediction_module'] = None
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.title("🧬 PROTAC Research & Prediction Platform")
+    st.markdown("Welcome to the professional platform for PROTAC design, physicochemical property calculation, and scientific collaboration.")
     
-    st.markdown("""
-        <style>
-        .home-btn-large > button {
-            font-size: 20px !important;
-            padding: 12px 30px !important;
-            background-color: #1f4e78 !important;
-            color: white !important;
-            border-radius: 10px !important;
-            font-weight: bold !important;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.1) !important;
-        }
-        .desc-box {
-            background-color: #f8f9fa;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 10px;
-            font-size: 13px;
-            color: #555;
-            min-height: 55px;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    st.subheader("🌾 Welcome to PROTAC Research Hub")
+    st.markdown("Choose a section below to get started with your research, design, and collaboration workflow:")
 
-    if page == "Home Page":
-        st.markdown('<div class="home-btn-large">', unsafe_allow_html=True)
-        if st.button("🏠 Home Page", key="btn_home_top"):
-            st.session_state['current_page'] = "Home Page"
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("💳 Subscription Plans", key="btn_sub_card", use_container_width=True):
+            st.session_state['current_page'] = "Subscriptions"
+            st.rerun()
+        st.markdown('<div class="desc-box">Explore access levels and research tiers.</div>', unsafe_allow_html=True)
+
+    with col2:
+        if st.button("🔬 Prediction Tool", key="btn_pred_card", use_container_width=True):
+            st.session_state['current_page'] = "Prediction Tool"
             st.session_state['active_prediction_module'] = None
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="desc-box">Access molecular docking, IC50 predictions, and ADME modules.</div>', unsafe_allow_html=True)
 
-        st.title("🧬 PROTAC Research & Prediction Platform")
-        st.markdown("Welcome to the professional platform for PROTAC design, physicochemical property calculation, and scientific collaboration.")
+    with col3:
+        if st.button("💼 Consultations & Collaboration", key="btn_collab_card", use_container_width=True):
+            st.session_state['current_page'] = "Consultations"
+            st.session_state['collab_sub_tab'] = None
+            st.rerun()
+        st.markdown('<div class="desc-box">Connect for advanced computational chemistry projects.</div>', unsafe_allow_html=True)
+
+elif page == "Subscriptions":
+    render_subscriptions_page()
+
+elif page == "Prediction Tool":
+    if st.button("⬅️ Back to Home Page", key="back_to_home_pred"):
+        st.session_state['current_page'] = "Home Page"
+        st.session_state['active_prediction_module'] = None
+        st.rerun()
+    
+    st.title("🔬 PROTAC Prediction Tool")
+    st.markdown("Molecular docking, binding affinity, and ADME property evaluation.")
+
+    whitelist_emails = ["azizamnasri10@gmail.com"]
+
+    if not st.session_state['user_subscribed']:
+        entered_email = st.text_input("Enter your registered email address (Whitelisted users get instant access):", key="sub_email_input")
         
-        st.subheader("🌾 Welcome to PROTAC Research Hub")
-        st.markdown("Choose a section below to get started with your research, design, and collaboration workflow:")
-
-        col1, col2, col3 = st.columns(3)
+        if st.button("Verify & Access Tool", key="verify_email_btn"):
+            if entered_email.strip().lower() in whitelist_emails or ("@" in entered_email and "." in entered_email):
+                st.session_state['user_subscribed'] = True
+                st.session_state['user_email'] = entered_email.strip()
+                st.success(f"Access granted for: {entered_email}")
+                st.rerun()
+            else:
+                st.error("Email not found in whitelist or invalid format.")
+    else:
+        is_whitelisted = st.session_state['user_email'].lower() in whitelist_emails
+        role_badge = "👑 Whitelisted Lead Researcher" if is_whitelisted else "✅ Verified Subscriber"
         
-        with col1:
-            if st.button("💳 Subscription Plans", key="btn_sub_card", use_container_width=True):
-                st.session_state['current_page'] = "Subscriptions"
-                st.rerun()
-            st.markdown('<div class="desc-box">Explore access levels and research tiers.</div>', unsafe_allow_html=True)
-
-        with col2:
-            if st.button("🔬 Prediction Tool", key="btn_pred_card", use_container_width=True):
-                st.session_state['current_page'] = "Prediction Tool"
-                st.session_state['active_prediction_module'] = None
-                st.rerun()
-            st.markdown('<div class="desc-box">Access molecular docking, IC50 predictions, and ADME modules.</div>', unsafe_allow_html=True)
-
-        with col3:
-            if st.button("💼 Consultations & Collaboration", key="btn_collab_card", use_container_width=True):
-                st.session_state['current_page'] = "Consultations"
-                st.session_state['collab_sub_tab'] = None
-                st.rerun()
-            st.markdown('<div class="desc-box">Connect for advanced computational chemistry projects.</div>', unsafe_allow_html=True)
-
-     elif page == "Subscriptions":
-     render_subscriptions_page()
-
-
-    elif page == "Prediction Tool":
-        if st.button("⬅️ Back to Home Page", key="back_to_home_pred"):
-            st.session_state['current_page'] = "Home Page"
+        st.success(f"{role_badge}: {st.session_state['user_email']}")
+        if st.button("Logout / Change Email", key="logout_email_btn"):
+            st.session_state['user_subscribed'] = False
+            st.session_state['user_email'] = ""
             st.session_state['active_prediction_module'] = None
             st.rerun()
         
-        st.title("🔬 PROTAC Prediction Tool")
-        st.markdown("Molecular docking, binding affinity, and ADME property evaluation.")
-
-        whitelist_emails = ["azizamnasri10@gmail.com"]
-
-        if not st.session_state['user_subscribed']:
-            entered_email = st.text_input("Enter your registered email address (Whitelisted users get instant access):", key="sub_email_input")
+        if st.session_state['active_prediction_module'] is None:
+            st.subheader("⚙️ Select a Prediction Module to Start Working")
             
-            if st.button("Verify & Access Tool", key="verify_email_btn"):
-                if entered_email.strip().lower() in whitelist_emails or ("@" in entered_email and "." in entered_email):
-                    st.session_state['user_subscribed'] = True
-                    st.session_state['user_email'] = entered_email.strip()
-                    st.success(f"Access granted for: {entered_email}")
+            col_m1, col_m2, col_m3 = st.columns(3)
+            
+            with col_m1:
+                if st.button("🎯 Molecular Docking", key="mod_docking", use_container_width=True):
+                    st.session_state['active_prediction_module'] = "Docking"
                     st.rerun()
-                else:
-                    st.error("Email not found in whitelist or invalid format.")
-        else:
-            is_whitelisted = st.session_state['user_email'].lower() in whitelist_emails
-            role_badge = "👑 Whitelisted Lead Researcher" if is_whitelisted else "✅ Verified Subscriber"
+                st.markdown('<div class="desc-box">Configure grid boxes, rotatable bonds, binding affinity, and IC50 evaluations.</div>', unsafe_allow_html=True)    
             
-            st.success(f"{role_badge}: {st.session_state['user_email']}")
-            if st.button("Logout / Change Email", key="logout_email_btn"):
-                st.session_state['user_subscribed'] = False
-                st.session_state['user_email'] = ""
-                st.session_state['active_prediction_module'] = None
-                st.rerun()
-            
-            if st.session_state['active_prediction_module'] is None:
-                st.subheader("⚙️ Select a Prediction Module to Start Working")
-                
-                col_m1, col_m2, col_m3 = st.columns(3)
-                
-                with col_m1:
-                    if st.button("🎯 Molecular Docking", key="mod_docking", use_container_width=True):
-                        st.session_state['active_prediction_module'] = "Docking"
-                        st.rerun()
-                    st.markdown('<div class="desc-box">Configure grid boxes, rotatable bonds, binding affinity, and IC50 evaluations.</div>', unsafe_allow_html=True)    
-                
-                with col_m2:
-                    if st.button("📊 ADME & Pharmacokinetics\n(pkCSM)", key="mod_adme", use_container_width=True):
-                        st.session_state['active_prediction_module'] = "ADME"
-                        st.rerun()
-                    st.markdown('<div class="desc-box">Evaluate chemical properties, biological parameters, and permeability.</div>', unsafe_allow_html=True)
+            with col_m2:
+                if st.button("📊 ADME & Pharmacokinetics\n(pkCSM)", key="mod_adme", use_container_width=True):
+                    st.session_state['active_prediction_module'] = "ADME"
+                    st.rerun()
+                st.markdown('<div class="desc-box">Evaluate chemical properties, biological parameters, and permeability.</div>', unsafe_allow_html=True)
 
-                with col_m3:
-                    if st.button("🔗 Linker Optimization\n& Design", key="mod_linker", use_container_width=True):
-                        st.session_state['active_prediction_module'] = "Linker"
-                        st.rerun()
-                    st.markdown('<div class="desc-box">Analyze linker length, flexibility, and ternary complex stability.</div>', unsafe_allow_html=True)
+            with col_m3:
+                if st.button("🔗 Linker Optimization\n& Design", key="mod_linker", use_container_width=True):
+                    st.session_state['active_prediction_module'] = "Linker"
+                    st.rerun()
+                st.markdown('<div class="desc-box">Analyze linker length, flexibility, and ternary complex stability.</div>', unsafe_allow_html=True)
 
-        active_mod = st.session_state.get('active_prediction_module')
+    active_mod = st.session_state.get('active_prediction_module')
 
-        if active_mod == "Docking":
-            render_molecular_docking_workspace()
-        elif active_mod == "ADME":
-            render_adme_workspace()
-        elif active_mod == "Linker":
-            render_linker_optimization_workspace()
+    if active_mod == "Docking":
+        render_molecular_docking_workspace()
+    elif active_mod == "ADME":
+        render_adme_workspace()
+    elif active_mod == "Linker":
+        render_linker_optimization_workspace()
 
-    elif page == "Consultations":
+elif page == "Consultations":
     render_consultations_workspace()
         
     # ==============================================================================
