@@ -348,7 +348,7 @@ elif page == "QR Code":
     st.info("App deployment link active and synchronized.")
 
 # ==============================================================================
-# 📌 PART 9: AI & QSAR PREDICTION HUB (WITH RANDOM STATE & FEATURE TUNING)
+# 📌 PART 9: AI & QSAR PREDICTION HUB (WITH AUTOMATIC FEATURE OPTIMIZER)
 # ==============================================================================
 elif page == "AI Hub" and st.session_state['dev_authenticated']:
     if st.button("⬅️ Back to Home Page", key="back_to_home_ai"):
@@ -370,10 +370,54 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                 target_col = st.selectbox("Select Target Variable (Numeric):", numeric_cols, key="ml_target")
                 feature_candidates = [c for c in numeric_cols if c != target_col]
                 
-                # إمكانية اختيار الـ Features
-                feature_cols = st.multiselect("Select Feature Columns:", feature_candidates, default=feature_candidates[:min(4, len(feature_candidates))])
+                # خيار الأداة التلقائية أو الاختيار اليدوي
+                optimizer_mode = st.radio("Choose Feature Selection Method:", ["Manual Selection", "🚀 Auto-Find Best Features (Optimizer)"])
                 
-                # إضافة خيار التحكم في الـ Random State وسرعة الموديل
+                if optimizer_mode == "🚀 Auto-Find Best Features (Optimizer)":
+                    max_features_to_test = st.slider("Max features to combine:", min_value=2, max_value=min(10, len(feature_candidates)), value=min(5, len(feature_candidates)))
+                    random_seed_opt = st.number_input("Optimizer Random State:", min_value=1, max_value=1000, value=42, step=1)
+                    
+                    if st.button("🔍 Run Feature Optimization"):
+                        best_r2 = -999.0
+                        best_features = []
+                        best_rmse = 999.0
+                        
+                        # تجربة أهم الـ Features بناء على تقييم سريع (Correlation أو Importance مبدئي)
+                        from itertools import combinations
+                        
+                        # لربح الوقت، نجرب مجموعات طولها من 2 إلى max_features_to_test
+                        with st.spinner("Optimizing features for best R2 and RMSE... Please wait."):
+                            for k in range(2, max_features_to_test + 1):
+                                for combo in combinations(feature_candidates, k):
+                                    cols_test = list(combo) + [target_col]
+                                    df_t = merged_data.dropna(subset=cols_test)
+                                    if len(df_t) > 10:
+                                        Xt = df_t[list(combo)]
+                                        yt = df_t[target_col]
+                                        st_scaler = StandardScaler()
+                                        Xt_sc = st_scaler.fit_transform(Xt)
+                                        X_tr, X_te, y_tr, y_te = train_test_split(Xt_sc, yt, test_size=0.2, random_state=random_seed_opt)
+                                        
+                                        rf_temp = RandomForestRegressor(n_estimators=100, random_state=random_seed_opt)
+                                        rf_temp.fit(X_tr, y_tr)
+                                        y_p = rf_temp.predict(X_te)
+                                        r2_t = r2_score(y_te, y_p)
+                                        rmse_t = np.sqrt(np.mean((y_te - y_p) ** 2))
+                                        
+                                        # نبحث عن أعلى R2 (أو أقل RMSE)
+                                        if r2_t > best_r2:
+                                            best_r2 = r2_t
+                                            best_features = list(combo)
+                                            best_rmse = rmse_t
+                            
+                            st.session_state['optimal_features'] = best_features
+                            st.success(f"🎉 Optimization Complete! Best R²: **{best_r2:.2f}** | Best RMSE: **{best_rmse:.2f}**")
+                    
+                    # استرجاع الـ Features التي تم إيجادها
+                    feature_cols = st.multiselect("Select Feature Columns:", feature_candidates, default=st.session_state.get('optimal_features', feature_candidates[:min(4, len(feature_candidates))]))
+                else:
+                    feature_cols = st.multiselect("Select Feature Columns:", feature_candidates, default=feature_candidates[:min(4, len(feature_candidates))])
+                
                 col_opt1, col_opt2 = st.columns(2)
                 with col_opt1:
                     random_seed = st.number_input("Random State (Seed):", min_value=1, max_value=1000, value=42, step=1)
@@ -395,7 +439,6 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                         X_scaled = scaler.fit_transform(X)
                         X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=random_seed)
                         
-                        # استخدام الـ Random State والـ n_estimators المحددين من الواجهة
                         ml_model = RandomForestRegressor(n_estimators=n_estimators_val, random_state=random_seed)
                         ml_model.fit(X_train, y_train)
                         y_pred = ml_model.predict(X_test)
