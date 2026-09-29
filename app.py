@@ -336,6 +336,7 @@ def main():
         # Inside the active working module workspace
         active_mod = st.session_state.get('active_prediction_module')
 
+  active_mod = st.session_state.get('active_prediction_module')
     if active_mod == "Docking":
         render_molecular_docking_workspace()
     elif active_mod == "ADME":
