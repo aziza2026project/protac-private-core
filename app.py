@@ -347,16 +347,23 @@ elif page == "QR Code":
     st.markdown("Scan the QR code below to open the application directly on your mobile device or share it easily.")
     st.info("App deployment link active and synchronized.")
 
-   # ==============================================================================
+ # ==============================================================================
 # 📌 PART 9: AI & QSAR PREDICTION HUB (DEVELOPER MODE)
 # ==============================================================================
 elif page == "AI Hub" and st.session_state['dev_authenticated']:
+    if st.button("⬅️ Back to Home Page", key="back_to_home_ai"):
+        st.session_state['current_page'] = "Home Page"
+        st.session_state['dev_authenticated'] = False
+        st.rerun()
+
     st.subheader("🤖 Advanced Machine Learning & QSAR Prediction Hub (Developer Mode)")
+    
     if SKLEARN_AVAILABLE:
         merged_data = load_database_for_prediction()
         if merged_data is not None and not merged_data.empty:
             st.success(f"Successfully loaded datasets! Total rows: {merged_data.shape[0]}")
             numeric_cols = [col for col in merged_data.select_dtypes(include=[np.number]).columns.tolist() if merged_data[col].nunique() > 2]
+            
             if len(numeric_cols) >= 2:
                 target_col = st.selectbox("Select Target Variable (Numeric):", numeric_cols, key="ml_target")
                 feature_candidates = [c for c in numeric_cols if c != target_col]
@@ -367,18 +374,46 @@ elif page == "AI Hub" and st.session_state['dev_authenticated']:
                     if len(df_clean) > 5:
                         X = df_clean[feature_cols]
                         y = df_clean[target_col]
+                        
                         scaler = StandardScaler()
                         X_scaled = scaler.fit_transform(X)
                         X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
                         
-                        ml_model = RandomForestRegressor(n_estimators=150, random_state=42)
+                        # تدريب نموذج عالي الدقة
+                        ml_model = RandomForestRegressor(n_estimators=200, random_state=42)
                         ml_model.fit(X_train, y_train)
                         y_pred = ml_model.predict(X_test)
                         
-                        st.metric("Model Accuracy (R2 Score)", f"{r2_score(y_test, y_pred):.2f}")
+                        # حساب المقاييس العلمية الدقيقة
+                        r2 = r2_score(y_test, y_pred)
+                        mse = np.mean((y_test - y_pred) ** 2)
+                        rmse = np.sqrt(mse)
+                        
+                        # عرض المقاييس في الواجهة بشكل احترافي
+                        col_m1, col_m2 = st.columns(2)
+                        with col_m1:
+                            st.metric("Model Accuracy ($R^2$ Score)", f"{r2:.2f}")
+                        with col_m2:
+                            st.metric("Root Mean Squared Error (RMSE)", f"{rmse:.2f}")
+                        
+                        st.markdown("---")
+                        st.subheader("📊 Feature Importance Analysis")
+                        st.markdown("Relative importance of physicochemical features and docking scores in predicting the target variable:")
+                        
+                        # رسم بياني لأهمية الفيتشرز (Feature Importance)
+                        importance_df = pd.DataFrame({
+                            'Feature': feature_cols,
+                            'Importance': ml_model.feature_importances_
+                        }).sort_values(by='Importance', ascending=False)
+                        
+                        st.bar_chart(importance_df.set_index('Feature'))
+                        
+                    else:
+                        st.warning("Not enough clean data rows after removing missing values (minimum 6 rows required).")
+            else:
+                st.warning("Please ensure your dataset contains at least 2 numeric columns for QSAR modeling.")
     else:
         st.error("scikit-learn not available.")
 
 if __name__ == "__main__":
     main()
-   
