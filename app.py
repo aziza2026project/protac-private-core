@@ -332,7 +332,6 @@ def main():
                         st.rerun()
                     st.markdown('<div class="desc-box">Analyze linker length, flexibility, and ternary complex stability.</div>', unsafe_allow_html=True)
 
-           
 # Inside the active working module workspace
     active_mod = st.session_state.get('active_prediction_module')
 
