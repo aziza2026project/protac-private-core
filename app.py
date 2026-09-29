@@ -342,7 +342,10 @@ def main():
     elif active_mod == "Linker":
         render_linker_optimization_workspace()
 
-    else active_mod:
+  elif page == "Consultations and Scientific Sollaboration":
+        if st.button("⬅️ Back to Home Page", key="back_to_home_sub"):
+            st.session_state['current_page'] = "Home Page"
+            st.rerun()
         st.title("💼 Consultations & Scientific Collaboration")
         st.markdown("Connect with Dr. Aziza Mnasri for advanced computational chemistry projects.")
     # ==============================================================================
